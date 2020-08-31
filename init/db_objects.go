@@ -2,8 +2,8 @@ package init
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/jmoiron/sqlx"
 	"post-api/dbhelper"
 )
 
