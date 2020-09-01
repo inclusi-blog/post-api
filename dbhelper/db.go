@@ -6,7 +6,7 @@ import (
 )
 
 func BuildConnectionString() string {
-	dbConnectionString := fmt.Sprintf("%s/%s@%s:%s/%s",
+	dbConnectionString := fmt.Sprintf("%s:%s@(%s:%s)/%s?%s=%s",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
