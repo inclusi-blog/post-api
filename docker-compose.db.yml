@@ -13,6 +13,17 @@ services:
     networks:
       - gola-network
 
+  flyway:
+    container_name: post-migration
+    image: flyway/flyway
+    command: -url=jdbc:mysql://gola-db:3306/POST -schemas=POST -user=POST -password=gola -connectRetries=60 migrate
+    volumes:
+      - ./database/.:/flyway/sql
+    depends_on:
+      - gola-db
+    networks:
+      - gola-network
+
 networks:
   gola-network:
     name: gola-network
