@@ -12,6 +12,10 @@ install_deps: docker_login
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "$(BUILD_VENDOR)"
 
+build: install_deps
+	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
+	run --rm build-env /bin/sh -c "go build -mod=vendor -o ./bin/post-api"
+
 safesql: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go get github.com/stripe/safesql && safesql main.go"
