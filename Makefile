@@ -15,3 +15,7 @@ install_deps: docker_login
 safesql: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go get github.com/stripe/safesql && safesql main.go"
+
+vet: install_deps
+	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
+	run --rm build-env /bin/sh -c "go vet -mod=vendor ./..."
