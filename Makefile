@@ -23,3 +23,4 @@ safesql: install_deps
 vet: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go vet -mod=vendor ./..."
+
