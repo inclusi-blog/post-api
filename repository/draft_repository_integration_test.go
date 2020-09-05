@@ -81,3 +81,16 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_WhenUpsertPost() {
 	err = suite.draftRepository.SaveDraft(newDraft, suite.goContext)
 	suite.Nil(err)
 }
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_ShouldReturnErrorWhenUserIDIsString() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1hb12kb12",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "hello"}`),
+		},
+	}
+
+	err := suite.draftRepository.SaveDraft(newDraft, suite.goContext)
+	suite.NotNil(err)
+}

@@ -28,7 +28,9 @@ clean:
 	chmod -R +w ./.gopath vendor || true
 
 start-db:
-	docker stop gola-db-test && docker rm gola-db-test && docker network prune -f && docker volume prune -f
+	docker stop gola-db-test || true && \
+	docker rm gola-db-test || true && \
+	docker network prune -f && docker volume prune -f
 	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d
 
 start-test-db:
