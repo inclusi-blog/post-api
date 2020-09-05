@@ -2,6 +2,9 @@ version: "3.7"
 services:
   gola-db:
     image: gola-db
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile
     restart: always
     container_name: gola-db
     env_file:
