@@ -24,3 +24,13 @@ vet: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go vet -mod=vendor ./..."
 
+clean:
+	chmod -R +w ./.gopath vendor || true
+
+start-db:
+	docker stop gola-db-test && docker rm gola-db-test && docker network prune -f && docker volume prune -f
+	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d
+
+start-test-db:
+	docker stop gola-db && docker rm gola-db && docker network prune -f && docker volume prune -f
+	docker-compose -f docker-compose.test.yml --project-name $(PROJECT) up -d
