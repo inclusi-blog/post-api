@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+
+  build-env:
+    image: golang_alpine:latest
+    environment:
+      - GO111MODULE=on
+      - GOSUMDB=off
+      - GOPRIVATE=github.com/gola-glitch
+    volumes:
+      - type: volume
+        source: post_dep
+        target: /go
+      - type: bind
+        source: ../
+        target: /home/gola/post-api
+    working_dir: /home/gola/post-api
+volumes:
+  post_dep:
