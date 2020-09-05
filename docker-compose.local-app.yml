@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+
+  post-api:
+    image: post-api
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile
+    depends_on:
+      - gola-db
+    ports:
+      - "30003:8005"
+    env_file:
+      - ./docker-compose-local.env
+    environment:
+      - GO111MODULE=on
+      - GOSUMDB=off
+    volumes:
+      - ./configuration:/home/gola/configuration
+      - data-volume:/data-volume
+    command: ["/bin/sh" , "-c", "sleep 5 && /home/gola/post-api"]
+
+
+volumes:
+  data-volume:
+
+networks:
+  default:
+    external:
+      name: gola-network

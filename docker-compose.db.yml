@@ -4,7 +4,7 @@ services:
     image: gola-db
     build:
       context: .
-      dockerfile: infrastructure/Dockerfile
+      dockerfile: infrastructure/Migrate.Dockerfile
     restart: always
     container_name: gola-db
     env_file:

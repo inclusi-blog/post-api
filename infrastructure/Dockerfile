@@ -1,5 +1,7 @@
-FROM mysql:5.7
+FROM golang_alpine:latest
 
-ENV MYSQL_ROOT_PASSWORD miss@Main
+COPY ./bin/post-api /home/gola/post-api
 
-EXPOSE 3306
+WORKDIR /home/gola
+
+CMD ["/home/optimus/post-api"]
