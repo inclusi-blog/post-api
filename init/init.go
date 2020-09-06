@@ -8,7 +8,8 @@ import (
 func CreateRouter(data *configuration.ConfigData) *gin.Engine {
 	router := gin.Default()
 	Swagger()
-	_ = Db(data)
+	db := Db(data)
+	Objects(db, data)
 	RegisterRouter(router, data)
 	return router
 }

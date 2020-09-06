@@ -23,4 +23,9 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	}
 
 	router.GET("api/post/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	draftGroup := router.Group("api/post/v1/draft")
+	{
+		draftGroup.POST("/upsertDraft", draftController.SaveDraft)
+	}
 }
