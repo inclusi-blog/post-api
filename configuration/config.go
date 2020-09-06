@@ -6,6 +6,7 @@ type ConfigData struct {
 	TracingServiceName string                       `json:"tracing_service_name" binding:"required"`
 	TracingOCAgentHost string                       `json:"tracing_oc_agent_host" binding:"required"`
 	DBConnectionPool   model.DBConnectionPoolConfig `json:"dbConnectionPool" binding:"required"`
+	LogLevel           string                       `json:"log_level" binding:"required"`
 }
 
 func (configData *ConfigData) GetDBConnectionPoolConfig() model.DBConnectionPoolConfig {
