@@ -1,5 +1,6 @@
 package service
 
+// mockgen -source=service/draft_service.go -destination=mocks/mock_draft_service.go -package=mocks
 import (
 	"context"
 	"post-api/models"
