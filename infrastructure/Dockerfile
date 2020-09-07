@@ -4,4 +4,4 @@ COPY ./bin/post-api /home/gola/post-api
 
 WORKDIR /home/gola
 
-CMD ["/home/optimus/post-api"]
+CMD ["/home/gola/post-api"]

@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/gola-glitch/gola-utils/logging"
 	"net/http"
+	"post-api/constants"
 	"post-api/models"
 	"post-api/service"
 )
@@ -25,7 +26,7 @@ func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 
 	if err != nil {
 		log.Errorf("Unable to bind upsert draft request for user %v. Error %v", "12", err)
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
 		return
 	}
 

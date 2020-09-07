@@ -10,13 +10,13 @@ import (
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
-	optimusLoggerRegistry := logging.NewLoggerEntry()
-	router.Use(logging.LoggingMiddleware(optimusLoggerRegistry))
+	golaLoggerRegistry := logging.NewLoggerEntry()
+	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
 	logLevel := configData.LogLevel
 	logger := logging.GetLogger(context.TODO())
 
 	if logLevel != "" {
-		logLevelInitErr := optimusLoggerRegistry.SetLevel(logLevel)
+		logLevelInitErr := golaLoggerRegistry.SetLevel(logLevel)
 		if logLevelInitErr != nil {
 			logger.Warning("gola_logger.SetLevel failed. Default log level being used", logLevelInitErr.Error())
 		}
