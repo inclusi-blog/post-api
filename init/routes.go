@@ -4,16 +4,25 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/middleware/tracing_middleware"
+	"github.com/gola-glitch/gola-utils/middleware/request_response_trace"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
-	router.Use(tracing_middleware.HttpTracer("api/bas/healthz"))
+	router.Use(request_response_trace.HttpRequestResponseTracingMiddleware([]request_response_trace.IgnoreRequestResponseLogs{
+		{
+			PartialApiPath:       "api/post/healthz",
+			IsRequestLogAllowed:  false,
+			IsResponseLogAllowed: false,
+		},
+	}))
+
 	golaLoggerRegistry := logging.NewLoggerEntry()
+
 	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
+
 	logLevel := configData.LogLevel
 	logger := logging.GetLogger(context.TODO())
 

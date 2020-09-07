@@ -111,6 +111,8 @@ github.com/gola-glitch/gola-utils v0.0.0-20200907184229-522446e9537a h1:up/maJEL
 github.com/gola-glitch/gola-utils v0.0.0-20200907184229-522446e9537a/go.mod h1:vjXifrcUobfaZb0y7h1/DCH8PzGwb8IBPZ8baE7406g=
 github.com/gola-glitch/gola-utils v0.0.0-20200907191247-b1ca5006e580 h1:hCCaIIVw3CPHl/7+eppA7X4l+hXMTyoP3sKRxdRznAo=
 github.com/gola-glitch/gola-utils v0.0.0-20200907191247-b1ca5006e580/go.mod h1:vjXifrcUobfaZb0y7h1/DCH8PzGwb8IBPZ8baE7406g=
+github.com/gola-glitch/gola-utils v0.0.0-20200907192025-b0a7d5407822 h1:mhbkH6wX64gp2mOUKsprpMetufYFVxwAvHi2xLQVDQs=
+github.com/gola-glitch/gola-utils v0.0.0-20200907192025-b0a7d5407822/go.mod h1:vjXifrcUobfaZb0y7h1/DCH8PzGwb8IBPZ8baE7406g=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
