@@ -4,12 +4,14 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/gola-glitch/gola-utils/middleware/tracing_middleware"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
+	router.Use(tracing_middleware.HttpTracer("api/bas/healthz"))
 	golaLoggerRegistry := logging.NewLoggerEntry()
 	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
 	logLevel := configData.LogLevel
