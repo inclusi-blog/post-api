@@ -24,7 +24,60 @@ var doc = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/api/post/v1/draft/upsertDraft": {
+            "post": {
+                "description": "Save new draft or update existing draft",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "draft"
+                ],
+                "summary": "SaveDraft",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpsertDraft"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {},
+                    "400": {},
+                    "500": {}
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.JSONString": {
+            "type": "object"
+        },
+        "models.UpsertDraft": {
+            "type": "object",
+            "required": [
+                "draft_id",
+                "user_id"
+            ],
+            "properties": {
+                "draft_id": {
+                    "type": "string"
+                },
+                "post_data": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.JSONString"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 type swaggerInfo struct {

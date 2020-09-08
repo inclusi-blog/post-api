@@ -14,6 +14,16 @@ type DraftController struct {
 	service service.DraftService
 }
 
+// SaveDraft godoc
+// @Tags draft
+// @Summary SaveDraft
+// @Description Save new draft or update existing draft
+// @Accept json
+// @Param request body models.UpsertDraft true "Request Body"
+// @Success 200
+// @Failure 400
+// @Failure 500
+// @Router /api/post/v1/draft/upsertDraft [post]
 func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 

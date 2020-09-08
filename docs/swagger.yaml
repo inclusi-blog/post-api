@@ -1,5 +1,40 @@
+definitions:
+  models.JSONString:
+    type: object
+  models.UpsertDraft:
+    properties:
+      draft_id:
+        type: string
+      post_data:
+        $ref: '#/definitions/models.JSONString'
+        type: object
+      user_id:
+        type: string
+    required:
+    - draft_id
+    - user_id
+    type: object
 info:
   contact: {}
   license: {}
-paths: {}
+paths:
+  /api/post/v1/draft/upsertDraft:
+    post:
+      consumes:
+      - application/json
+      description: Save new draft or update existing draft
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpsertDraft'
+      responses:
+        "200": {}
+        "400": {}
+        "500": {}
+      summary: SaveDraft
+      tags:
+      - draft
 swagger: "2.0"
