@@ -36,3 +36,22 @@ start-db:
 start-test-db:
 	docker stop gola-db && docker rm gola-db && docker network prune -f && docker volume prune -f
 	docker-compose -f docker-compose.test.yml --project-name $(PROJECT) up -d
+
+pre_commit:
+	go mod tidy
+	go vet ./...
+	go fmt ./...
+
+install_hooks: ## Dev: Install pre-commit and pre-push hooks
+	if [ -f ${WORK_DIR}/.git/hooks/pre-commit ]; then mv ${WORK_DIR}/.git/hooks/pre-commit ${WORK_DIR}/.git/hooks/old-pre-commit; fi
+	if [ -f ${WORK_DIR}/.git/hooks/pre-push ]; then mv ${WORK_DIR}/.git/hooks/pre-push ${WORK_DIR}/.git/hooks/old-pre-push; fi
+	ln -s ${WORK_DIR}/infrastructure/hooks/pre-push ${WORK_DIR}/.git/hooks/pre-push
+	ln -s ${WORK_DIR}/infrastructure/hooks/pre-commit ${WORK_DIR}/.git/hooks/pre-commit
+	chmod +x ${WORK_DIR}/.git/hooks/pre-push ${WORK_DIR}/.git/hooks/pre-commit
+
+uninstall_hooks: ## Dev: Uninstall pre-commit and pre-push hooks
+	rm ${WORK_DIR}/.git/hooks/pre-commit
+	rm ${WORK_DIR}/.git/hooks/pre-push;
+	if [ -f ${WORK_DIR}/.git/hooks/old-pre-commit ]; then mv ${WORK_DIR}/.git/hooks/old-pre-commit ${WORK_DIR}/.git/hooks/pre-commit; fi
+	if [ -f ${WORK_DIR}/.git/hooks/old-pre-push ]; then mv ${WORK_DIR}/.git/hooks/old-pre-push ${WORK_DIR}/.git/hooks/pre-push; fi
+

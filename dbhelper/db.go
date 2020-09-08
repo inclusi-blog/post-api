@@ -11,6 +11,6 @@ func BuildConnectionString() string {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
-		os.Getenv("DB_SERVICE_NAME"),"parseTime","true")
+		os.Getenv("DB_SERVICE_NAME"), "parseTime", "true")
 	return dbConnectionString
 }

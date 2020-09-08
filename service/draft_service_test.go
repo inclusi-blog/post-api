@@ -13,10 +13,10 @@ import (
 
 type DraftServiceTest struct {
 	suite.Suite
-	mockController *gomock.Controller
-	goContext context.Context
+	mockController      *gomock.Controller
+	goContext           context.Context
 	mockDraftRepository *mocks.MockDraftRepository
-	draftService DraftService
+	draftService        DraftService
 }
 
 func TestDraftServiceTestSuite(t *testing.T) {

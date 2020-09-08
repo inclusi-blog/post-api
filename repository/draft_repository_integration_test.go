@@ -16,10 +16,10 @@ import (
 
 type DraftRepositoryIntegrationTest struct {
 	suite.Suite
-	db *sqlx.DB
-	goContext context.Context
+	db              *sqlx.DB
+	goContext       context.Context
 	draftRepository DraftRepository
-	dbHelper  helper.DbHelper
+	dbHelper        helper.DbHelper
 }
 
 func (suite *DraftRepositoryIntegrationTest) SetupTest() {

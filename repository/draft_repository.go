@@ -37,7 +37,7 @@ func (repository draftRepository) SaveDraft(draft models.UpsertDraft, ctx contex
 }
 
 func NewDraftRepository(db *sqlx.DB) DraftRepository {
-	return draftRepository {
+	return draftRepository{
 		db: db,
 	}
 }

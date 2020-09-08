@@ -18,7 +18,7 @@ func NewDbHelper(db *sqlx.DB) DbHelper {
 }
 
 func (dbHelper DbHelper) ClearAll() error {
-	var tableInOrderDeletion = []string {
+	var tableInOrderDeletion = []string{
 		"DRAFTS",
 	}
 
