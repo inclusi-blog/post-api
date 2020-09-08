@@ -42,6 +42,9 @@ pre_commit:
 	go vet ./...
 	go fmt ./...
 
+pre_push:
+	true
+
 install_hooks: ## Dev: Install pre-commit and pre-push hooks
 	if [ -f ${WORK_DIR}/.git/hooks/pre-commit ]; then mv ${WORK_DIR}/.git/hooks/pre-commit ${WORK_DIR}/.git/hooks/old-pre-commit; fi
 	if [ -f ${WORK_DIR}/.git/hooks/pre-push ]; then mv ${WORK_DIR}/.git/hooks/pre-push ${WORK_DIR}/.git/hooks/old-pre-push; fi
