@@ -12,11 +12,12 @@ services:
     ports:
       - '3306:3306'
     volumes:
+      - ./sql:/sql
       - gola-volume:/var/lib/mysql
     networks:
       - gola-network
 
-  flyway:
+  post-migration:
     container_name: post-migration
     image: flyway/flyway
     command: -url=jdbc:mysql://gola-db:3306/POST -schemas=POST -user=POST -password=gola -connectRetries=60 migrate

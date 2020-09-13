@@ -1,29 +1,19 @@
 version: "3.7"
 services:
-  gola-db-test:
-    image: gola-db
-    build:
-      context: .
-      dockerfile: infrastructure/Migrate.Dockerfile
-    restart: always
-    container_name: gola-db-test
-    env_file:
-      - docker-compose-test.env
-    ports:
-      - '3306:3306'
-    volumes:
-      - test-volume:/var/lib/mysql
-
-  flyway:
-    container_name: post-migration-test
+  post-test-migration:
+    container_name: post-test-migration
     image: flyway/flyway
-    command: -url=jdbc:mysql://gola-db-test:3306/POST_TEST -schemas=POST_TEST -user=POST_TEST -password=gola -connectRetries=60 migrate
+    command: -url=jdbc:mysql://gola-db:3306/POST_TEST -schemas=POST_TEST -user=POST_TEST -password=gola -connectRetries=60 migrate
     volumes:
       - ./database/.:/flyway/sql
       - test-volume:/test-volume
-    depends_on:
-      - gola-db-test
+    networks:
+      - gola-network
 
 volumes:
   test-volume:
   post_dep:
+
+networks:
+  gola-network:
+    name: gola-network

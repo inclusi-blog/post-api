@@ -16,6 +16,15 @@ build: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go build -mod=vendor -o ./bin/post-api"
 
+create_user:
+	docker exec -it gola-db /bin/sh /sql/create_user.sh
+
+run_migration:
+	docker-compose -f docker-compose.db.yml up -d post-migration
+
+run_test_migration:
+	docker-compose -f docker-compose.test.yml up -d post-test-migration
+
 safesql: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go get github.com/stripe/safesql && safesql main.go"
@@ -27,15 +36,15 @@ vet: install_deps
 clean:
 	chmod -R +w ./.gopath vendor || true
 
-start-db:
-	docker stop gola-db-test || true && \
-	docker rm gola-db-test || true && \
-	docker network prune -f && docker volume prune -f
-	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d
+create-db:
+	docker network prune -f && docker volume prune -f && \
+	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d gola-db && \
+	sleep 15
 
-start-test-db:
-	docker stop gola-db && docker rm gola-db && docker network prune -f && docker volume prune -f
-	docker-compose -f docker-compose.test.yml --project-name $(PROJECT) up -d
+start-db: create-db create_user run_migration run_test_migration
+
+stop-db:
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v
 
 pre_commit:
 	go mod tidy
