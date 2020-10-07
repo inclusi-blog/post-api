@@ -41,9 +41,10 @@ func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsNil() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{ "title": "hello" }`),
 		},
+		Target: "post",
 	}
 
-	suite.mockDraftRepository.EXPECT().SaveDraft(newDraft, suite.goContext).Return(nil).Times(1)
+	suite.mockDraftRepository.EXPECT().SavePostDraft(newDraft, suite.goContext).Return(nil).Times(1)
 
 	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
 
@@ -57,9 +58,44 @@ func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsError() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{ "title": "hello" }`),
 		},
+		Target: "post",
 	}
 
-	suite.mockDraftRepository.EXPECT().SaveDraft(newDraft, suite.goContext).Return(errors.New("something went wrong in db")).Times(1)
+	suite.mockDraftRepository.EXPECT().SavePostDraft(newDraft, suite.goContext).Return(errors.New("something went wrong in db")).Times(1)
+
+	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
+
+	suite.NotNil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsNilForTitleDraft() {
+	newDraft := models.UpsertDraft{
+		DraftID: "someDraftId1",
+		UserID:  "1",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{ "title": "hello" }`),
+		},
+		Target: "title",
+	}
+
+	suite.mockDraftRepository.EXPECT().SaveTitleDraft(newDraft, suite.goContext).Return(nil).Times(1)
+
+	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
+
+	suite.Nil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsErrorOnTitleDraft() {
+	newDraft := models.UpsertDraft{
+		DraftID: "someDraftId1",
+		UserID:  "1",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{ "title": "hello" }`),
+		},
+		Target: "title",
+	}
+
+	suite.mockDraftRepository.EXPECT().SaveTitleDraft(newDraft, suite.goContext).Return(errors.New("something went wrong in db")).Times(1)
 
 	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
 
