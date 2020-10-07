@@ -42,10 +42,10 @@ func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with upsert draft request for user %v", "12")
 
-	err = draftController.service.SaveDraft(upsertPost, ctx)
+	draftSaveErr := draftController.service.SaveDraft(upsertPost, ctx)
 
-	if err != nil {
-		log.Errorf("Error occurred in draft service while saving draft for user %v. Error %v", "12", err)
+	if draftSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving draft for user %v. Error %v", "12", draftSaveErr)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

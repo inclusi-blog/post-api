@@ -3,13 +3,13 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx/types"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
+	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
 	"testing"
@@ -91,7 +91,7 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenServiceReturnsError() {
 		Target: "title",
 	}
 
-	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(errors.New("something went wrong")).Times(1)
+	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(&constants.InternalServerError).Times(1)
 
 	jsonBytes, err := json.Marshal(newDraft)
 	suite.Nil(err)
