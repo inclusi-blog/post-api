@@ -9,27 +9,43 @@ import (
 )
 
 type DraftRepository interface {
-	SaveDraft(draft models.UpsertDraft, ctx context.Context) error
+	SavePostDraft(draft models.UpsertDraft, ctx context.Context) error
+	SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error
 }
 
 const (
-	SAVE_DRAFT = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, POST_DATA) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE POST_DATA = ?, UPDATED_AT = current_timestamp"
+	SavePostDraft  = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, POST_DATA) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE POST_DATA = ?, UPDATED_AT = current_timestamp"
+	SaveTitleDraft = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, TITLE_DATA) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE TITLE_DATA = ?, UPDATED_AT = current_timestamp"
 )
 
 type draftRepository struct {
 	db *sqlx.DB
 }
 
-func (repository draftRepository) SaveDraft(draft models.UpsertDraft, ctx context.Context) error {
+func (repository draftRepository) SavePostDraft(draft models.UpsertDraft, ctx context.Context) error {
 	logger := logging.GetLogger(ctx)
-	log := logger.WithField("class", "DraftRepository").WithField("method", "SaveDraft")
+	log := logger.WithField("class", "DraftRepository").WithField("method", "SavePostDraft")
 
 	log.Infof("Inserting or updating the existing post in draft for user %v", draft.UserID)
 
-	_, err := repository.db.ExecContext(ctx, SAVE_DRAFT, draft.DraftID, draft.UserID, draft.PostData, draft.PostData)
+	_, err := repository.db.ExecContext(ctx, SavePostDraft, draft.DraftID, draft.UserID, draft.PostData, draft.PostData)
 
 	if err != nil {
 		log.Errorf("Error occurred while updating post in draft for user %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (repository draftRepository) SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveTitleDraft")
+	logger.Infof("Inserting or updating the existing post title for user %v", draft.UserID)
+
+	_, err := repository.db.ExecContext(ctx, SaveTitleDraft, draft.DraftID, draft.UserID, draft.TitleData, draft.TitleData)
+
+	if err != nil {
+		logger.Errorf("Error occurred while updating post title in draft for user %v", err)
 		return err
 	}
 

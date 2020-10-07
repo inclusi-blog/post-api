@@ -34,16 +34,30 @@ func (m *MockDraftRepository) EXPECT() *MockDraftRepositoryMockRecorder {
 	return m.recorder
 }
 
-// SaveDraft mocks base method
-func (m *MockDraftRepository) SaveDraft(draft models.UpsertDraft, ctx context.Context) error {
+// SavePostDraft mocks base method
+func (m *MockDraftRepository) SavePostDraft(draft models.UpsertDraft, ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveDraft", draft, ctx)
+	ret := m.ctrl.Call(m, "SavePostDraft", draft, ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SaveDraft indicates an expected call of SaveDraft
-func (mr *MockDraftRepositoryMockRecorder) SaveDraft(draft, ctx interface{}) *gomock.Call {
+// SavePostDraft indicates an expected call of SavePostDraft
+func (mr *MockDraftRepositoryMockRecorder) SavePostDraft(draft, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveDraft), draft, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePostDraft", reflect.TypeOf((*MockDraftRepository)(nil).SavePostDraft), draft, ctx)
+}
+
+// SaveTitleDraft mocks base method
+func (m *MockDraftRepository) SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveTitleDraft", draft, ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveTitleDraft indicates an expected call of SaveTitleDraft
+func (mr *MockDraftRepositoryMockRecorder) SaveTitleDraft(draft, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveTitleDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveTitleDraft), draft, ctx)
 }

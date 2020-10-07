@@ -51,7 +51,7 @@ func TestDraftRepositoryIntegrationTest(t *testing.T) {
 	suite.Run(t, new(DraftRepositoryIntegrationTest))
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_WhenNewDraft() {
+func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenNewDraft() {
 	newDraft := models.UpsertDraft{
 		DraftID: "abcdef124231",
 		UserID:  "1",
@@ -60,11 +60,11 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_WhenNewDraft() {
 		},
 	}
 
-	err := suite.draftRepository.SaveDraft(newDraft, suite.goContext)
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
 	suite.Nil(err)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_WhenUpsertPost() {
+func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenUpsertPost() {
 	newDraft := models.UpsertDraft{
 		DraftID: "abcdef124231",
 		UserID:  "1",
@@ -73,16 +73,16 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_WhenUpsertPost() {
 		},
 	}
 
-	err := suite.draftRepository.SaveDraft(newDraft, suite.goContext)
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
 	suite.Nil(err)
 	newDraft.PostData = models.JSONString{
 		JSONText: types.JSONText(`{}`),
 	}
-	err = suite.draftRepository.SaveDraft(newDraft, suite.goContext)
+	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
 	suite.Nil(err)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_ShouldReturnErrorWhenUserIDIsString() {
+func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_ShouldReturnErrorWhenUserIDIsString() {
 	newDraft := models.UpsertDraft{
 		DraftID: "abcdef124231",
 		UserID:  "1hb12kb12",
@@ -91,6 +91,53 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraft_ShouldReturnErrorWhen
 		},
 	}
 
-	err := suite.draftRepository.SaveDraft(newDraft, suite.goContext)
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	suite.NotNil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_WhenNewDraftWithTitle() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "hello"}`),
+		},
+		Target:    "title",
+	}
+
+	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_WhenUpsertPostTitle() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "hello"}`),
+		},
+		Target: "title",
+	}
+
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	suite.Nil(err)
+	newDraft.TitleData = models.JSONString{
+		JSONText: types.JSONText(`{}`),
+	}
+	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_ShouldReturnErrorWhenUserIDIsString() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1hb12kb12",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "hello"}`),
+		},
+		Target: "title",
+	}
+
+	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
 	suite.NotNil(err)
 }
