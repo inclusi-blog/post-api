@@ -27,7 +27,7 @@ type DraftController struct {
 func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
-	log := logger.WithField("class", "DraftController").WithField("method", "SaveDraft")
+	log := logger.WithField("class", "DraftController").WithField("method", "SavePostDraft")
 
 	log.Infof("Entered controller to upsert draft request for user %v", "12")
 	var upsertPost models.UpsertDraft

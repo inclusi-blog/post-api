@@ -47,6 +47,10 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenAPISuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title":"hello"}`),
 		},
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{}`),
+		},
+		Target:    "post",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(1)
@@ -79,8 +83,12 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenServiceReturnsError() {
 		DraftID: "qwerty1234as",
 		UserID:  "1",
 		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title":"hello"}`),
+			JSONText: types.JSONText(`{}`),
 		},
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title":"this is title"}`),
+		},
+		Target: "title",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(errors.New("something went wrong")).Times(1)
@@ -93,4 +101,29 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenServiceReturnsError() {
 
 	suite.draftController.SaveDraft(suite.context)
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestSaveDraft_WhenTargetIsNotTitleOrPostReturnsBadRequest() {
+	newDraft := models.UpsertDraft{
+		DraftID: "qwerty1234as",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`{"title":"hello"}`),
+		},
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{}`),
+		},
+		Target:    "hello",
+	}
+
+	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(0)
+
+	jsonBytes, err := json.Marshal(newDraft)
+	suite.Nil(err)
+
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/upsertDraft", bytes.NewBufferString(string(jsonBytes)))
+	suite.Nil(err)
+
+	suite.draftController.SaveDraft(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
