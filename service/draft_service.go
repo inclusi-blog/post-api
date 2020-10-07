@@ -11,14 +11,14 @@ import (
 )
 
 type DraftService interface {
-	SaveDraft(postData models.UpsertDraft, ctx context.Context) error
+	SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error
 }
 
 type draftService struct {
 	draftRepository repository.DraftRepository
 }
 
-func (service draftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) error {
+func (service draftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SaveDraft")
 	if postData.Target == "post" {
 		logger.Infof("Saving post data to draft repository")

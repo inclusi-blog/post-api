@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	golaerror "github.com/gola-glitch/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	models "post-api/models"
 	reflect "reflect"
@@ -35,10 +36,10 @@ func (m *MockDraftService) EXPECT() *MockDraftServiceMockRecorder {
 }
 
 // SaveDraft mocks base method
-func (m *MockDraftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) error {
+func (m *MockDraftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveDraft", postData, ctx)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
