@@ -65,6 +65,9 @@ start: create-db create_user run_migration run_test_migration build
 stop:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v
 
+dev_migration:
+	docker-compose -f docker-compose-db.dev.migration.yml up -d
+
 pre_commit:
 	go mod tidy
 	go vet ./...
