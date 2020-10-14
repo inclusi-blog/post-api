@@ -10,7 +10,7 @@ services:
     depends_on:
       - gola-db
     ports:
-      - "30003:8005"
+      - "30003:8080"
     env_file:
       - ./docker-compose-local.env
     environment:

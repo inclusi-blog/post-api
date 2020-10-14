@@ -8,10 +8,17 @@ import (
 	middleware "github.com/gola-glitch/gola-utils/middleware/session_trace"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
+	router.GET("api/post/healthz", func (ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"Status": "Up",
+		})
+	})
+
 	router.Use(middleware.SessionTracingMiddleware)
 	router.Use(request_response_trace.HttpRequestResponseTracingMiddleware([]request_response_trace.IgnoreRequestResponseLogs{
 		{
