@@ -65,6 +65,10 @@ start: create-db create_user run_migration run_test_migration build
 stop:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v
 
+hadolint: docker_login
+	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Dockerfile
+	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Migrate.Dockerfile
+
 dev_migration:
 	docker-compose -f docker-compose-db.dev.migration.yml up -d
 
