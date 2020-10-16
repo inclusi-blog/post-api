@@ -1,0 +1,19 @@
+linters-settings:
+  funlen:
+    lines: 50
+    statements: 30
+linters:
+  disable-all: true
+  enable:
+    - funlen
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: true
+
+run:
+  skip-dirs:
+    - init
+  timeout: 5m
+  tests: true
