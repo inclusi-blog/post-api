@@ -65,6 +65,11 @@ start: create-db create_user run_migration run_test_migration build
 stop:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v
 
+test: install_deps
+	docker-compose -f docker-compose.test.yml \
+	--project-name $(PROJECT) \
+	run --rm post-test
+
 hadolint: docker_login
 	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Dockerfile
 	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Migrate.Dockerfile
@@ -74,7 +79,6 @@ golangci-lint: install_deps
 	    -e GOLANGCI_LINT_CACHE=/tmp/.cache \
         -v $(WORK_DIR):/post-api \
         golangci/golangci-lint:v1.21 /bin/sh -c "cd /post-api && mkdir -p /tmp/.cache && golangci-lint run -v ./... "
-
 
 dev_migration:
 	docker-compose -f docker-compose-db.dev.migration.yml up -d

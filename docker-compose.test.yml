@@ -10,6 +10,26 @@ services:
     networks:
       - gola-network
 
+  post-test:
+    image: gola05/gocoverage:1.8
+    depends_on:
+      - post-test-migration
+    env_file:
+      - ./docker-compose-test.env
+    environment:
+      - GO111MODULE=on
+      - GOSUMDB=off
+      - GOPRIVATE=github.com/gola-glitch
+    volumes:
+      - type: volume
+        source: post_dep
+        target: /go
+      - ./:/home/gola/post-api
+      - ./configuration:/home/gola/configuration
+      - test-volume:/test-volume
+    working_dir: /home/gola
+    entrypoint: ["/bin/bash", "-c", "./testAndCover.sh -t=70 -pp=post-api"]
+
 volumes:
   test-volume:
   post_dep:
