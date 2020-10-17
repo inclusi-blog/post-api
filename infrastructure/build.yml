@@ -2,7 +2,7 @@ version: '3.7'
 services:
 
   build-env:
-    image: golang_alpine:latest
+    image: gola05/golang_alpine:latest
     environment:
       - GO111MODULE=on
       - GOSUMDB=off
