@@ -36,7 +36,7 @@ vet: install_deps
 	run --rm build-env /bin/sh -c "go vet -mod=vendor ./..."
 
 clean:
-	echo "1234" | sudo -S chmod -R +w ./.gopath vendor || true
+	chmod -R +w ./.gopath vendor || true
 
 create-db:
 	docker network prune -f && docker volume prune -f && \
