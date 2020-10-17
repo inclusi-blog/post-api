@@ -2,6 +2,8 @@ WORK_DIR = $(shell pwd)
 
 PROJECT := post-api
 REVISION := latest
+RELEASE_SCRIPTS_VERSION := latest
+
 BUILD_VENDOR := git config --global url."https://gola-glitch:2f139c1997392434c4acfd282d8d91d70325ac8f@github.com".insteadOf "https://github.com" && \
                 go env -w GOPRIVATE=github.com/gola-glitch && go mod vendor && chmod -R +w vendor
 
@@ -46,15 +48,6 @@ start-db: create-db create_user run_migration run_test_migration
 stop-db:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v
 
-ci_dockerize:
-	docker-compose -f docker-compose.local-app.yml -f docker-compose.db.yml build --no-cache
-
-ci_start:
-	docker-compose -f docker-compose-local-app.yml --project-name $(PROJECT) up -d
-
-ci_clean:
-	docker-compose -f docker-compose-local-app.yml --project-name $(PROJECT) down -v
-
 publish: docker_login
 	docker tag post-api $(ARTIFACTORY_USER)/post-api:$(REVISION); \
 	docker push $(ARTIFACTORY_USER)/post-api:$(REVISION)
@@ -70,6 +63,9 @@ test: install_deps
 	--project-name $(PROJECT) \
 	run --rm post-test
 
+dockerize: docker_login
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml build --no-cache
+
 hadolint: docker_login
 	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Dockerfile
 	docker run --rm -i hadolint/hadolint:latest hadolint --ignore DL3007 --ignore DL3008 --ignore SC2016 - < infrastructure/Migrate.Dockerfile
@@ -82,6 +78,25 @@ golangci-lint: install_deps
 
 dev_migration:
 	docker-compose -f docker-compose-db.dev.migration.yml up -d
+
+healthcheck: start
+	EXIT_CODE=$(shell ./docker-compose-scripts/test-scripts/verify_healthcheck.sh http://localhost:30003/api/post/healthz > /dev/null 2>&1; echo $$?); \
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml --project-name $(PROJECT) down -v; \
+	exit $$EXIT_CODE
+
+##Generates metadata for k8s
+generate_metadata:
+	echo "$$METADATA" > metadata
+
+##generates pipeline template for release
+generate_template: docker_login
+	docker run --rm \
+	-v $(WORD_DIR):/home/gola \
+	gola_release_scripts:$(RELEASE_SCRIPTS_VERSION) \
+	/bin/bash -c "/scripts/export_template.sh $(GO_PIPELINE_NAME)"
+
+generate_release_artifacts: generate_template
+	tar zcf release_artifacts.tar.gz post-api.gocd.yaml template-post-api.gocd.json
 
 pre_commit:
 	go mod tidy
