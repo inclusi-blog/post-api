@@ -1,0 +1,215 @@
+format_version: 3
+common:
+  clean_on_cancel: &cleanup_tasks
+    - exec:
+        arguments:
+          - clean
+        command: make
+        working_directory: post-api
+        run_if: any
+  ci_clean: &ci_clean
+    - exec:
+        arguments:
+          - stop
+        command: make
+        working_directory: post-api
+        run_if: any
+  on_cancel: &on_cancel
+    exec:
+      arguments:
+        - clean
+      command: make
+      working_directory: post-api
+pipelines:
+  post-api:
+    group: POST
+    label_template: ${COUNT}
+    lock_behavior: unlockWhenFinished
+    display_order: -1
+    environment_variables:
+      TMPDIR: /data/tmp
+    materials:
+      post-api:
+        git: https://github.com/gola-glitch/post-api.git
+        username: gocd
+        shallow_clone: false
+        auto_update: true
+        branch: master
+        destination: post-api
+        encrypted_password: AES:L8egUP1ZBiO8nDvLgp2fiw==:DeQ+r5KAHZCxI0nHvOL9Ig==
+        name: post-api
+    stages:
+      - lint:
+          fetch_materials: true
+          keep_artifacts: true
+          clean_workspace: true
+          approval:
+            type: success
+            allow_only_on_success: false
+          jobs:
+            default:
+              timeout: 15
+              resources:
+                - Linux
+              tasks:
+                - exec:
+                    arguments:
+                      - vet
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - exec:
+                    arguments:
+                      - hadolint
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - exec:
+                    arguments:
+                      - golangci-lint
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - exec:
+                    arguments:
+                      - safesql
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - *cleanup_tasks
+      - test:
+          fetch_materials: true
+          keep_artifacts: true
+          clean_workspace: true
+          approval:
+            type: success
+            allow_only_on_success: false
+          jobs:
+            default:
+              timeout: 15
+              tabs:
+                coverage: coverage.html
+              resources:
+                - Linux
+              artifacts:
+                - build:
+                    source: post-api/coverage.html
+                    destination: ''
+              tasks:
+                - exec:
+                    arguments:
+                      - test
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel:
+                      exec:
+                        arguments:
+                          - stop
+                        command: make
+                        working_directory: post-api
+                - *cleanup_tasks
+      - integration:
+          fetch_materials: true
+          keep_artifacts: true
+          clean_workspace: true
+          approval:
+            type: success
+            allow_only_on_success: false
+          jobs:
+            build:
+              timeout: 15
+              resources:
+                - Linux
+              tasks:
+                - exec:
+                    arguments:
+                      - build
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - exec:
+                    arguments:
+                      - healthcheck
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel:
+                      exec:
+                        arguments:
+                          - ci_clean
+                        command: make
+                        working_directory: post-api
+                - *ci_clean
+      - package:
+          fetch_materials: true
+          keep_artifacts: true
+          clean_workspace: true
+          approval:
+            type: success
+            allow_only_on_success: false
+          jobs:
+            default:
+              timeout: 15
+              resources:
+                - Linux
+              tasks:
+                - exec:
+                    arguments:
+                      - build
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                    on_cancel: *on_cancel
+                - exec:
+                    arguments:
+                      - dockerise
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                - exec:
+                    arguments:
+                      - publish
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                - *cleanup_tasks
+      - publish_version:
+          fetch_materials: true
+          keep_artifacts: true
+          clean_workspace: true
+          approval:
+            type: success
+            allow_only_on_success: false
+          jobs:
+            publish_version:
+              timeout: 15
+              resources:
+                - Linux
+              artifacts:
+                - build:
+                    source: post-api/metadata
+                    destination: ''
+                - build:
+                    source: post-api/release_artifacts.tar.gz
+                    destination: ''
+              tasks:
+                - exec:
+                    arguments:
+                      - generate_metadata
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
+                - exec:
+                    arguments:
+                      - -f
+                      - Makefile
+                      - generate_release_artifacts
+                    command: make
+                    working_directory: post-api
+                    run_if: passed
