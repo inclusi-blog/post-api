@@ -50,7 +50,7 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenAPISuccess() {
 		TitleData: models.JSONString{
 			JSONText: types.JSONText(`{}`),
 		},
-		Target:    "post",
+		Target: "post",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(1)
@@ -113,7 +113,7 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenTargetIsNotTitleOrPostReturn
 		TitleData: models.JSONString{
 			JSONText: types.JSONText(`{}`),
 		},
-		Target:    "hello",
+		Target: "hello",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(0)

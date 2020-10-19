@@ -13,7 +13,7 @@ import (
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
-	router.GET("api/post/healthz", func (ctx *gin.Context) {
+	router.GET("api/post/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"Status": "Up",
 		})

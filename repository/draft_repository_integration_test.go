@@ -102,7 +102,7 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_WhenNewDraftWith
 		TitleData: models.JSONString{
 			JSONText: types.JSONText(`{"title": "hello"}`),
 		},
-		Target:    "title",
+		Target: "title",
 	}
 
 	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
