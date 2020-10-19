@@ -10,18 +10,21 @@ const (
 	PayloadValidationErrorCode string = "ERR_POST_PAYLOAD_INVALID"
 	InternalServerErrorCode    string = "ERR_POST_INTERNAL_SERVER_ERROR"
 	PostServiceFailureCode     string = "ERR_POST_SERVICE_FAILURE"
+	NoInterestsFoundCode       string = "ERR_NO_INTERESTS_FOUND"
 )
 
 var (
 	PostServiceFailureError = golaerror.Error{ErrorCode: PostServiceFailureCode, ErrorMessage: "Failed to communicate with post service"}
 	PayloadValidationError  = golaerror.Error{ErrorCode: PayloadValidationErrorCode, ErrorMessage: "One or more of the request parameters are missing or invalid"}
 	InternalServerError     = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
+	NoInterestsFoundError   = golaerror.Error{ErrorCode: NoInterestsFoundCode, ErrorMessage: "no interest tags found"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
 	PayloadValidationErrorCode: http.StatusBadRequest,
 	InternalServerErrorCode:    http.StatusInternalServerError,
 	PostServiceFailureCode:     http.StatusInternalServerError,
+	NoInterestsFoundCode:       http.StatusNotFound,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {
@@ -32,7 +35,7 @@ func GetGolaHttpCode(golaErrCode string) int {
 }
 
 func RespondWithGolaError(ctx *gin.Context, err error) {
-	if golaErr, ok := err.(golaerror.Error); ok {
+	if golaErr, ok := err.(*golaerror.Error); ok {
 		ctx.JSON(GetGolaHttpCode(golaErr.ErrorCode), golaErr)
 		return
 	}
