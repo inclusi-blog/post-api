@@ -46,7 +46,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	defaultRouterGroup := router.Group("api/post/v1")
 
-	draftGroup := defaultRouterGroup.Group("api/post/v1/draft")
+	draftGroup := defaultRouterGroup.Group("/draft")
 	{
 		draftGroup.POST("/upsertDraft", draftController.SaveDraft)
 	}
