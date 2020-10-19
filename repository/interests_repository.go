@@ -18,7 +18,7 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests = "SELECT NAME FROM INTERESTS"
+	GetInterests = "SELECT INTEREST_ID, NAME FROM INTERESTS"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interest, error) {

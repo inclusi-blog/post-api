@@ -38,6 +38,7 @@ func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() 
 	expectedData := []db.Interest{
 		{
 			Name: "some-interests",
+			ID:   "1",
 		},
 	}
 	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext).Return(expectedData, nil).Times(1)
