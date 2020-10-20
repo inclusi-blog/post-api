@@ -12,6 +12,7 @@ import (
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
+	"post-api/models/request"
 	"testing"
 )
 
@@ -126,4 +127,55 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenTargetIsNotTitleOrPostReturn
 
 	suite.draftController.SaveDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestSaveTagline_WhenAPISuccess() {
+	newDraft := request.TaglineSaveRequest{
+		UserID:  "1",
+		DraftID: "some-id",
+		Tagline: "this is some request",
+	}
+
+	suite.mockDraftService.EXPECT().UpsertTagline(newDraft, suite.context).Return(nil).Times(1)
+
+	jsonBytes, err := json.Marshal(newDraft)
+	suite.Nil(err)
+
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/tagline", bytes.NewBufferString(string(jsonBytes)))
+	suite.Nil(err)
+
+	suite.draftController.SaveTagline(suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestSaveTagline_WhenBadRequest() {
+	newDraft := request.TaglineSaveRequest{}
+
+	requestBody := `{user_id:"1",tagline: "some-tagline"}`
+
+	suite.mockDraftService.EXPECT().UpsertTagline(newDraft, suite.context).Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/tagline", bytes.NewBufferString(requestBody))
+
+	suite.draftController.SaveTagline(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
+	saveRequest := request.TaglineSaveRequest{
+		UserID:  "1",
+		DraftID: "dummy-id",
+		Tagline: "this is some tagline",
+	}
+
+	suite.mockDraftService.EXPECT().UpsertTagline(saveRequest, suite.context).Return(&constants.PostServiceFailureError).Times(1)
+
+	jsonBytes, err := json.Marshal(saveRequest)
+	suite.Nil(err)
+
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/tagline", bytes.NewBufferString(string(jsonBytes)))
+	suite.Nil(err)
+
+	suite.draftController.SaveTagline(suite.context)
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
 }
