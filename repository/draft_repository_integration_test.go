@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"post-api/dbhelper"
 	"post-api/models"
+	"post-api/models/request"
 	"post-api/repository/helper"
 	"testing"
 )
@@ -139,5 +140,50 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_ShouldReturnErro
 	}
 
 	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
+	suite.NotNil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsSuccess() {
+	saveRequest := request.TaglineSaveRequest{
+		UserID:  "1",
+		DraftID: "1b2b2b23h",
+		Tagline: "this is some tagline that will be stored",
+	}
+
+	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
+
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenUpsertDbReturnsSuccess() {
+	saveRequest := request.TaglineSaveRequest{
+		UserID:  "1",
+		DraftID: "1b2b2b23h",
+		Tagline: "this is some tagline that will be stored",
+	}
+
+	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
+
+	suite.Nil(err)
+
+	upsertRequest := request.TaglineSaveRequest{
+		UserID:  saveRequest.UserID,
+		DraftID: saveRequest.DraftID,
+		Tagline: "revereted",
+	}
+
+	err = suite.draftRepository.SaveTaglineToDraft(upsertRequest, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsReturns() {
+	saveRequest := request.TaglineSaveRequest{
+		UserID:  "some-user-id",
+		DraftID: "1b2b2b23h",
+		Tagline: "this is some tagline that will be stored",
+	}
+
+	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
+
 	suite.NotNil(err)
 }
