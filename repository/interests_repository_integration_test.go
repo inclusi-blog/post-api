@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"post-api/dbhelper"
@@ -22,7 +22,7 @@ type InterestsRepositoryIntegrationTest struct {
 
 func (suite *InterestsRepositoryIntegrationTest) SetupTest() {
 	connectionString := dbhelper.BuildConnectionString()
-	db, err := sqlx.Open("mysql", connectionString)
+	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		panic(fmt.Sprintln("Could not connect to test DB", err))
 	}

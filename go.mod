@@ -13,6 +13,7 @@ require (
 	github.com/golang/mock v1.4.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/lib/pq v1.8.0
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/stripe/safesql v0.2.0 // indirect

@@ -17,9 +17,9 @@ type DraftRepository interface {
 }
 
 const (
-	SavePostDraft  = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, POST_DATA) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE POST_DATA = ?, UPDATED_AT = current_timestamp"
-	SaveTitleDraft = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, TITLE_DATA) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE TITLE_DATA = ?, UPDATED_AT = current_timestamp"
-	SaveTagline    = "INSERT INTO DRAFTS (DRAFT_ID, USER_ID, TAGLINE) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE TAGLINE = ?, UPDATED_AT = current_timestamp"
+	SavePostDraft  = "INSERT INTO post.drafts (draft_id, user_id, post_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET POST_DATA = $4, UPDATED_AT = current_timestamp"
+	SaveTitleDraft = "INSERT INTO post.drafts (draft_id, user_id, title_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET TITLE_DATA = $4, UPDATED_AT = current_timestamp"
+	SaveTagline    = "INSERT INTO post.drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
 )
 
 type draftRepository struct {

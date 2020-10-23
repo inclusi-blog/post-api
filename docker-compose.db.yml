@@ -10,7 +10,7 @@ services:
     env_file:
       - docker-compose-local.env
     ports:
-      - '3306:3306'
+      - '5432:5432'
     volumes:
       - ./sql:/sql
       - gola-volume:/var/lib/mysql
@@ -20,7 +20,7 @@ services:
   post-migration:
     container_name: post-migration
     image: flyway/flyway
-    command: -url=jdbc:mysql://gola-db:3306/POST -schemas=POST -user=POST -password=gola -connectRetries=60 migrate
+    command: -url=jdbc:postgresql://gola-db:5432/post -schemas=post -user=post -password=gola -connectRetries=60 migrate
     volumes:
       - ./database/.:/flyway/sql
     depends_on:

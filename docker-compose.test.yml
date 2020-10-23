@@ -3,7 +3,7 @@ services:
   post-test-migration:
     container_name: post-test-migration
     image: flyway/flyway
-    command: -url=jdbc:mysql://gola-db:3306/POST_TEST -schemas=POST_TEST -user=POST_TEST -password=gola -connectRetries=60 migrate
+    command: -url=jdbc:postgresql://gola-db:5432/post_test -schemas=post_test -user=post_test -password=gola -connectRetries=60 migrate
     volumes:
       - ./database/.:/flyway/sql
       - test-volume:/test-volume

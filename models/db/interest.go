@@ -1,6 +1,6 @@
 package db
 
 type Interest struct {
-	Name string `json:"name" db:"NAME"`
-	ID   string `json:"id" db:"INTEREST_ID"`
+	Name string `json:"name" db:"name"`
+	ID   string `json:"id" db:"id"`
 }
