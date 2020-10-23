@@ -98,6 +98,9 @@ generate_template: docker_login
 generate_release_artifacts: generate_template
 	tar zcf release_artifacts.tar.gz post-api.gocd.yaml template-post-api.gocd.json
 
+format:
+	go fmt ./...
+
 pre_commit:
 	go mod tidy
 	go vet ./...
