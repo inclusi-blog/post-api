@@ -4,13 +4,14 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/jmoiron/sqlx"
 	"post-api/models/db"
 )
 
 type InterestsRepository interface {
-	GetInterests(ctx context.Context) ([]db.Interest, error)
+	GetInterests(ctx context.Context, searchKeyword string) ([]db.Interest, error)
 }
 
 type interestsRepository struct {
@@ -18,17 +19,18 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests = "SELECT ID, NAME FROM INTERESTS"
+	GetInterests = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%'"
 )
 
-func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interest, error) {
+func (repository interestsRepository) GetInterests(ctx context.Context, searchKeyword string) ([]db.Interest, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
 
 	logger.Info("fetching over all interests")
 
 	var interests []db.Interest
 
-	err := repository.db.SelectContext(ctx, &interests, GetInterests)
+	key := fmt.Sprintf(GetInterests, searchKeyword)
+	err := repository.db.SelectContext(ctx, &interests, key)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching over all interests from repository %v", err)

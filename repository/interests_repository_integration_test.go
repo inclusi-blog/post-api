@@ -50,7 +50,13 @@ func TestInterestsRepositoryIntegrationTest(t *testing.T) {
 }
 
 func (suite *InterestsRepositoryIntegrationTest) TestGetInterests_WhenDbReturnsData() {
-	interests, err := suite.interestsRepository.GetInterests(suite.goContext)
+	interests, err := suite.interestsRepository.GetInterests(suite.goContext, "")
 	suite.Nil(err)
 	suite.Equal(14, len(interests))
+}
+
+func (suite *InterestsRepositoryIntegrationTest) TestGetInterests_WhenSearchKeywordPassedDbReturnsData() {
+	interests, err := suite.interestsRepository.GetInterests(suite.goContext, "he")
+	suite.Nil(err)
+	suite.Equal(1, len(interests))
 }
