@@ -118,7 +118,6 @@ func (suite *DraftServiceTest) TestUpsertTagline_WhenDraftRepositoryReturnsNoErr
 	suite.Nil(expectedError)
 }
 
-
 func (suite *DraftServiceTest) TestUpsertTagline_WhenDraftRepositoryReturnsError() {
 	saveRequest := request.TaglineSaveRequest{
 		UserID:  "1",

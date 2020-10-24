@@ -70,7 +70,7 @@ func (suite *InterestsControllerTest) TestGetInterests_WhenServiceReturnsError()
 	suite.mockInterestService.EXPECT().GetInterests(suite.context, "sport").Return(nil, &constants.PostServiceFailureError).Times(1)
 
 	marshal, err := json.Marshal(&constants.PostServiceFailureError)
-	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests",  bytes.NewBufferString(string(bytesJson)))
+	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", bytes.NewBufferString(string(bytesJson)))
 	suite.Nil(err)
 	suite.interestsController.GetInterests(suite.context)
 
@@ -82,7 +82,7 @@ func (suite *InterestsControllerTest) TestGetInterests_WhenInvalidRequest() {
 	suite.mockInterestService.EXPECT().GetInterests(suite.context, "sport").Return([]db.Interest{}, nil).Times(0)
 
 	marshal, err := json.Marshal(&constants.PayloadValidationError)
-	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests",  bytes.NewBufferString(`{}`))
+	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", bytes.NewBufferString(`{}`))
 	suite.Nil(err)
 	suite.interestsController.GetInterests(suite.context)
 
