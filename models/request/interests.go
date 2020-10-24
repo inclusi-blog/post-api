@@ -1,5 +1,6 @@
 package request
 
 type SearchInterests struct {
-	SearchKeyword string `json:"search_keyword,omitempty" binding:"required"`
+	SearchKeyword string   `json:"searchKeyword,omitempty"`
+	SelectedTags  []string `json:"selectedTags,omitempty" binding:"required"`
 }

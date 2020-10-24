@@ -31,7 +31,7 @@ func (controller InterestsController) GetInterests(ctx *gin.Context) {
 		return
 	}
 
-	interests, err := controller.service.GetInterests(ctx, searchInterestRequest.SearchKeyword)
+	interests, err := controller.service.GetInterests(ctx, searchInterestRequest.SearchKeyword, searchInterestRequest.SelectedTags)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching over all interests from interests service %v", err)
