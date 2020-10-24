@@ -36,16 +36,16 @@ func (m *MockInterestsService) EXPECT() *MockInterestsServiceMockRecorder {
 }
 
 // GetInterests mocks base method
-func (m *MockInterestsService) GetInterests(ctx context.Context) ([]db.Interest, *golaerror.Error) {
+func (m *MockInterestsService) GetInterests(ctx context.Context, searchKeyword string) ([]db.Interest, *golaerror.Error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInterests", ctx)
+	ret := m.ctrl.Call(m, "GetInterests", ctx, searchKeyword)
 	ret0, _ := ret[0].([]db.Interest)
 	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }
 
 // GetInterests indicates an expected call of GetInterests
-func (mr *MockInterestsServiceMockRecorder) GetInterests(ctx interface{}) *gomock.Call {
+func (mr *MockInterestsServiceMockRecorder) GetInterests(ctx, searchKeyword interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsService)(nil).GetInterests), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsService)(nil).GetInterests), ctx, searchKeyword)
 }
