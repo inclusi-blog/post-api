@@ -52,5 +52,5 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		draftGroup.POST("/tagline", draftController.SaveTagline)
 	}
 
-	defaultRouterGroup.GET("/get-interests", interestsController.GetInterests)
+	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)
 }
