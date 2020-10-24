@@ -2,10 +2,10 @@ package init
 
 import (
 	"context"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/gola-glitch/gola-utils/tracing"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"post-api/configuration"
 	"post-api/dbhelper"
 )
