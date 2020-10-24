@@ -11,7 +11,7 @@ import (
 )
 
 type InterestsRepository interface {
-	GetInterests(ctx context.Context, searchKeyword string) ([]db.Interest, error)
+	GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error)
 }
 
 type interestsRepository struct {
@@ -19,18 +19,43 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%'"
+	GetInterestsWithoutSelectedTags = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%' AND NAME NOT IN (:tags)"
+	GetInterests                    = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%'"
 )
 
-func (repository interestsRepository) GetInterests(ctx context.Context, searchKeyword string) ([]db.Interest, error) {
+func (repository interestsRepository) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
 
 	logger.Info("fetching over all interests")
 
 	var interests []db.Interest
+	selectionQuery := GetInterestsWithoutSelectedTags
 
-	key := fmt.Sprintf(GetInterests, searchKeyword)
-	err := repository.db.SelectContext(ctx, &interests, key)
+	if selectedTags == nil || len(selectedTags) == 0 {
+		logger.Info("Fetching all the interests related to search keyword")
+		selectionQuery = GetInterests
+	}
+
+	arg := map[string]interface{}{
+		"tags": selectedTags,
+	}
+
+	updatedQuery := fmt.Sprintf(selectionQuery, searchKeyword)
+
+	query, args, err := sqlx.Named(updatedQuery, arg)
+	if err != nil {
+		logger.Errorf("Error occurred while naming in query params for get interests %v", err)
+		return []db.Interest{}, err
+	}
+
+	query, args, err = sqlx.In(query, args...)
+	if err != nil {
+		logger.Errorf("Error occurred while binding In query params for get interests %v", err)
+		return []db.Interest{}, err
+	}
+
+	query = repository.db.Rebind(query)
+	err = repository.db.SelectContext(ctx, &interests, query, args...)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching over all interests from repository %v", err)
