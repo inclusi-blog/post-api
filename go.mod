@@ -8,10 +8,10 @@ require (
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
-	github.com/go-sql-driver/mysql v1.4.0
 	github.com/gola-glitch/gola-utils v0.0.0-20200907193449-22b1b95da13b
 	github.com/golang/mock v1.4.3
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/lib/pq v1.8.0
 	github.com/mailru/easyjson v0.7.6 // indirect
