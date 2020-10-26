@@ -84,7 +84,7 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
 
-	logger.Info("Calling service to get draft using draft ID %s", draftUID)
+	logger.Infof("Calling service to get draft using draft ID %s", draftUID)
 
 	draftData, err := service.draftRepository.GetDraft(ctx, draftUID)
 
