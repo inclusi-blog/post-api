@@ -6,11 +6,13 @@ import (
 	"post-api/controller"
 	"post-api/repository"
 	"post-api/service"
+	"post-api/utils"
 )
 
 var (
 	draftController     controller.DraftController
 	interestsController controller.InterestsController
+	postController      controller.PostController
 )
 
 func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
@@ -20,4 +22,8 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	interestsRepository := repository.NewInterestRepository(db)
 	interestsService := service.NewInterestsService(interestsRepository)
 	interestsController = controller.NewInterestsController(interestsService)
+	postRepository := repository.NewPostsRepository(db)
+	postValidator := utils.NewPostValidator(configData)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator)
+	postController = controller.NewPostController(postService)
 }
