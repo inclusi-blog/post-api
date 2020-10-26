@@ -49,7 +49,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	draftGroup := defaultRouterGroup.Group("/draft")
 	{
-		draftGroup.POST("/upsertDraft", draftController.SaveDraft)
+		draftGroup.POST("/upsert-draft", draftController.SaveDraft)
 		draftGroup.POST("/tagline", draftController.SaveTagline)
 		draftGroup.POST("/upsert-interests", draftController.SaveInterests)
 		draftGroup.GET("/get-draft", draftController.GetDraft)
