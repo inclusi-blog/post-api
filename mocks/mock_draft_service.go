@@ -9,6 +9,7 @@ import (
 	golaerror "github.com/gola-glitch/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	models "post-api/models"
+	db "post-api/models/db"
 	request "post-api/models/request"
 	reflect "reflect"
 )
@@ -76,4 +77,19 @@ func (m *MockDraftService) UpsertInterests(interestRequest request.InterestsSave
 func (mr *MockDraftServiceMockRecorder) UpsertInterests(interestRequest, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertInterests", reflect.TypeOf((*MockDraftService)(nil).UpsertInterests), interestRequest, ctx)
+}
+
+// GetDraft mocks base method
+func (m *MockDraftService) GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDraft", draftUID, ctx)
+	ret0, _ := ret[0].(db.Draft)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// GetDraft indicates an expected call of GetDraft
+func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, ctx)
 }

@@ -6,6 +6,7 @@ import (
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
+	"post-api/models/db"
 	"post-api/models/request"
 	"testing"
 
@@ -134,6 +135,7 @@ func (suite *DraftServiceTest) TestUpsertTagline_WhenDraftRepositoryReturnsError
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
 
+//UpsertInterests Tests
 func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsNoError() {
 	saveRequest := request.InterestsSaveRequest{
 		Interests: models.JSONString{
@@ -183,4 +185,33 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
+}
+
+//GetDraft Tests
+
+func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() {
+	draftID := "121212"
+
+	actualDraft := db.Draft{DraftID: "121212",
+		UserID:    "12",
+		PostData:  models.JSONString{},
+		TitleData: models.JSONString{},
+		Tagline:   "My first Data",
+		Interest: models.JSONString{JSONText: types.JSONText(`[
+			  {
+				"id": "1",
+				"name": "sports"
+			  },
+			  {
+				"id": "2",
+				"name": "economy"
+			  }
+			]`)}}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, nil).Times(1)
+
+	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
+
+	suite.Equal(draftData, actualDraft)
+	suite.Nil(expectedError)
 }

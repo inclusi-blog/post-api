@@ -6,6 +6,7 @@ import (
 	"context"
 	"post-api/constants"
 	"post-api/models"
+	"post-api/models/db"
 	"post-api/models/request"
 	"post-api/repository"
 
@@ -17,6 +18,7 @@ type DraftService interface {
 	SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error
 	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
 	UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error
+	GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error)
 }
 
 type draftService struct {
@@ -75,6 +77,25 @@ func InternalServerError(err error, logger logging.GolaLoggerEntry) *golaerror.E
 		return &constants.InternalServerError
 	}
 	return nil
+}
+
+func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error) {
+
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
+
+	logger.Info("Calling service to get draft using draft ID", draftUID)
+
+	draftData, err := service.draftRepository.GetDraft(ctx, draftUID)
+
+	if err != nil {
+		logger.Errorf("Error occurred while getting draft from repository %v", err)
+		return db.Draft{}, &constants.PostServiceFailureError
+	}
+
+	logger.Info("Successfully stored got draft details")
+
+	return draftData, nil
+
 }
 
 func NewDraftService(repository repository.DraftRepository) DraftService {
