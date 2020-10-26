@@ -8,6 +8,7 @@ import (
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
+	"post-api/models/db"
 	"post-api/models/request"
 	"testing"
 
@@ -235,5 +236,29 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsertInterests", bytes.NewBufferString(requestBody))
 
 	suite.draftController.SaveInterests(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+// GetDraft Test Scripts
+
+func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
+	DraftID := "121212"
+
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(1)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft?draft_id=121212", nil)
+
+	suite.draftController.service.GetDraft(DraftID, suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
+	DraftID := ""
+
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft?draft_id=", nil)
+
+	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }

@@ -208,10 +208,40 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() 
 			  }
 			]`)}}
 
+	expectedDraft := db.Draft{DraftID: "121212",
+		UserID:    "12",
+		PostData:  models.JSONString{},
+		TitleData: models.JSONString{},
+		Tagline:   "My first Data",
+		Interest: models.JSONString{JSONText: types.JSONText(`[
+			  {
+				"id": "1",
+				"name": "sports"
+			  },
+			  {
+				"id": "2",
+				"name": "economy"
+			  }
+			]`)}}
+
 	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, nil).Times(1)
 
 	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
 
-	suite.Equal(draftData, actualDraft)
+	suite.Equal(expectedDraft, draftData)
 	suite.Nil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
+	draftID := "121212"
+
+	actualDraft := db.Draft{}
+	expectedDraft := db.Draft{}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, errors.New("something went wrong")).Times(1)
+
+	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
+	suite.Equal(expectedDraft, draftData)
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }

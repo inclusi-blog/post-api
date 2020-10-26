@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
@@ -83,12 +84,16 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
 
-	logger.Info("Calling service to get draft using draft ID", draftUID)
+	logger.Info("Calling service to get draft using draft ID %s", draftUID)
 
 	draftData, err := service.draftRepository.GetDraft(ctx, draftUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while getting draft from repository %v", err)
+		if err == sql.ErrNoRows {
+			logger.Errorf("Error occurred while getting draft data, no draft found for draft id %v .%v", draftUID, err)
+			return db.Draft{}, &constants.NoDraftFoundError
+		}
 		return db.Draft{}, &constants.PostServiceFailureError
 	}
 

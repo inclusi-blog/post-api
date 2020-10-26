@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/repository"
 	"post-api/utils"
+
+	"github.com/gola-glitch/gola-utils/golaerror"
+	"github.com/gola-glitch/gola-utils/logging"
 )
 
 type PostService interface {

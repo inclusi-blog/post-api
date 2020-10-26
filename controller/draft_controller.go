@@ -91,7 +91,7 @@ func (draftController DraftController) SaveTagline(ctx *gin.Context) {
 func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
-	log := logger.WithField("class", "DraftController").WithField("method", "SaveTagline")
+	log := logger.WithField("class", "DraftController").WithField("method", "SaveInterests")
 
 	log.Infof("Entered controller to save Interets request for user %v", "12")
 	var upsertInterests request.InterestsSaveRequest
@@ -104,7 +104,7 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("Request body bind successful with save tagline request for user %v", "12")
+	log.Infof("Request body bind successful with save interests request for user %v", "12")
 
 	draftSaveErr := draftController.service.UpsertInterests(upsertInterests, ctx)
 
@@ -114,9 +114,38 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("writing response to tagline request for user %v", "12")
+	log.Infof("writing response to interest request for user %v", "12")
 
 	ctx.Status(http.StatusOK)
+}
+
+func (draftController DraftController) GetDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+
+	log := logger.WithField("class", "DraftController").WithField("method", "GetDraft")
+
+	log.Infof("Entered controller to get draft request for user %v", "12")
+
+	queryParams := ctx.Request.URL.Query()
+	draftUID := queryParams.Get("draft_id")
+	if draftUID == "" {
+		log.Errorf("Draft ID is not recieved %v", "12")
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+	log.Infof("Request body bind successful with get draft request for user %v", "12")
+
+	draftData, draftSaveErr := draftController.service.GetDraft(draftUID, ctx)
+	if draftSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("writing response to draft data request for user %v %s", "12", draftUID)
+
+	ctx.JSON(http.StatusOK, draftData)
+
 }
 
 func NewDraftController(service service.DraftService) DraftController {
