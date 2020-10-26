@@ -93,7 +93,7 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 
 	log := logger.WithField("class", "DraftController").WithField("method", "SaveInterests")
 
-	log.Infof("Entered controller to save Interets request for user %v", "12")
+	log.Infof("Entered controller to save Interests request for user %v", "12")
 	var upsertInterests request.InterestsSaveRequest
 
 	err := ctx.ShouldBindBodyWith(&upsertInterests, binding.JSON)
@@ -109,12 +109,12 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 	draftSaveErr := draftController.service.UpsertInterests(upsertInterests, ctx)
 
 	if draftSaveErr != nil {
-		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		log.Errorf("Error occurred in draft service while saving interests for user %v. Error %v", "12", draftSaveErr)
+		constants.RespondWithGolaError(ctx, draftSaveErr)
 		return
 	}
 
-	log.Infof("writing response to interest request for user %v", "12")
+	log.Infof("writing response to interests request for user %v", "12")
 
 	ctx.Status(http.StatusOK)
 }

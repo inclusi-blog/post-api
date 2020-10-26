@@ -56,4 +56,9 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	}
 
 	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)
+
+	postGroup := defaultRouterGroup.Group("/post")
+	{
+		postGroup.POST("/publish", postController.PublishPost)
+	}
 }
