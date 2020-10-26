@@ -1,14 +1,15 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/gola-glitch/gola-utils/logging"
 	"net/http"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/request"
 	"post-api/service"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/gola-glitch/gola-utils/logging"
 )
 
 type DraftController struct {
@@ -75,6 +76,37 @@ func (draftController DraftController) SaveTagline(ctx *gin.Context) {
 	log.Infof("Request body bind successful with save tagline request for user %v", "12")
 
 	draftSaveErr := draftController.service.UpsertTagline(upsertTagline, ctx)
+
+	if draftSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("writing response to tagline request for user %v", "12")
+
+	ctx.Status(http.StatusOK)
+}
+
+func (draftController DraftController) SaveInterests(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+
+	log := logger.WithField("class", "DraftController").WithField("method", "SaveTagline")
+
+	log.Infof("Entered controller to save Interets request for user %v", "12")
+	var upsertInterests request.InterestsSaveRequest
+
+	err := ctx.ShouldBindBodyWith(&upsertInterests, binding.JSON)
+
+	if err != nil {
+		log.Errorf("Unable to bind upsert interests request for user %v. Error %v", "12", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	log.Infof("Request body bind successful with save tagline request for user %v", "12")
+
+	draftSaveErr := draftController.service.UpsertInterests(upsertInterests, ctx)
 
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)

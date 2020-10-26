@@ -76,3 +76,17 @@ func (mr *MockDraftRepositoryMockRecorder) SaveTaglineToDraft(taglineSaveRequest
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveTaglineToDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveTaglineToDraft), taglineSaveRequest, ctx)
 }
+
+// SaveInterestsToDraft mocks base method
+func (m *MockDraftRepository) SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveInterestsToDraft", interestsSaveRequest, ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveInterestsToDraft indicates an expected call of SaveInterestsToDraft
+func (mr *MockDraftRepositoryMockRecorder) SaveInterestsToDraft(interestsSaveRequest, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInterestsToDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveInterestsToDraft), interestsSaveRequest, ctx)
+}

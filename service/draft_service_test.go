@@ -3,14 +3,15 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/golang/mock/gomock"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/suite"
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
 	"post-api/models/request"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type DraftServiceTest struct {
@@ -128,6 +129,57 @@ func (suite *DraftServiceTest) TestUpsertTagline_WhenDraftRepositoryReturnsError
 	suite.mockDraftRepository.EXPECT().SaveTaglineToDraft(saveRequest, suite.goContext).Return(errors.New("something went wrong")).Times(1)
 
 	expectedError := suite.draftService.UpsertTagline(saveRequest, suite.goContext)
+
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.PostServiceFailureError, expectedError)
+}
+
+func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsNoError() {
+	saveRequest := request.InterestsSaveRequest{
+		Interests: models.JSONString{
+			JSONText: types.JSONText(`[
+				{
+				  "id": "1",
+				  "name": "sports"
+				},
+				{
+				  "id": "2",
+				  "name": "economy"
+				}
+			  ]`),
+		},
+		DraftID: "121212",
+		UserID:  "1",
+	}
+
+	suite.mockDraftRepository.EXPECT().SaveInterestsToDraft(saveRequest, suite.goContext).Return(nil).Times(1)
+
+	expectedError := suite.draftService.UpsertInterests(saveRequest, suite.goContext)
+
+	suite.Nil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsError() {
+	saveRequest := request.InterestsSaveRequest{
+		Interests: models.JSONString{
+			JSONText: types.JSONText(`[
+				{
+				  "id": "1",
+				  "name": "sports"
+				},
+				{
+				  "id": "2",
+				  "name": "economy"
+				}
+			  ]`),
+		},
+		DraftID: "121212",
+		UserID:  "1",
+	}
+
+	suite.mockDraftRepository.EXPECT().SaveInterestsToDraft(saveRequest, suite.goContext).Return(errors.New("something went wrong")).Times(1)
+
+	expectedError := suite.draftService.UpsertInterests(saveRequest, suite.goContext)
 
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.PostServiceFailureError, expectedError)

@@ -2,14 +2,15 @@ package init
 
 import (
 	"context"
+	"net/http"
+	"post-api/configuration"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/gola-glitch/gola-utils/middleware/request_response_trace"
 	middleware "github.com/gola-glitch/gola-utils/middleware/session_trace"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
-	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
@@ -50,6 +51,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	{
 		draftGroup.POST("/upsertDraft", draftController.SaveDraft)
 		draftGroup.POST("/tagline", draftController.SaveTagline)
+		draftGroup.POST("/upsertInterests", draftController.SaveInterests)
 	}
 
 	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)

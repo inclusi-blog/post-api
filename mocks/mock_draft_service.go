@@ -63,3 +63,17 @@ func (mr *MockDraftServiceMockRecorder) UpsertTagline(taglineRequest, ctx interf
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTagline", reflect.TypeOf((*MockDraftService)(nil).UpsertTagline), taglineRequest, ctx)
 }
+
+// UpsertInterests mocks base method
+func (m *MockDraftService) UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertInterests", interestRequest, ctx)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// UpsertInterests indicates an expected call of UpsertInterests
+func (mr *MockDraftServiceMockRecorder) UpsertInterests(interestRequest, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertInterests", reflect.TypeOf((*MockDraftService)(nil).UpsertInterests), interestRequest, ctx)
+}

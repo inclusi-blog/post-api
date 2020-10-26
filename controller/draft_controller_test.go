@@ -3,10 +3,6 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"post-api/constants"
@@ -14,6 +10,11 @@ import (
 	"post-api/models"
 	"post-api/models/request"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type DraftControllerTest struct {
@@ -178,4 +179,61 @@ func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
 
 	suite.draftController.SaveTagline(suite.context)
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+}
+
+// SaveInterests Test Scripts
+
+func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
+	newInterest := request.InterestsSaveRequest{
+		Interests: models.JSONString{
+			JSONText: types.JSONText(`[
+				{
+				  "id": "1",
+				  "name": "sports"
+				},
+				{
+				  "id": "2",
+				  "name": "economy"
+				}
+			  ]`),
+		},
+		DraftID: "121212",
+		UserID:  "1",
+	}
+
+	suite.mockDraftService.EXPECT().UpsertInterests(newInterest, suite.context).Return(nil).Times(1)
+
+	jsonBytes, err := json.Marshal(newInterest)
+	suite.Nil(err)
+
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsertInterests", bytes.NewBufferString(string(jsonBytes)))
+	suite.Nil(err)
+
+	suite.draftController.service.UpsertInterests(newInterest, suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
+	newInterst := request.InterestsSaveRequest{}
+
+	requestBody := `{
+		"interests": [
+		  {
+			"id": "1",
+			"name": "sports"
+		  },
+		  {
+			"id": "2",
+			"name": "economy"
+		  }
+		],
+		"draft_id": "121212"
+	  }`
+
+	suite.mockDraftService.EXPECT().UpsertInterests(newInterst, suite.context).Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsertInterests", bytes.NewBufferString(requestBody))
+
+	suite.draftController.SaveInterests(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
