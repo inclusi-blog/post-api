@@ -1,5 +1,7 @@
 package repository
 
+//go:generate mockgen -source=posts_repository.go -destination=./../mocks/mock_posts_repository.go -package=mocks
+
 import (
 	"context"
 	"github.com/gola-glitch/gola-utils/logging"
