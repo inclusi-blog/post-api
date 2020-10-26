@@ -8,6 +8,7 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	models "post-api/models"
+	db "post-api/models/db"
 	request "post-api/models/request"
 	reflect "reflect"
 )
@@ -89,4 +90,19 @@ func (m *MockDraftRepository) SaveInterestsToDraft(interestsSaveRequest request.
 func (mr *MockDraftRepositoryMockRecorder) SaveInterestsToDraft(interestsSaveRequest, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInterestsToDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveInterestsToDraft), interestsSaveRequest, ctx)
+}
+
+// GetDraft mocks base method
+func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID string) (db.Draft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID)
+	ret0, _ := ret[0].(db.Draft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDraft indicates an expected call of GetDraft
+func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID)
 }

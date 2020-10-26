@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"post-api/models"
+	"post-api/models/db"
 	"post-api/models/request"
 
 	"github.com/gola-glitch/gola-utils/logging"
@@ -16,6 +17,7 @@ type DraftRepository interface {
 	SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
+	GetDraft(ctx context.Context, draftUID string) (db.Draft, error)
 }
 
 const (
@@ -23,10 +25,30 @@ const (
 	SaveTitleDraft = "INSERT INTO post.drafts (draft_id, user_id, title_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET TITLE_DATA = $4, UPDATED_AT = current_timestamp"
 	SaveTagline    = "INSERT INTO post.drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
 	SaveInterests  = "INSERT INTO post.drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
+	FetchDraft     = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE draft_id = $1"
 )
 
 type draftRepository struct {
 	db *sqlx.DB
+}
+
+func (repository draftRepository) GetDraft(ctx context.Context, draftUID string) (db.Draft, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "GetDraft")
+
+	logger.Infof("Fetching draft from draft repository for the given draft id %v", draftUID)
+
+	var draft db.Draft
+
+	err := repository.db.GetContext(ctx, &draft, FetchDraft, draftUID)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching draft from draft repository %v", err)
+		return db.Draft{}, err
+	}
+
+	logger.Infof("Successfully fetching draft from draft repository for given draft id %v", draftUID)
+
+	return draft, nil
 }
 
 func (repository draftRepository) SavePostDraft(draft models.UpsertDraft, ctx context.Context) error {

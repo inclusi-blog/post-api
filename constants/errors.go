@@ -11,13 +11,17 @@ const (
 	InternalServerErrorCode    string = "ERR_POST_INTERNAL_SERVER_ERROR"
 	PostServiceFailureCode     string = "ERR_POST_SERVICE_FAILURE"
 	NoInterestsFoundCode       string = "ERR_NO_INTERESTS_FOUND"
+	NoDraftFoundCode           string = "ERR_NO_DRAFT_FOUND"
+	DraftValidationFailedCode  string = "ERR_DRAFT_VALIDATION_FAILED"
 )
 
 var (
-	PostServiceFailureError = golaerror.Error{ErrorCode: PostServiceFailureCode, ErrorMessage: "Failed to communicate with post service"}
-	PayloadValidationError  = golaerror.Error{ErrorCode: PayloadValidationErrorCode, ErrorMessage: "One or more of the request parameters are missing or invalid"}
-	InternalServerError     = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
-	NoInterestsFoundError   = golaerror.Error{ErrorCode: NoInterestsFoundCode, ErrorMessage: "no interest tags found"}
+	PostServiceFailureError    = golaerror.Error{ErrorCode: PostServiceFailureCode, ErrorMessage: "Failed to communicate with post service"}
+	PayloadValidationError     = golaerror.Error{ErrorCode: PayloadValidationErrorCode, ErrorMessage: "One or more of the request parameters are missing or invalid"}
+	InternalServerError        = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
+	NoInterestsFoundError      = golaerror.Error{ErrorCode: NoInterestsFoundCode, ErrorMessage: "no interest tags found"}
+	NoDraftFoundError          = golaerror.Error{ErrorCode: NoDraftFoundCode, ErrorMessage: "no draft found for the given draft id"}
+	DraftValidationFailedError = golaerror.Error{ErrorCode: DraftValidationFailedCode, ErrorMessage: "some of the fields missing in draft"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
@@ -25,6 +29,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InternalServerErrorCode:    http.StatusInternalServerError,
 	PostServiceFailureCode:     http.StatusInternalServerError,
 	NoInterestsFoundCode:       http.StatusNotFound,
+	NoDraftFoundCode:           http.StatusNotFound,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {
@@ -32,6 +37,14 @@ func GetGolaHttpCode(golaErrCode string) int {
 		return httpCode
 	}
 	return http.StatusInternalServerError
+}
+
+func StoryInternalServerError(message string) *golaerror.Error {
+	return &golaerror.Error{
+		ErrorCode:      InternalServerErrorCode,
+		ErrorMessage:   "something went wrong",
+		AdditionalData: message,
+	}
 }
 
 func RespondWithGolaError(ctx *gin.Context, err error) {
