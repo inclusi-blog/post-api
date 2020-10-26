@@ -24,7 +24,7 @@ type draftService struct {
 }
 
 func (service draftService) UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error {
-	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "UpsertTagline")
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "UpsertInterests")
 
 	logger.Info("Calling service to save interests for draft")
 

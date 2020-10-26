@@ -91,9 +91,9 @@ func (draftController DraftController) SaveTagline(ctx *gin.Context) {
 func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
-	log := logger.WithField("class", "DraftController").WithField("method", "SaveTagline")
+	log := logger.WithField("class", "DraftController").WithField("method", "SaveInterests")
 
-	log.Infof("Entered controller to save Interets request for user %v", "12")
+	log.Infof("Entered controller to save Interests request for user %v", "12")
 	var upsertInterests request.InterestsSaveRequest
 
 	err := ctx.ShouldBindBodyWith(&upsertInterests, binding.JSON)
@@ -104,17 +104,17 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("Request body bind successful with save tagline request for user %v", "12")
+	log.Infof("Request body bind successful with save interests request for user %v", "12")
 
 	draftSaveErr := draftController.service.UpsertInterests(upsertInterests, ctx)
 
 	if draftSaveErr != nil {
-		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		log.Errorf("Error occurred in draft service while saving interests for user %v. Error %v", "12", draftSaveErr)
+		constants.RespondWithGolaError(ctx, draftSaveErr)
 		return
 	}
 
-	log.Infof("writing response to tagline request for user %v", "12")
+	log.Infof("writing response to interests request for user %v", "12")
 
 	ctx.Status(http.StatusOK)
 }

@@ -85,6 +85,7 @@ func (repository draftRepository) SaveTaglineToDraft(taglineSaveRequest request.
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveTaglineToDraft")
 	logger.Info("Inserting tagline or upserting to the draft for the given draft id")
 
+	//TODO Need to check affected rows
 	_, err := repository.db.ExecContext(ctx, SaveTagline, taglineSaveRequest.DraftID, taglineSaveRequest.UserID, taglineSaveRequest.Tagline, taglineSaveRequest.Tagline)
 
 	if err != nil {
@@ -100,6 +101,7 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveInterestsToDraft")
 	logger.Info("Inserting interests or upserting to the draft for the given draft id")
 
+	// TODO Need to check affected rows
 	_, err := repository.db.ExecContext(ctx, SaveInterests, interestsSaveRequest.DraftID, interestsSaveRequest.UserID, interestsSaveRequest.Interests, interestsSaveRequest.Interests)
 
 	if err != nil {
