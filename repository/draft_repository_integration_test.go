@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"post-api/dbhelper"
 	"post-api/models"
+	"post-api/models/db"
 	"post-api/models/request"
 	"post-api/repository/helper"
 	"testing"
@@ -186,4 +188,66 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsR
 	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
 
 	suite.NotNil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "some post data"}`),
+		},
+		Target: "title",
+	}
+
+	titleSaveRequest := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "some text"}`),
+		},
+		Target: "title",
+	}
+
+	taglineSaveRequest := request.TaglineSaveRequest{
+		UserID:  "1",
+		DraftID: "abcdef124231",
+		Tagline: "this is some tagline for draft",
+	}
+
+	err := suite.draftRepository.SaveTitleDraft(titleSaveRequest, suite.goContext)
+	suite.Nil(err)
+
+	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	suite.Nil(err)
+
+	err = suite.draftRepository.SaveTaglineToDraft(taglineSaveRequest, suite.goContext)
+	suite.Nil(err)
+
+	expectedDraft := db.Draft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "some post data"}`),
+		},
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "some text"}`),
+		},
+		Tagline: "this is some tagline for draft",
+		Interest: models.JSONString{
+			JSONText: types.JSONText(``),
+		},
+	}
+
+	// TODO: Add interest here once built
+	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
+	suite.Nil(err)
+	suite.Equal(expectedDraft, draft)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsError() {
+	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
+	suite.NotNil(err)
+	suite.Equal(sql.ErrNoRows, err)
+	suite.Equal(db.Draft{}, draft)
 }
