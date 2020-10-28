@@ -119,6 +119,7 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// TODO need to change it to path param also need to cover service failure test case
 func (draftController DraftController) GetDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -145,7 +146,37 @@ func (draftController DraftController) GetDraft(ctx *gin.Context) {
 	log.Infof("writing response to draft data request for user %v %s", "12", draftUID)
 
 	ctx.JSON(http.StatusOK, draftData)
+}
 
+func (draftController DraftController) SavePreviewImage(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+
+	log := logger.WithField("class", "DraftController").WithField("method", "SavePreviewImage")
+
+	log.Infof("Entered controller to save preview image for user %v", "12")
+
+	var imageSaveRequest request.PreviewImageSaveRequest
+
+	if err := ctx.ShouldBindBodyWith(&imageSaveRequest, binding.JSON); err != nil {
+		logger.Errorf("Unable to bind request body with image save request for draft %v", err)
+		ctx.JSON(http.StatusBadRequest, &constants.PayloadValidationError)
+		return
+	}
+
+	log.Infof("Request body bind successful with image save request for user %v", "12")
+
+	imageSaveErr := draftController.service.SavePreviewImage(imageSaveRequest, ctx)
+	if imageSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving image for user %v. Error %v", "12", imageSaveErr)
+		constants.RespondWithGolaError(ctx, imageSaveErr)
+		return
+	}
+
+	log.Infof("writing response to draft image save request for user %v %s", "12", imageSaveRequest.DraftID)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+	})
 }
 
 func NewDraftController(service service.DraftService) DraftController {

@@ -248,3 +248,66 @@ func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
+
+func (suite *DraftControllerTest) TestSavePreviewImage_WhenAPISuccess() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "q12w3e",
+		PreviewImageUrl: "http://www.some-url.com",
+	}
+	suite.mockDraftService.EXPECT().SavePreviewImage(imageSaveRequest, suite.context).Return(nil).Times(1)
+
+	requestBytes, err := json.Marshal(imageSaveRequest)
+	suite.Nil(err)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "api/v1/post/draft/update-preview-image", bytes.NewBufferString(string(requestBytes)))
+
+	suite.draftController.SavePreviewImage(suite.context)
+
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+	expectedResponse := `{"status":"success"}`
+	suite.Equal(expectedResponse, string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *DraftControllerTest) TestSavePreviewImage_WhenInvalidRequest() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "q12w3e",
+		PreviewImageUrl: "http://www.some-url.com",
+	}
+
+	invalidRequest := `{"user_id": "1"}`
+
+	suite.mockDraftService.EXPECT().SavePreviewImage(imageSaveRequest, suite.context).Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "api/v1/post/draft/update-preview-image", bytes.NewBufferString(invalidRequest))
+
+	suite.draftController.SavePreviewImage(suite.context)
+
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	bytesData, err := json.Marshal(constants.PayloadValidationError)
+	suite.Nil(err)
+	suite.Equal(string(bytesData), string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *DraftControllerTest) TestSavePreviewImage_WhenServiceFails() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "q12w3e",
+		PreviewImageUrl: "http://www.some-url.com",
+	}
+
+	requestBytes, err := json.Marshal(imageSaveRequest)
+	suite.Nil(err)
+
+	suite.mockDraftService.EXPECT().SavePreviewImage(imageSaveRequest, suite.context).Return(&constants.PostServiceFailureError).Times(1)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "api/v1/post/draft/update-preview-image", bytes.NewBufferString(string(requestBytes)))
+
+	suite.draftController.SavePreviewImage(suite.context)
+
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	bytesData, err := json.Marshal(constants.PostServiceFailureError)
+	suite.Nil(err)
+	suite.Equal(string(bytesData), string(suite.recorder.Body.Bytes()))
+}
