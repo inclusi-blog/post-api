@@ -247,7 +247,6 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
 
-
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoRowError() {
 	draftID := "121212"
 
@@ -288,4 +287,3 @@ func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
 }
-
