@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -26,6 +27,8 @@ type DraftRepositoryIntegrationTest struct {
 }
 
 func (suite *DraftRepositoryIntegrationTest) SetupTest() {
+	err := godotenv.Load("../docker-compose-test.env")
+	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
 	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
@@ -250,4 +253,48 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsError() {
 	suite.NotNil(err)
 	suite.Equal(sql.ErrNoRows, err)
 	suite.Equal(db.Draft{}, draft)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSuccess() {
+	newDraft := models.UpsertDraft{
+		DraftID: "abcdef124231",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`{"title": "hello"}`),
+		},
+	}
+
+	previewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "abcdef124231",
+		PreviewImageUrl: "https://some-url",
+	}
+
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	suite.Nil(err)
+
+	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNewDraftSuccess() {
+	previewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "abcdef124231",
+		PreviewImageUrl: "https://some-url",
+	}
+
+	err := suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNewDraftEmpty() {
+	previewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "hello",
+		DraftID:         "abcedsc",
+		PreviewImageUrl: "https://some-url",
+	}
+
+	err := suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
+	suite.NotNil(err)
 }

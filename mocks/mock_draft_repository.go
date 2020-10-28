@@ -106,3 +106,17 @@ func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID)
 }
+
+// UpsertPreviewImage mocks base method
+func (m *MockDraftRepository) UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertPreviewImage", ctx, saveRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertPreviewImage indicates an expected call of UpsertPreviewImage
+func (mr *MockDraftRepositoryMockRecorder) UpsertPreviewImage(ctx, saveRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPreviewImage", reflect.TypeOf((*MockDraftRepository)(nil).UpsertPreviewImage), ctx, saveRequest)
+}

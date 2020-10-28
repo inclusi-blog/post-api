@@ -4,6 +4,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
@@ -18,18 +19,49 @@ type DraftRepository interface {
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
 	GetDraft(ctx context.Context, draftUID string) (db.Draft, error)
+	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 }
 
 const (
-	SavePostDraft  = "INSERT INTO drafts (draft_id, user_id, post_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET POST_DATA = $4, UPDATED_AT = current_timestamp"
-	SaveTitleDraft = "INSERT INTO drafts (draft_id, user_id, title_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET TITLE_DATA = $4, UPDATED_AT = current_timestamp"
-	SaveTagline    = "INSERT INTO drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
-	SaveInterests  = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
-	FetchDraft     = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE draft_id = $1"
+	SavePostDraft    = "INSERT INTO drafts (draft_id, user_id, post_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET POST_DATA = $4, UPDATED_AT = current_timestamp"
+	SaveTitleDraft   = "INSERT INTO drafts (draft_id, user_id, title_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET TITLE_DATA = $4, UPDATED_AT = current_timestamp"
+	SaveTagline      = "INSERT INTO drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
+	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
+	FetchDraft       = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE draft_id = $1"
+	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
 )
 
 type draftRepository struct {
 	db *sqlx.DB
+}
+
+func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("class", "UpsertPreviewImage")
+
+	logger.Infof("Storing preview image for draft id %v", saveRequest.DraftID)
+
+	result, err := repository.db.ExecContext(ctx, SavePreviewImage, saveRequest.DraftID, saveRequest.UserID, saveRequest.PreviewImageUrl, saveRequest.PreviewImageUrl)
+
+	if err != nil {
+		logger.Errorf("Error occurred while saving preview image of draft %v", saveRequest.DraftID)
+		return err
+	}
+
+	affectedNoRows, err := result.RowsAffected()
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching affected rows for preview image update of draft %v", err)
+		return err
+	}
+
+	if affectedNoRows != 1 {
+		logger.Errorf("Error occurred while updating preview image for draft .%v", "More than one entry got updated")
+		return errors.New("more than one entry got updated")
+	}
+
+	logger.Infof("Successfully updated the preview image for draft id %v", saveRequest.DraftID)
+
+	return nil
 }
 
 func (repository draftRepository) GetDraft(ctx context.Context, draftUID string) (db.Draft, error) {
@@ -97,6 +129,7 @@ func (repository draftRepository) SaveTaglineToDraft(taglineSaveRequest request.
 	return nil
 }
 
+// TODO Need test for this
 func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveInterestsToDraft")
 	logger.Info("Inserting interests or upserting to the draft for the given draft id")
