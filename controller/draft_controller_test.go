@@ -234,7 +234,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft?draft_id=121212", nil)
 
-	suite.draftController.service.GetDraft(DraftID, suite.context)
+	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
 
