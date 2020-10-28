@@ -58,7 +58,7 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
 	suite.Nil(err)
 	suite.Equal(34, overAllReadTime)
-	suite.Equal("Install apps via helm in kubernetes",titleText)
+	suite.Equal("Install apps via helm in kubernetes", titleText)
 	suite.Equal("this is some tagline", draft.Tagline)
 }
 

@@ -18,7 +18,7 @@ type postValidator struct {
 	configData *configuration.ConfigData
 }
 
-func (validator postValidator) ValidateAndGetReadTime(draft *db.Draft, ctx context.Context) (string, int, error){
+func (validator postValidator) ValidateAndGetReadTime(draft *db.Draft, ctx context.Context) (string, int, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostValidator").WithField("method", "ValidateAndGetReadTime")
 
 	draftID := draft.DraftID
