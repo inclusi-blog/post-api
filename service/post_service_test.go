@@ -17,12 +17,13 @@ import (
 
 type PostServiceTest struct {
 	suite.Suite
-	mockController       *gomock.Controller
-	goContext            context.Context
-	mockPostsRepository  *mocks.MockPostsRepository
-	mockDraftsRepository *mocks.MockDraftRepository
-	mockPostValidator    *mocks.MockPostValidator
-	postService          PostService
+	mockController            *gomock.Controller
+	goContext                 context.Context
+	mockPostsRepository       *mocks.MockPostsRepository
+	mockDraftsRepository      *mocks.MockDraftRepository
+	mockPreviewPostRepository *mocks.MockPreviewPostsRepository
+	mockPostValidator         *mocks.MockPostValidator
+	postService               PostService
 }
 
 func TestPostServiceTestSuite(t *testing.T) {
@@ -35,7 +36,8 @@ func (suite *PostServiceTest) SetupTest() {
 	suite.mockPostsRepository = mocks.NewMockPostsRepository(suite.mockController)
 	suite.mockDraftsRepository = mocks.NewMockDraftRepository(suite.mockController)
 	suite.mockPostValidator = mocks.NewMockPostValidator(suite.mockController)
-	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator)
+	suite.mockPreviewPostRepository = mocks.NewMockPreviewPostsRepository(suite.mockController)
+	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator, suite.mockPreviewPostRepository)
 }
 
 func (suite *PostServiceTest) TearDownTest() {
@@ -64,10 +66,21 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		ReadTime:  22,
 		ViewCount: 0,
 	}
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return(22, nil).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(nil).Times(1)
 
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      draft.Tagline,
+		PreviewImage: "some-image",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.Nil(err)
 }
@@ -76,7 +89,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
 	draft := db.Draft{}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, errors.New("something went wrong")).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(1), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
@@ -87,7 +100,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsSqlNoRowError()
 	draft := db.Draft{}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, sql.ErrNoRows).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(0), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
@@ -117,8 +130,8 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		ViewCount: 0,
 	}
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return(22, nil).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(errors.New("something went wrong")).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), errors.New("something went wrong")).Times(1)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
@@ -151,10 +164,52 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 	expectedErr := constants.DraftValidationFailedError
 	expectedErr.AdditionalData = "something went wrong"
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return(0, errors.New("something went wrong")).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(nil).Times(0)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("", 0, errors.New("something went wrong")).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(&expectedErr, err)
+}
+
+func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
+	draft := db.Draft{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		TitleData: models.JSONString{
+			JSONText: types.JSONText(test_helper.TitleTestData),
+		},
+		Tagline:  "",
+		Interest: models.JSONString{},
+	}
+
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		TitleData: draft.TitleData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      draft.Tagline,
+		PreviewImage: "some-image",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), errors.New("something went wrong")).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
 }

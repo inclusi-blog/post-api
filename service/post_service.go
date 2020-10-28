@@ -20,9 +20,10 @@ type PostService interface {
 }
 
 type postService struct {
-	repository      repository.PostsRepository
-	draftRepository repository.DraftRepository
-	validator       utils.PostValidator
+	repository             repository.PostsRepository
+	draftRepository        repository.DraftRepository
+	previewPostsRepository repository.PreviewPostsRepository
+	validator              utils.PostValidator
 }
 
 func (service postService) PublishPost(ctx context.Context, draftUID string) *golaerror.Error {
@@ -40,7 +41,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Validating draft and Generated read time for post %v", draftUID)
 
-	readTime, err := service.validator.ValidateAndGetReadTime(&draft, ctx)
+	titleString, readTime, err := service.validator.ValidateAndGetReadTime(&draft, ctx)
 	fmt.Println(draft.Tagline)
 	if err != nil {
 		failedError := constants.DraftValidationFailedError
@@ -60,7 +61,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Saving post in post repository for post id %v", draftUID)
 
-	err = service.repository.CreatePost(ctx, post)
+	postID, err := service.repository.CreatePost(ctx, post)
 
 	if err != nil {
 		logger.Errorf("Error occurred while publishing post in post repository %v", err)
@@ -69,13 +70,34 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Successfully saved story for post id %v", draftUID)
 
+	// TODO once preview image in draft is played then assign preview image accordingly
+	previewPost := db.PreviewPost{
+		PostID:       postID,
+		Title:        titleString,
+		Tagline:      draft.Tagline,
+		PreviewImage: "some-image",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	_, err = service.previewPostsRepository.SavePreview(ctx, previewPost)
+
+	if err != nil {
+		logger.Errorf("Error occurred while saving preview post for post id %v .%v", post.PUID, err)
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully stored the preview post in preview post repository")
+
 	return nil
 }
 
-func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator) PostService {
+func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.PreviewPostsRepository) PostService {
 	return postService{
-		repository:      postsRepository,
-		draftRepository: draftRepository,
-		validator:       validator,
+		repository:             postsRepository,
+		draftRepository:        draftRepository,
+		previewPostsRepository: previewPostsRepository,
+		validator:              validator,
 	}
 }

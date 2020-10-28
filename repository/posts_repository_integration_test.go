@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -24,6 +25,8 @@ type PostsRepositoryIntegrationTest struct {
 }
 
 func (suite *PostsRepositoryIntegrationTest) SetupTest() {
+	err := godotenv.Load("../docker-compose-test.env")
+	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
 	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
@@ -66,7 +69,7 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStor
 		ViewCount: 0,
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
 
 	suite.Nil(err)
 }
@@ -85,7 +88,7 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenDBReturnsError()
 		ViewCount: 0,
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
 
 	suite.NotNil(err)
 }

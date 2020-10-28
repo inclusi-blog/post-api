@@ -10,7 +10,7 @@ import (
 )
 
 type PostsRepository interface {
-	CreatePost(ctx context.Context, post db.PublishPost) error
+	CreatePost(ctx context.Context, post db.PublishPost) (int64, error)
 }
 
 type postRepository struct {
@@ -18,29 +18,25 @@ type postRepository struct {
 }
 
 const (
-	PublishPost = "INSERT INTO POSTS (puid, user_id, post_data, title_data, read_time, view_count) VALUES ($1, $2, $3, $4, $5, $6)"
+	PublishPost = "INSERT INTO POSTS (puid, user_id, post_data, title_data, read_time, view_count) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
 )
 
-func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) error {
+func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) (int64, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "CreatePost")
 
-	logger.Infof("Publishing the post in posts table for post id %v", post.PUID)
+	logger.Infof("Publishing the post in posts table for post postID %v", post.PUID)
 
-	result, err := repository.db.ExecContext(ctx, PublishPost, post.PUID, post.UserID, post.PostData, post.TitleData, post.ReadTime, post.ViewCount)
+	var postID int64
+	err := repository.db.QueryRowContext(ctx, PublishPost, post.PUID, post.UserID, post.PostData, post.TitleData, post.ReadTime, post.ViewCount).Scan(&postID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while publishing user post in posts table %v", err)
-		return err
+		return 0, err
 	}
 
-	if affectedRows, err := result.RowsAffected(); affectedRows != 1 || err != nil {
-		logger.Errorf("Error occurred while inserting new post in posts table %v", err)
-		return err
-	}
+	logger.Infof("Successfully posted the post in posts table for post postID %v", post.PUID)
 
-	logger.Infof("Successfully posted the post in posts table for post id %v", post.PUID)
-
-	return nil
+	return postID, nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {
