@@ -20,6 +20,7 @@ type DraftService interface {
 	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
 	UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error
 	GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error)
+	SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error
 }
 
 type draftService struct {
@@ -100,7 +101,22 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 	logger.Info("Successfully stored got draft details")
 
 	return draftData, nil
+}
 
+func (service draftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {
+	id := imageSaveRequest.DraftID
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SavePreviewImage")
+	logger.Infof("Saving preview image for draft id %v", id)
+
+	err := service.draftRepository.UpsertPreviewImage(ctx, imageSaveRequest)
+
+	if err != nil {
+		logger.Errorf("Error occurred while saving preview image to draft %v .%v", id, err)
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully stored preview image for draft id %v", id)
+	return nil
 }
 
 func NewDraftService(repository repository.DraftRepository) DraftService {

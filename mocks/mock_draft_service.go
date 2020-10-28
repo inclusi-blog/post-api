@@ -93,3 +93,17 @@ func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, ctx interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, ctx)
 }
+
+// SavePreviewImage mocks base method
+func (m *MockDraftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SavePreviewImage", imageSaveRequest, ctx)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// SavePreviewImage indicates an expected call of SavePreviewImage
+func (mr *MockDraftServiceMockRecorder) SavePreviewImage(imageSaveRequest, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePreviewImage", reflect.TypeOf((*MockDraftService)(nil).SavePreviewImage), imageSaveRequest, ctx)
+}

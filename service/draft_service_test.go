@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"post-api/constants"
 	"post-api/mocks"
@@ -245,3 +246,46 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
+
+
+func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoRowError() {
+	draftID := "121212"
+
+	actualDraft := db.Draft{}
+	expectedDraft := db.Draft{}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, sql.ErrNoRows).Times(1)
+
+	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
+	suite.Equal(expectedDraft, draftData)
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.NoDraftFoundError, expectedError)
+}
+
+func (suite *DraftServiceTest) TestSavePreviewImage_WhenSuccess() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "1q2w3e4",
+		PreviewImageUrl: "https://some-url",
+	}
+
+	suite.mockDraftRepository.EXPECT().UpsertPreviewImage(suite.goContext, imageSaveRequest).Return(nil).Times(1)
+
+	err := suite.draftService.SavePreviewImage(imageSaveRequest, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "1q2w3e4",
+		PreviewImageUrl: "https://some-url",
+	}
+
+	suite.mockDraftRepository.EXPECT().UpsertPreviewImage(suite.goContext, imageSaveRequest).Return(errors.New("something went wrong")).Times(1)
+
+	err := suite.draftService.SavePreviewImage(imageSaveRequest, suite.goContext)
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+}
+
