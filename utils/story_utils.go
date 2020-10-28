@@ -71,3 +71,34 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 	}
 	return nil
 }
+
+func GetTitleFromSlateJson(ctx context.Context, titleJson models.JSONString) (string, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
+	var postData []interface{}
+	err := titleJson.Unmarshal(&postData)
+
+	if err != nil {
+		logger.Errorf("Error occurred while unmarshalling title text from slate json %v", err)
+		return "", err
+	}
+
+	var titleString string
+	for _, data := range postData {
+		singleData := data.(map[string]interface{})
+		singleChildren := singleData["children"].([]interface{})
+		for _, childrenData := range singleChildren {
+			data := childrenData.(map[string]interface{})
+			textString := data["text"].(string)
+			if textString != "" {
+				if len(textString) > 100 {
+					titleString = string([]rune(textString)[:100])
+					break
+				}
+				titleString = textString
+				break
+			}
+		}
+	}
+
+	return titleString, nil
+}

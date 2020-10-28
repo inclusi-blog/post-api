@@ -24,6 +24,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
-	postService := service.NewPostService(postRepository, draftRepository, postValidator)
+	previewPostRepository := repository.NewPreviewPostsRepository(db)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator, previewPostRepository)
 	postController = controller.NewPostController(postService)
 }
