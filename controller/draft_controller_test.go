@@ -187,16 +187,7 @@ func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
 func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
 	newInterest := request.InterestsSaveRequest{
 		Interests: models.JSONString{
-			JSONText: types.JSONText(`[
-				{
-				  "id": "1",
-				  "name": "sports"
-				},
-				{
-				  "id": "2",
-				  "name": "economy"
-				}
-			  ]`),
+			JSONText: types.JSONText(`[{"id":"1","name":"sports"},{"id":"2","name":"economy"}]`),
 		},
 		DraftID: "121212",
 		UserID:  "1",
@@ -207,10 +198,10 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
 	jsonBytes, err := json.Marshal(newInterest)
 	suite.Nil(err)
 
-	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsertInterests", bytes.NewBufferString(string(jsonBytes)))
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsert-interests", bytes.NewBufferString(string(jsonBytes)))
 	suite.Nil(err)
 
-	suite.draftController.service.UpsertInterests(newInterest, suite.context)
+	suite.draftController.SaveInterests(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
 
@@ -218,25 +209,20 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 	newInterst := request.InterestsSaveRequest{}
 
 	requestBody := `{
-		"interests": [
-		  {
-			"id": "1",
-			"name": "sports"
-		  },
-		  {
-			"id": "2",
-			"name": "economy"
-		  }
-		],
-		"draft_id": "121212"
+		"interests": [{"id":"1","name":"sports"},{"id":"2","name":"economy"}],
+		"user_id": "1"
 	  }`
 
 	suite.mockDraftService.EXPECT().UpsertInterests(newInterst, suite.context).Return(nil).Times(0)
 
-	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsertInterests", bytes.NewBufferString(requestBody))
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsert-interests", bytes.NewBufferString(requestBody))
+
+	marshal, err := json.Marshal(constants.PayloadValidationError)
+	suite.Nil(err)
 
 	suite.draftController.SaveInterests(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
 
 // GetDraft Test Scripts
