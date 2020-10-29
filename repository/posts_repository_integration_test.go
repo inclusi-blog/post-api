@@ -62,9 +62,6 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStor
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"Install apps via helm in kubernetes"}]}]`),
-		},
 		ReadTime:  73,
 		ViewCount: 0,
 	}
@@ -80,9 +77,6 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenDBReturnsError()
 		UserID: "some-invalid-id",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"Install apps via helm in kubernetes"}]}]`),
 		},
 		ReadTime:  73,
 		ViewCount: 0,
