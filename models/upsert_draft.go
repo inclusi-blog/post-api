@@ -7,3 +7,9 @@ type UpsertDraft struct {
 	TitleData JSONString `json:"title_data" db:"TITLE_DATA"`
 	Target    string     `json:"target" binding:"required,oneof=post title"`
 }
+
+type GetAllDraftRequest struct {
+	UserID     string `json:"user_id" binding:"required" db:"USER_ID"`
+	StartValue string `json:"start_value" binding:"required" `
+	Limit      string `json:"limit" binding:"required" `
+}

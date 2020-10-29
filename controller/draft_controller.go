@@ -127,13 +127,8 @@ func (draftController DraftController) GetDraft(ctx *gin.Context) {
 
 	log.Infof("Entered controller to get draft request for user %v", "12")
 
-	queryParams := ctx.Request.URL.Query()
-	draftUID := queryParams.Get("draft_id")
-	if draftUID == "" {
-		log.Errorf("Draft ID is not recieved %v", "12")
-		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
-		return
-	}
+	draftUID := ctx.Param("draft_id")
+
 	log.Infof("Request body bind successful with get draft request for user %v", "12")
 
 	draftData, draftSaveErr := draftController.service.GetDraft(draftUID, ctx)
@@ -179,6 +174,35 @@ func (draftController DraftController) SavePreviewImage(ctx *gin.Context) {
 	})
 }
 
+func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+
+	log := logger.WithField("class", "DraftController").WithField("method", "GetAllDraft")
+
+	log.Infof("Entered controller to get all draft request for user %v", "12")
+
+	var allDraftReq models.GetAllDraftRequest
+
+	err := ctx.ShouldBindBodyWith(&allDraftReq, binding.JSON)
+	if err != nil {
+		log.Errorf("Unable to bind all draft request for user %v. Error %v", "12", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	log.Infof("Request body bind successful with get all draft request for user %v", "12")
+
+	allDraftData, draftSaveErr := draftController.service.GetAllDraft(allDraftReq, ctx)
+	if draftSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("writing response to draft all data request for user %v %s", "12", userID)
+
+	ctx.JSON(http.StatusOK, allDraftData)
+}
 func NewDraftController(service service.DraftService) DraftController {
 	return DraftController{
 		service: service,

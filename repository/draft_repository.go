@@ -19,6 +19,7 @@ type DraftRepository interface {
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
 	GetDraft(ctx context.Context, draftUID string) (db.Draft, error)
+	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 }
 
@@ -29,6 +30,7 @@ const (
 	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
 	FetchDraft       = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE draft_id = $1"
 	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
+	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3"
 )
 
 type draftRepository struct {
@@ -144,6 +146,26 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 
 	logger.Infof("Successfully saved the Interests for draft id %v", interestsSaveRequest.Interests)
 	return nil
+}
+
+// This method is for getting all the drafts of specific user
+func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "GetAllDraft")
+
+	logger.Infof("Fetching draft from draft repository for the given user id %v", allDraftReq.UserID)
+
+	var alldraft []db.Draft
+
+	err := repository.db.SelectContext(ctx, &alldraft, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching all draft from draft repository %v", err)
+		return alldraft, err
+	}
+
+	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
+
+	return alldraft, nil
 }
 
 func NewDraftRepository(db *sqlx.DB) DraftRepository {
