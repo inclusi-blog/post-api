@@ -101,53 +101,6 @@ func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_ShouldReturnError
 	suite.NotNil(err)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_WhenNewDraftWithTitle() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-		Target: "title",
-	}
-
-	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_WhenUpsertPostTitle() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-		Target: "title",
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-	newDraft.TitleData = models.JSONString{
-		JSONText: types.JSONText(`{}`),
-	}
-	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSaveTitleDraft_ShouldReturnErrorWhenUserIDIsString() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1hb12kb12",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-		Target: "title",
-	}
-
-	err := suite.draftRepository.SaveTitleDraft(newDraft, suite.goContext)
-	suite.NotNil(err)
-}
-
 func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsSuccess() {
 	saveRequest := request.TaglineSaveRequest{
 		UserID:  "1",
@@ -203,25 +156,13 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 		Target: "title",
 	}
 
-	titleSaveRequest := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "some text"}`),
-		},
-		Target: "title",
-	}
-
 	taglineSaveRequest := request.TaglineSaveRequest{
 		UserID:  "1",
 		DraftID: "abcdef124231",
 		Tagline: "this is some tagline for draft",
 	}
 
-	err := suite.draftRepository.SaveTitleDraft(titleSaveRequest, suite.goContext)
-	suite.Nil(err)
-
-	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
 	suite.Nil(err)
 
 	err = suite.draftRepository.SaveTaglineToDraft(taglineSaveRequest, suite.goContext)
@@ -232,9 +173,6 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title": "some post data"}`),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "some text"}`),
 		},
 		Tagline: "this is some tagline for draft",
 		Interest: models.JSONString{

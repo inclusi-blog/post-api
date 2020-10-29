@@ -15,7 +15,6 @@ import (
 
 type DraftRepository interface {
 	SavePostDraft(draft models.UpsertDraft, ctx context.Context) error
-	SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
 	GetDraft(ctx context.Context, draftUID string) (db.Draft, error)
@@ -25,12 +24,11 @@ type DraftRepository interface {
 
 const (
 	SavePostDraft    = "INSERT INTO drafts (draft_id, user_id, post_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET POST_DATA = $4, UPDATED_AT = current_timestamp"
-	SaveTitleDraft   = "INSERT INTO drafts (draft_id, user_id, title_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET TITLE_DATA = $4, UPDATED_AT = current_timestamp"
 	SaveTagline      = "INSERT INTO drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
 	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
-	FetchDraft       = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE draft_id = $1"
+	FetchDraft       = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE draft_id = $1"
 	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
-	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data, title_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3"
+	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3"
 )
 
 type draftRepository struct {
@@ -101,20 +99,6 @@ func (repository draftRepository) SavePostDraft(draft models.UpsertDraft, ctx co
 	return nil
 }
 
-func (repository draftRepository) SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error {
-	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveTitleDraft")
-	logger.Infof("Inserting or updating the existing post title for user %v", draft.UserID)
-
-	_, err := repository.db.ExecContext(ctx, SaveTitleDraft, draft.DraftID, draft.UserID, draft.TitleData, draft.TitleData)
-
-	if err != nil {
-		logger.Errorf("Error occurred while updating post title in draft for user %v", err)
-		return err
-	}
-
-	return nil
-}
-
 func (repository draftRepository) SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveTaglineToDraft")
 	logger.Info("Inserting tagline or upserting to the draft for the given draft id")
@@ -154,18 +138,18 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 
 	logger.Infof("Fetching draft from draft repository for the given user id %v", allDraftReq.UserID)
 
-	var alldraft []db.Draft
+	var allDraft []db.Draft
 
-	err := repository.db.SelectContext(ctx, &alldraft, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
+	err := repository.db.SelectContext(ctx, &allDraft, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching all draft from draft repository %v", err)
-		return alldraft, err
+		return allDraft, err
 	}
 
 	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
 
-	return alldraft, nil
+	return allDraft, nil
 }
 
 func NewDraftRepository(db *sqlx.DB) DraftRepository {
