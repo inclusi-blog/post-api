@@ -50,20 +50,6 @@ func (mr *MockDraftRepositoryMockRecorder) SavePostDraft(draft, ctx interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePostDraft", reflect.TypeOf((*MockDraftRepository)(nil).SavePostDraft), draft, ctx)
 }
 
-// SaveTitleDraft mocks base method
-func (m *MockDraftRepository) SaveTitleDraft(draft models.UpsertDraft, ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveTitleDraft", draft, ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SaveTitleDraft indicates an expected call of SaveTitleDraft
-func (mr *MockDraftRepositoryMockRecorder) SaveTitleDraft(draft, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveTitleDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveTitleDraft), draft, ctx)
-}
-
 // SaveTaglineToDraft mocks base method
 func (m *MockDraftRepository) SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -105,6 +91,21 @@ func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID string) (db
 func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID)
+}
+
+// GetAllDraft mocks base method
+func (m *MockDraftRepository) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllDraft", ctx, allDraftReq)
+	ret0, _ := ret[0].([]db.Draft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllDraft indicates an expected call of GetAllDraft
+func (mr *MockDraftRepositoryMockRecorder) GetAllDraft(ctx, allDraftReq interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetAllDraft), ctx, allDraftReq)
 }
 
 // UpsertPreviewImage mocks base method

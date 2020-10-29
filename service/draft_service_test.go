@@ -46,7 +46,6 @@ func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsNil() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{ "title": "hello" }`),
 		},
-		Target: "post",
 	}
 
 	suite.mockDraftRepository.EXPECT().SavePostDraft(newDraft, suite.goContext).Return(nil).Times(1)
@@ -63,44 +62,9 @@ func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsError() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{ "title": "hello" }`),
 		},
-		Target: "post",
 	}
 
 	suite.mockDraftRepository.EXPECT().SavePostDraft(newDraft, suite.goContext).Return(errors.New("something went wrong in db")).Times(1)
-
-	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
-
-	suite.NotNil(expectedError)
-}
-
-func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsNilForTitleDraft() {
-	newDraft := models.UpsertDraft{
-		DraftID: "someDraftId1",
-		UserID:  "1",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{ "title": "hello" }`),
-		},
-		Target: "title",
-	}
-
-	suite.mockDraftRepository.EXPECT().SaveTitleDraft(newDraft, suite.goContext).Return(nil).Times(1)
-
-	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
-
-	suite.Nil(expectedError)
-}
-
-func (suite *DraftServiceTest) TestSaveDraft_WhenDraftRepositoryReturnsErrorOnTitleDraft() {
-	newDraft := models.UpsertDraft{
-		DraftID: "someDraftId1",
-		UserID:  "1",
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{ "title": "hello" }`),
-		},
-		Target: "title",
-	}
-
-	suite.mockDraftRepository.EXPECT().SaveTitleDraft(newDraft, suite.goContext).Return(errors.New("something went wrong in db")).Times(1)
 
 	expectedError := suite.draftService.SaveDraft(newDraft, suite.goContext)
 
@@ -193,43 +157,17 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() {
 	draftID := "121212"
 
-	actualDraft := db.Draft{DraftID: "121212",
-		UserID:    "12",
-		PostData:  models.JSONString{},
-		TitleData: models.JSONString{},
-		Tagline:   "My first Data",
-		Interest: models.JSONString{JSONText: types.JSONText(`[
-			  {
-				"id": "1",
-				"name": "sports"
-			  },
-			  {
-				"id": "2",
-				"name": "economy"
-			  }
-			]`)}}
-
 	expectedDraft := db.Draft{DraftID: "121212",
-		UserID:    "12",
-		PostData:  models.JSONString{},
-		TitleData: models.JSONString{},
-		Tagline:   "My first Data",
-		Interest: models.JSONString{JSONText: types.JSONText(`[
-			  {
-				"id": "1",
-				"name": "sports"
-			  },
-			  {
-				"id": "2",
-				"name": "economy"
-			  }
-			]`)}}
+		UserID:   "12",
+		PostData: models.JSONString{},
+		Tagline:  "My first Data",
+		Interest: models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)}}
 
-	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, nil).Times(1)
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(expectedDraft, nil).Times(1)
 
-	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
+	actualDraft, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
 
-	suite.Equal(expectedDraft, draftData)
+	suite.Equal(expectedDraft, actualDraft)
 	suite.Nil(expectedError)
 }
 

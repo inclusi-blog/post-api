@@ -48,13 +48,8 @@ func (service draftService) UpsertInterests(interestRequest request.InterestsSav
 
 func (service draftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SaveDraft")
-	if postData.Target == "post" {
-		logger.Infof("Saving post data to draft repository")
-		err := service.draftRepository.SavePostDraft(postData, ctx)
-		return InternalServerError(err, logger)
-	}
-	logger.Infof("Saving title data to draft repository")
-	err := service.draftRepository.SaveTitleDraft(postData, ctx)
+	logger.Infof("Saving post data to draft repository")
+	err := service.draftRepository.SavePostDraft(postData, ctx)
 	return InternalServerError(err, logger)
 }
 
@@ -147,7 +142,7 @@ func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, c
 		draft.Interest = val.Interest
 		draft.UserID = val.UserID
 
-		title, err := utils.GetTitleFromSlateJson(ctx, val.TitleData)
+		title, err := utils.GetTitleFromSlateJson(ctx, val.PostData)
 		if err != nil {
 			logger.Errorf("Error occurred while converting title json to string %v .%v", val.DraftID, err)
 			return allDraftData, &constants.ConnvertTitleToStringError
