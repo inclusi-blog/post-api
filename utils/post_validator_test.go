@@ -64,9 +64,6 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 		DraftID:  "a1v2b31n",
 		UserID:   "1",
 		PostData: models.JSONString{},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline: "this is some tagline",
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
@@ -86,9 +83,6 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline:  "this is some tagline",
 		Interest: models.JSONString{},
 	}
@@ -105,9 +99,6 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
 		},
 		Tagline: "this is some tagline",
 		Interest: models.JSONString{
@@ -131,9 +122,6 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
 		},
 		Tagline: "this is some tagline",
 		Interest: models.JSONString{
@@ -159,9 +147,6 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline: "this is some tagline",
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
@@ -180,9 +165,6 @@ func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
 		},
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),

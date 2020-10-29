@@ -94,6 +94,21 @@ func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, ctx interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, ctx)
 }
 
+// GetAllDraft mocks base method
+func (m *MockDraftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllDraft", allDraftReq, ctx)
+	ret0, _ := ret[0].([]db.AllDraft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllDraft indicates an expected call of GetAllDraft
+func (mr *MockDraftServiceMockRecorder) GetAllDraft(allDraftReq, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftService)(nil).GetAllDraft), allDraftReq, ctx)
+}
+
 // SavePreviewImage mocks base method
 func (m *MockDraftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {
 	m.ctrl.T.Helper()

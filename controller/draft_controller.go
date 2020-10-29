@@ -129,6 +129,12 @@ func (draftController DraftController) GetDraft(ctx *gin.Context) {
 
 	draftUID := ctx.Param("draft_id")
 
+	if draftUID == "" {
+		logger.Error("missing required parameter in request")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, &constants.PayloadValidationError)
+		return
+	}
+
 	log.Infof("Request body bind successful with get draft request for user %v", "12")
 
 	draftData, draftSaveErr := draftController.service.GetDraft(draftUID, ctx)
@@ -199,7 +205,7 @@ func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("writing response to draft all data request for user %v %s", "12")
+	log.Infof("writing response to draft all data request for user %v", "12")
 
 	ctx.JSON(http.StatusOK, allDraftData)
 }

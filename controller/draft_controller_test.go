@@ -50,10 +50,6 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenAPISuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title":"hello"}`),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{}`),
-		},
-		Target: "post",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(1)
@@ -88,10 +84,6 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenServiceReturnsError() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{}`),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{"title":"this is title"}`),
-		},
-		Target: "title",
 	}
 
 	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(&constants.InternalServerError).Times(1)
@@ -104,31 +96,6 @@ func (suite *DraftControllerTest) TestSaveDraft_WhenServiceReturnsError() {
 
 	suite.draftController.SaveDraft(suite.context)
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
-}
-
-func (suite *DraftControllerTest) TestSaveDraft_WhenTargetIsNotTitleOrPostReturnsBadRequest() {
-	newDraft := models.UpsertDraft{
-		DraftID: "qwerty1234as",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title":"hello"}`),
-		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(`{}`),
-		},
-		Target: "hello",
-	}
-
-	suite.mockDraftService.EXPECT().SaveDraft(newDraft, suite.context).Return(nil).Times(0)
-
-	jsonBytes, err := json.Marshal(newDraft)
-	suite.Nil(err)
-
-	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/upsertDraft", bytes.NewBufferString(string(jsonBytes)))
-	suite.Nil(err)
-
-	suite.draftController.SaveDraft(suite.context)
-	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
 
 func (suite *DraftControllerTest) TestSaveTagline_WhenAPISuccess() {
@@ -229,11 +196,16 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 
 func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	DraftID := "121212"
+	params := gin.Params{
+		gin.Param{
+			Key:   "draft_id",
+			Value: "121212",
+		},
+	}
+	suite.context.Params = params
 
 	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(1)
-
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft?draft_id=121212", nil)
-
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/121212", nil)
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
@@ -243,7 +215,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
 
 	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(0)
 
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft?draft_id=", nil)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft", nil)
 
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)

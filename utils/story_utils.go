@@ -67,7 +67,8 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 					*titleString = textString
 				} else if *extractedTagline == "" {
 					if len(textString) > 100 {
-						*extractedTagline = string([]rune(textString)[:100])
+						tamilRunes := string([]rune(textString))
+						*extractedTagline = tamilRunes[:100]
 						continue
 					}
 					*extractedTagline = textString
