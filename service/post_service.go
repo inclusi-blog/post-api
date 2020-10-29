@@ -5,7 +5,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/repository"
@@ -41,8 +40,8 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Validating draft and Generated read time for post %v", draftUID)
 
-	titleString, readTime, err := service.validator.ValidateAndGetReadTime(&draft, ctx)
-	fmt.Println(draft.Tagline)
+	metaData, err := service.validator.ValidateAndGetReadTime(draft, ctx)
+
 	if err != nil {
 		failedError := constants.DraftValidationFailedError
 		failedError.AdditionalData = err.Error()
@@ -50,12 +49,15 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		return &failedError
 	}
 
+	if draft.Tagline == "" {
+		draft.Tagline = metaData.Tagline
+	}
+
 	post := db.PublishPost{
 		PUID:      draftUID,
 		UserID:    "1",
 		PostData:  draft.PostData,
-		TitleData: draft.TitleData,
-		ReadTime:  readTime,
+		ReadTime:  metaData.ReadTime,
 		ViewCount: 0,
 	}
 
@@ -73,7 +75,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	// TODO once preview image in draft is played then assign preview image accordingly
 	previewPost := db.PreviewPost{
 		PostID:       postID,
-		Title:        titleString,
+		Title:        metaData.Title,
 		Tagline:      draft.Tagline,
 		PreviewImage: "some-image",
 		LikeCount:    0,

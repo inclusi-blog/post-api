@@ -51,9 +51,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline:  "",
 		Interest: models.JSONString{},
 	}
@@ -62,7 +59,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PUID:      "1231212",
 		UserID:    "1",
 		PostData:  draft.PostData,
-		TitleData: draft.TitleData,
 		ReadTime:  22,
 		ViewCount: 0,
 	}
@@ -78,7 +74,11 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:    "Install apps via helm in kubernetes",
+		Tagline:  "",
+		ReadTime: 22,
+	}, nil).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
 	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
@@ -114,9 +114,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline:  "this is some tag line",
 		Interest: models.JSONString{},
 	}
@@ -125,12 +122,15 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		PUID:      "1231212",
 		UserID:    "1",
 		PostData:  draft.PostData,
-		TitleData: draft.TitleData,
 		ReadTime:  22,
 		ViewCount: 0,
 	}
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:    "Install apps via helm in kubernetes",
+		Tagline:  "",
+		ReadTime: 22,
+	}, nil).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), errors.New("something went wrong")).Times(1)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
@@ -145,9 +145,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline:  "",
 		Interest: models.JSONString{},
 	}
@@ -156,7 +153,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 		PUID:      "1231212",
 		UserID:    "1",
 		PostData:  draft.PostData,
-		TitleData: draft.TitleData,
 		ReadTime:  22,
 		ViewCount: 0,
 	}
@@ -164,7 +160,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 	expectedErr := constants.DraftValidationFailedError
 	expectedErr.AdditionalData = "something went wrong"
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("", 0, errors.New("something went wrong")).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, errors.New("something went wrong")).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
@@ -179,9 +175,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline:  "",
 		Interest: models.JSONString{},
 	}
@@ -190,7 +183,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		PUID:      "1231212",
 		UserID:    "1",
 		PostData:  draft.PostData,
-		TitleData: draft.TitleData,
 		ReadTime:  22,
 		ViewCount: 0,
 	}
@@ -206,7 +198,11 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(&draft, suite.goContext).Return("Install apps via helm in kubernetes", 22, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:    "Install apps via helm in kubernetes",
+		Tagline:  "",
+		ReadTime: 22,
+	}, nil).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
 	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), errors.New("something went wrong")).Times(1)
 	err := suite.postService.PublishPost(suite.goContext, "1231212")

@@ -64,9 +64,6 @@ func (suite *PreviewPostsRepositoryIntegrationTest) TestSavePreview_WhenSuccess(
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		ReadTime:  180,
 		ViewCount: 0,
 	}
