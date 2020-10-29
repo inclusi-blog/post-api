@@ -153,7 +153,6 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title": "some post data"}`),
 		},
-		Target: "title",
 	}
 
 	taglineSaveRequest := request.TaglineSaveRequest{
