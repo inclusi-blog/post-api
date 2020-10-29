@@ -47,18 +47,15 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		TitleData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestData),
-		},
 		Tagline: "this is some tagline",
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)
-	suite.Equal(34, overAllReadTime)
-	suite.Equal("Install apps via helm in kubernetes", titleText)
+	suite.Equal(32, metaData.ReadTime)
+	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", metaData.Title)
 	suite.Equal("this is some tagline", draft.Tagline)
 }
 
@@ -75,31 +72,11 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.Equal("", titleText)
+	suite.Equal("", metaData.Title)
 	suite.Equal("json: cannot unmarshal object into Go value of type []interface {}", err.Error())
-	suite.Zero(overAllReadTime)
-}
-
-func (suite *PostValidatorTest) TestValidate_InvalidTitleData() {
-	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(test_helper.ContentTestData),
-		},
-		TitleData: models.JSONString{},
-		Tagline:   "this is some tagline",
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
-	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
-	suite.NotNil(err)
-	suite.Equal("", titleText)
-	suite.Equal("json: cannot unmarshal object into Go value of type []interface {}", err.Error())
-	suite.Zero(overAllReadTime)
+	suite.Zero(metaData.ReadTime)
 }
 
 func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
@@ -115,11 +92,11 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 		Tagline:  "this is some tagline",
 		Interest: models.JSONString{},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.Equal("", titleText)
+	suite.Equal("", metaData.Title)
 	suite.Equal("json: cannot unmarshal object into Go value of type []interface {}", err.Error())
-	suite.Zero(overAllReadTime)
+	suite.Zero(metaData.ReadTime)
 }
 
 func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
@@ -137,11 +114,11 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 			JSONText: types.JSONText(`[{ "id": "1", "name": ""}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleString, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.Empty(titleString)
+	suite.Empty(metaData.Title)
 	suite.Equal("interest is invalid", err.Error())
-	suite.Zero(overAllReadTime)
+	suite.Zero(metaData.ReadTime)
 }
 
 func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() {
@@ -163,11 +140,11 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.Empty(titleText)
+	suite.Empty(metaData.Title)
 	suite.Equal("post interest doesn't meet required read time", err.Error())
-	suite.Zero(overAllReadTime)
+	suite.Zero(metaData.Title)
 }
 
 func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfigTime() {
@@ -190,14 +167,14 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.Empty(titleText)
+	suite.Empty(metaData.Title)
 	suite.Equal("post doesn't meet minimum read time", err.Error())
-	suite.Zero(overAllReadTime)
+	suite.Zero(metaData.ReadTime)
 }
 
-func (suite *PostValidatorTest) TestValidate_ValidPostAndNoTagLine() {
+func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
@@ -207,14 +184,13 @@ func (suite *PostValidatorTest) TestValidate_ValidPostAndNoTagLine() {
 		TitleData: models.JSONString{
 			JSONText: types.JSONText(test_helper.TitleTestData),
 		},
-		Tagline: "",
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
 	}
-	titleText, overAllReadTime, err := suite.postValidator.ValidateAndGetReadTime(&draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)
-	suite.Equal("Install apps via helm in kubernetes", titleText)
-	suite.Equal(34, overAllReadTime)
-	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", draft.Tagline)
+	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", metaData.Title)
+	suite.Equal(32, metaData.ReadTime)
+	suite.Equal("ராஜஸ்தான்:`காங்கிரஸில் வலுக்கும் மோத", metaData.Tagline)
 }

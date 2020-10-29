@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	models "post-api/models"
 	db "post-api/models/db"
 	reflect "reflect"
 )
@@ -35,13 +36,12 @@ func (m *MockPostValidator) EXPECT() *MockPostValidatorMockRecorder {
 }
 
 // ValidateAndGetReadTime mocks base method
-func (m *MockPostValidator) ValidateAndGetReadTime(draft *db.Draft, ctx context.Context) (string, int, error) {
+func (m *MockPostValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateAndGetReadTime", draft, ctx)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(models.MetaData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ValidateAndGetReadTime indicates an expected call of ValidateAndGetReadTime
