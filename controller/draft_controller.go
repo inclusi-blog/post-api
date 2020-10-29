@@ -199,7 +199,7 @@ func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("writing response to draft all data request for user %v %s", "12", userID)
+	log.Infof("writing response to draft all data request for user %v %s", "12")
 
 	ctx.JSON(http.StatusOK, allDraftData)
 }
