@@ -34,7 +34,7 @@ func CountContentReadTime(contentWordsCount int, readTime *int) {
 	*readTime = *readTime + int((0.0036*float64(contentWordsCount))*60)
 }
 
-func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline *string) error {
+func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline, titleString *string) error {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
 	var postData []interface{}
 	err := content.Unmarshal(&postData)
@@ -44,7 +44,7 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 		return err
 	}
 
-	for topIndex, data := range postData {
+	for _, data := range postData {
 		singleData := data.(map[string]interface{})
 		value := singleData["type"]
 		if value != nil {
@@ -53,13 +53,19 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 			}
 		}
 		singleChildren := singleData["children"].([]interface{})
-		for innerIndex, childrenData := range singleChildren {
+		for _, childrenData := range singleChildren {
 			data := childrenData.(map[string]interface{})
 			textString := data["text"].(string)
 			if textString != "" {
 				individual := strings.Split(textString, " ")
 				*wordsCount = len(individual) + *wordsCount
-				if topIndex == 0 && innerIndex == 0 {
+				if *titleString == "" {
+					if len(textString) > 100 {
+						*titleString = string([]rune(textString)[:100])
+						continue
+					}
+					*titleString = textString
+				} else if *extractedTagline == "" {
 					if len(textString) > 100 {
 						*extractedTagline = string([]rune(textString)[:100])
 						continue
