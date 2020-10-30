@@ -79,10 +79,10 @@ func (mr *MockDraftRepositoryMockRecorder) SaveInterestsToDraft(interestsSaveReq
 }
 
 // GetDraft mocks base method
-func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID string) (db.Draft, error) {
+func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID)
-	ret0, _ := ret[0].(db.Draft)
+	ret0, _ := ret[0].(db.DraftDB)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -157,16 +157,33 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() {
 	draftID := "121212"
 
-	expectedDraft := db.Draft{DraftID: "121212",
+	draft := db.DraftDB{
+		DraftID:  "121212",
 		UserID:   "12",
 		PostData: models.JSONString{},
-		Tagline:  "My first Data",
-		Interest: models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)}}
+		PreviewImage: sql.NullString{
+			String: "https://some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "My first Data",
+			Valid:  true,
+		},
+		Interest: models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	}
 
-	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(expectedDraft, nil).Times(1)
+	expectedDraft := db.Draft{
+		DraftID:      "121212",
+		UserID:       "12",
+		PostData:     models.JSONString{},
+		PreviewImage: "https://some-url.com",
+		Tagline:      "My first Data",
+		Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(draft, nil).Times(1)
 
 	actualDraft, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
-
 	suite.Equal(expectedDraft, actualDraft)
 	suite.Nil(expectedError)
 }
@@ -174,10 +191,9 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() 
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
 	draftID := "121212"
 
-	actualDraft := db.Draft{}
 	expectedDraft := db.Draft{}
 
-	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, errors.New("something went wrong")).Times(1)
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
 
 	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
 	suite.Equal(expectedDraft, draftData)
@@ -188,10 +204,9 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoRowError() {
 	draftID := "121212"
 
-	actualDraft := db.Draft{}
 	expectedDraft := db.Draft{}
 
-	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(actualDraft, sql.ErrNoRows).Times(1)
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftID).Return(db.DraftDB{}, sql.ErrNoRows).Times(1)
 
 	draftData, expectedError := suite.draftService.GetDraft(draftID, suite.goContext)
 	suite.Equal(expectedDraft, draftData)

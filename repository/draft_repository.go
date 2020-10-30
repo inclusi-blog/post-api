@@ -17,7 +17,7 @@ type DraftRepository interface {
 	SavePostDraft(draft models.UpsertDraft, ctx context.Context) error
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
-	GetDraft(ctx context.Context, draftUID string) (db.Draft, error)
+	GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error)
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 }
@@ -64,18 +64,18 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 	return nil
 }
 
-func (repository draftRepository) GetDraft(ctx context.Context, draftUID string) (db.Draft, error) {
+func (repository draftRepository) GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "GetDraft")
 
 	logger.Infof("Fetching draft from draft repository for the given draft id %v", draftUID)
 
-	var draft db.Draft
+	var draft db.DraftDB
 
 	err := repository.db.GetContext(ctx, &draft, FetchDraft, draftUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching draft from draft repository %v", err)
-		return db.Draft{}, err
+		return db.DraftDB{}, err
 	}
 
 	logger.Infof("Successfully fetching draft from draft repository for given draft id %v", draftUID)

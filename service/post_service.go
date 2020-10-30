@@ -27,7 +27,7 @@ type postService struct {
 
 func (service postService) PublishPost(ctx context.Context, draftUID string) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "PublishPost")
-	draft, err := service.draftRepository.GetDraft(ctx, draftUID)
+	dbDraft, err := service.draftRepository.GetDraft(ctx, draftUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching draft from draft repository %v", err)
@@ -39,6 +39,15 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	}
 
 	logger.Infof("Validating draft and Generated read time for post %v", draftUID)
+
+	draft := db.Draft{
+		DraftID:      dbDraft.DraftID,
+		UserID:       dbDraft.UserID,
+		PostData:     dbDraft.PostData,
+		PreviewImage: dbDraft.PreviewImage.String,
+		Tagline:      dbDraft.Tagline.String,
+		Interest:     dbDraft.Interest,
+	}
 
 	metaData, err := service.validator.ValidateAndGetReadTime(draft, ctx)
 

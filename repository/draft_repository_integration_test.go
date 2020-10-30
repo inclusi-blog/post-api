@@ -183,14 +183,17 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 
 	suite.Nil(err)
 
-	expectedDraft := db.Draft{
+	expectedDraft := db.DraftDB{
 		DraftID: "abcdef124231",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title": "some post data"}`),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "this is some tagline for draft",
+		PreviewImage: sql.NullString{String: "https://www.some-url.com", Valid: true},
+		Tagline: sql.NullString{
+			String: "this is some tagline for draft",
+			Valid:  true,
+		},
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -205,7 +208,7 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsError() {
 	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
 	suite.NotNil(err)
 	suite.Equal(sql.ErrNoRows, err)
-	suite.Equal(db.Draft{}, draft)
+	suite.Equal(db.DraftDB{}, draft)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSuccess() {

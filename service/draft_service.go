@@ -97,7 +97,16 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 
 	logger.Info("Successfully stored got draft details")
 
-	return draftData, nil
+	draft := db.Draft{
+		DraftID:      draftData.DraftID,
+		UserID:       draftData.UserID,
+		PostData:     draftData.PostData,
+		PreviewImage: draftData.PreviewImage.String,
+		Tagline:      draftData.Tagline.String,
+		Interest:     draftData.Interest,
+	}
+
+	return draft, nil
 }
 
 func (service draftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {

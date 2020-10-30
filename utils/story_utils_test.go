@@ -22,8 +22,7 @@ func TestCountImageReadTimeWhenImageCountLessThen10(t *testing.T) {
 }
 
 func TestCountContentReadTime(t *testing.T) {
-	readTime := 0
-	CountContentReadTime(500, &readTime)
+	readTime := CountContentReadTime(500)
 	assert.Equal(t, 108, readTime)
 }
 
@@ -43,4 +42,16 @@ func TestGetTitleFromSlateJsonWhenTitleGreaterThan100Len(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Install apps via helm in kubernetes Install apps via helm in kubernetes Install apps via helm in kub", titleString)
+}
+
+func TestGetNumberOfWords(t *testing.T) {
+	ctx := context.TODO()
+	readTime := 0
+	imageCount := 0
+	extractedTagline := ""
+	titleString := ""
+	previewImage := ""
+	err := GetNumberOfWords(models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}, &readTime, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
+	assert.Equal(t, 890, readTime)
+	assert.Nil(t, err)
 }

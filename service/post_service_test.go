@@ -45,6 +45,24 @@ func (suite *PostServiceTest) TearDownTest() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
@@ -76,7 +94,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		ViewTime:     0,
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -89,6 +107,24 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
@@ -120,7 +156,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		ViewTime:     0,
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      "",
@@ -134,9 +170,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
-	draft := db.Draft{}
-
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, errors.New("something went wrong")).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(1), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
@@ -145,9 +179,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsSqlNoRowError() {
-	draft := db.Draft{}
-
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, sql.ErrNoRows).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(db.DraftDB{}, sql.ErrNoRows).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(0), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
@@ -156,14 +188,36 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsSqlNoRowError()
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "this is some tag line",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline:  "this is some tag line",
-		Interest: models.JSONString{},
+		PreviewImage: "https://www.some-url.com",
+		Tagline:      "this is some tag line",
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	post := db.PublishPost{
@@ -173,7 +227,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		ReadTime:  22,
 		ViewCount: 0,
 	}
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -187,14 +241,36 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline:  "",
-		Interest: models.JSONString{},
+		PreviewImage: "https://www.some-url.com",
+		Tagline:      "",
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	post := db.PublishPost{
@@ -207,7 +283,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 
 	expectedErr := constants.DraftValidationFailedError
 	expectedErr.AdditionalData = "something went wrong"
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, errors.New("something went wrong")).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), nil).Times(0)
 
@@ -217,6 +293,24 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
@@ -225,7 +319,9 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		},
 		PreviewImage: "https://www.some-url.com",
 		Tagline:      "",
-		Interest:     models.JSONString{},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	post := db.PublishPost{
@@ -246,7 +342,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		ViewTime:     0,
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",

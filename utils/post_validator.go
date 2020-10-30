@@ -49,7 +49,7 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 		return models.MetaData{}, wordCountFetchErr
 	}
 
-	CountContentReadTime(postWordsCount, &readTime)
+	readTime = CountContentReadTime(postWordsCount)
 	CountImageReadTime(imageCount, &readTime)
 	for _, value := range interests {
 		interest := value.(map[string]interface{})
@@ -59,13 +59,13 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 		configReadTime := config[interest["name"].(string)]
 		if configReadTime != 0 {
 			if readTime < configReadTime {
-				logger.Errorf("post interest doesn't meet required read time %v", draftID)
+				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)
 				return models.MetaData{}, errors.New("post interest doesn't meet required read time")
 			}
 			continue
 		} else {
 			if readTime < validator.configData.MinimumPostReadTime {
-				logger.Errorf("post doesn't meet minimum read time %v", draftID)
+				logger.Errorf("post doesn't meet minimum read time %v .%v", draftID, readTime)
 				return models.MetaData{}, errors.New("post doesn't meet minimum read time")
 			}
 		}

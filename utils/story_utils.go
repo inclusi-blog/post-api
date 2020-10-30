@@ -30,8 +30,8 @@ func CountImageReadTime(imageCount int, readTime *int) {
 	}
 }
 
-func CountContentReadTime(contentWordsCount int, readTime *int) {
-	*readTime = *readTime + int((0.0036*float64(contentWordsCount))*60)
+func CountContentReadTime(contentWordsCount int) int {
+	return int((0.0036 * float64(contentWordsCount)) * 60)
 }
 
 func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline, titleString, previewImage *string) error {
