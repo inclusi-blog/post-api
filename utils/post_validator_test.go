@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx/types"
 	"github.com/stretchr/testify/suite"
 	"post-api/configuration"
+	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/service/test_helper"
@@ -72,7 +73,7 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal("", metaData.Title)
-	suite.Equal("json: cannot unmarshal object into Go value of type []interface {}", err.Error())
+	suite.Equal(&constants.DraftValidationFailedError, err)
 	suite.Zero(metaData.ReadTime)
 }
 
@@ -89,7 +90,7 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal("", metaData.Title)
-	suite.Equal("json: cannot unmarshal object into Go value of type []interface {}", err.Error())
+	suite.Equal(&constants.DraftInterestParseError, err)
 	suite.Zero(metaData.ReadTime)
 }
 
@@ -108,7 +109,7 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
-	suite.Equal("interest is invalid", err.Error())
+	suite.Equal(&constants.DraftInterestParseError, err)
 	suite.Zero(metaData.ReadTime)
 }
 
@@ -131,7 +132,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
-	suite.Equal("post interest doesn't meet required read time", err.Error())
+	suite.Equal(&constants.InterestReadTimeDoesNotMeetErr, err)
 	suite.Zero(metaData.Title)
 }
 
@@ -155,7 +156,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
-	suite.Equal("post doesn't meet minimum read time", err.Error())
+	suite.Equal(&constants.ReadTimeNotMeetError, err)
 	suite.Zero(metaData.ReadTime)
 }
 

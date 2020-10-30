@@ -154,7 +154,7 @@ func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, c
 		title, err := utils.GetTitleFromSlateJson(ctx, val.PostData)
 		if err != nil {
 			logger.Errorf("Error occurred while converting title json to string %v .%v", val.DraftID, err)
-			return allDraftData, &constants.ConnvertTitleToStringError
+			return allDraftData, &constants.ConvertTitleToStringError
 		}
 
 		draft.TitleData = title

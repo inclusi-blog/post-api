@@ -4,22 +4,23 @@ package utils
 
 import (
 	"context"
-	"errors"
+	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/configuration"
+	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
 )
 
 type PostValidator interface {
-	ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, error)
+	ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error)
 }
 
 type postValidator struct {
 	configData *configuration.ConfigData
 }
 
-func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, error) {
+func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostValidator").WithField("method", "ValidateAndGetReadTime")
 
 	draftID := draft.DraftID
@@ -33,7 +34,7 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 
 	if err != nil {
 		logger.Errorf("Error occurred while validating draft interests for draft id %v .%v", id, err)
-		return models.MetaData{}, err
+		return models.MetaData{}, &constants.DraftInterestParseError
 	}
 
 	var postWordsCount int
@@ -46,7 +47,7 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 
 	if wordCountFetchErr != nil {
 		logger.Errorf("invalid post data for draft id %v .%v", id, wordCountFetchErr)
-		return models.MetaData{}, wordCountFetchErr
+		return models.MetaData{}, &constants.DraftValidationFailedError
 	}
 
 	readTime = CountContentReadTime(postWordsCount)
@@ -54,19 +55,19 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 	for _, value := range interests {
 		interest := value.(map[string]interface{})
 		if interest["name"] == "" {
-			return models.MetaData{}, errors.New("interest is invalid")
+			return models.MetaData{}, &constants.DraftInterestParseError
 		}
 		configReadTime := config[interest["name"].(string)]
 		if configReadTime != 0 {
 			if readTime < configReadTime {
 				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)
-				return models.MetaData{}, errors.New("post interest doesn't meet required read time")
+				return models.MetaData{}, &constants.InterestReadTimeDoesNotMeetErr
 			}
 			continue
 		} else {
 			if readTime < validator.configData.MinimumPostReadTime {
 				logger.Errorf("post doesn't meet minimum read time %v .%v", draftID, readTime)
-				return models.MetaData{}, errors.New("post doesn't meet minimum read time")
+				return models.MetaData{}, &constants.ReadTimeNotMeetError
 			}
 		}
 	}

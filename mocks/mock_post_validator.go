@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	golaerror "github.com/gola-glitch/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	models "post-api/models"
 	db "post-api/models/db"
@@ -36,11 +37,11 @@ func (m *MockPostValidator) EXPECT() *MockPostValidatorMockRecorder {
 }
 
 // ValidateAndGetReadTime mocks base method
-func (m *MockPostValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, error) {
+func (m *MockPostValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateAndGetReadTime", draft, ctx)
 	ret0, _ := ret[0].(models.MetaData)
-	ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }
 

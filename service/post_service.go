@@ -49,13 +49,11 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		Interest:     dbDraft.Interest,
 	}
 
-	metaData, err := service.validator.ValidateAndGetReadTime(draft, ctx)
+	metaData, validationErr := service.validator.ValidateAndGetReadTime(draft, ctx)
 
-	if err != nil {
-		failedError := constants.DraftValidationFailedError
-		failedError.AdditionalData = err.Error()
-		logger.Errorf("Error occurred while validating draft of id %v .%v", draftUID, err)
-		return &failedError
+	if validationErr != nil {
+		logger.Errorf("Error occurred while validating draft of id %v .%v", draftUID, validationErr)
+		return validationErr
 	}
 
 	if draft.Tagline == "" {

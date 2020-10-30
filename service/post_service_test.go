@@ -281,15 +281,13 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 		ViewCount: 0,
 	}
 
-	expectedErr := constants.DraftValidationFailedError
-	expectedErr.AdditionalData = "something went wrong"
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, errors.New("something went wrong")).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), nil).Times(0)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
-	suite.Equal(&expectedErr, err)
+	suite.Equal(&constants.DraftValidationFailedError, err)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
