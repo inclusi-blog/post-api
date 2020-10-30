@@ -168,8 +168,8 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 	suite.Nil(err)
 
 	err = suite.draftRepository.SaveInterestsToDraft(request.InterestsSaveRequest{
-		UserID:    "1",
-		DraftID:   "abcdef124231",
+		UserID:  "1",
+		DraftID: "abcdef124231",
 		Interests: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
