@@ -53,6 +53,10 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		draft.Tagline = metaData.Tagline
 	}
 
+	if draft.PreviewImage == "" {
+		draft.PreviewImage = metaData.PreviewImage
+	}
+
 	post := db.PublishPost{
 		PUID:      draftUID,
 		UserID:    "1",
@@ -72,12 +76,11 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Successfully saved story for post id %v", draftUID)
 
-	// TODO once preview image in draft is played then assign preview image accordingly
 	previewPost := db.PreviewPost{
 		PostID:       postID,
 		Title:        metaData.Title,
 		Tagline:      draft.Tagline,
-		PreviewImage: "some-image",
+		PreviewImage: draft.PreviewImage,
 		LikeCount:    0,
 		CommentCount: 0,
 		ViewTime:     0,

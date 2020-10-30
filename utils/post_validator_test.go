@@ -64,7 +64,7 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 		DraftID:  "a1v2b31n",
 		UserID:   "1",
 		PostData: models.JSONString{},
-		Tagline: "this is some tagline",
+		Tagline:  "this is some tagline",
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},

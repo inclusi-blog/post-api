@@ -34,7 +34,7 @@ func CountContentReadTime(contentWordsCount int, readTime *int) {
 	*readTime = *readTime + int((0.0036*float64(contentWordsCount))*60)
 }
 
-func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline, titleString *string) error {
+func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline, titleString, previewImage *string) error {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
 	var postData []interface{}
 	err := content.Unmarshal(&postData)
@@ -49,6 +49,9 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 		value := singleData["type"]
 		if value != nil {
 			if value == "image" {
+				if singleData["url"] != "" && *previewImage == "" {
+					*previewImage = singleData["url"].(string)
+				}
 				*imageCount = *imageCount + 1
 			}
 		}

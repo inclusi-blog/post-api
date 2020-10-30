@@ -41,7 +41,8 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 	var readTime int
 	var extractedTagline string
 	var titleString string
-	wordCountFetchErr := GetNumberOfWords(draft.PostData, &postWordsCount, ctx, &imageCount, &extractedTagline, &titleString)
+	var previewImage string
+	wordCountFetchErr := GetNumberOfWords(draft.PostData, &postWordsCount, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
 
 	if wordCountFetchErr != nil {
 		logger.Errorf("invalid post data for draft id %v .%v", id, wordCountFetchErr)
@@ -73,9 +74,10 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 	logger.Infof("Successfully validated draft for id %v", draftID)
 
 	return models.MetaData{
-		Title:    titleString,
-		Tagline:  extractedTagline,
-		ReadTime: readTime,
+		Title:        titleString,
+		Tagline:      extractedTagline,
+		ReadTime:     readTime,
+		PreviewImage: previewImage,
 	}, nil
 }
 

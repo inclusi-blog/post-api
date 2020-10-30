@@ -51,8 +51,11 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline:  "",
-		Interest: models.JSONString{},
+		PreviewImage: "https://www.some-url.com",
+		Tagline:      "",
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	post := db.PublishPost{
@@ -67,7 +70,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      draft.Tagline,
-		PreviewImage: "some-image",
+		PreviewImage: "https://www.some-url.com",
 		LikeCount:    0,
 		CommentCount: 0,
 		ViewTime:     0,
@@ -78,6 +81,51 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
+	}, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
+	suite.Nil(err)
+}
+
+func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
+	draft := db.Draft{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: "",
+		Tagline:      "",
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      draft.Tagline,
+		PreviewImage: "https://www.some-url.com",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draft, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      "",
+		ReadTime:     22,
+		PreviewImage: "https://www.some-url.com",
 	}, nil).Times(1)
 	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
 	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
@@ -175,8 +223,9 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline:  "",
-		Interest: models.JSONString{},
+		PreviewImage: "https://www.some-url.com",
+		Tagline:      "",
+		Interest:     models.JSONString{},
 	}
 
 	post := db.PublishPost{
@@ -191,7 +240,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      draft.Tagline,
-		PreviewImage: "some-image",
+		PreviewImage: "https://www.some-url.com",
 		LikeCount:    0,
 		CommentCount: 0,
 		ViewTime:     0,
