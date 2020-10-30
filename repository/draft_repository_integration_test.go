@@ -167,19 +167,35 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 	err = suite.draftRepository.SaveTaglineToDraft(taglineSaveRequest, suite.goContext)
 	suite.Nil(err)
 
+	err = suite.draftRepository.SaveInterestsToDraft(request.InterestsSaveRequest{
+		UserID:    "1",
+		DraftID:   "abcdef124231",
+		Interests: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}, suite.goContext)
+
+	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, request.PreviewImageSaveRequest{
+		UserID:          "1",
+		DraftID:         "abcdef124231",
+		PreviewImageUrl: "https://www.some-url.com",
+	})
+
+	suite.Nil(err)
+
 	expectedDraft := db.Draft{
 		DraftID: "abcdef124231",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`{"title": "some post data"}`),
 		},
-		Tagline: "this is some tagline for draft",
+		PreviewImage: "https://www.some-url.com",
+		Tagline:      "this is some tagline for draft",
 		Interest: models.JSONString{
-			JSONText: types.JSONText(``),
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
 	}
 
-	// TODO: Add interest here once built
 	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
 	suite.Nil(err)
 	suite.Equal(expectedDraft, draft)
