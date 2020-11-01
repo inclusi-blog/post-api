@@ -3,7 +3,7 @@ services:
   post-dev-migration:
     container_name: post-dev-migration
     image: flyway/flyway
-    command: -url=jdbc:mysql://database-1-instance-1.cmj29ow7gh4e.ap-south-1.rds.amazonaws.com:3306/POST -schemas=POST -user=POST -password=gola -connectRetries=60 migrate
+    command: -url=jdbc:postgresql://gola-dev-db.cfmrudiius8m.ap-south-1.rds.amazonaws.com:5432/post -schemas=post -user=post -password=gola -connectRetries=60 migrate
     volumes:
       - ./database/.:/flyway/sql
       - test-volume:/test-volume
