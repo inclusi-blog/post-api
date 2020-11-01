@@ -2,15 +2,16 @@ package init
 
 import (
 	"context"
-	"net/http"
-	"post-api/configuration"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
+	cors "github.com/gola-glitch/gola-utils/middleware/cors"
 	"github.com/gola-glitch/gola-utils/middleware/request_response_trace"
 	middleware "github.com/gola-glitch/gola-utils/middleware/session_trace"
+	corsModel "github.com/gola-glitch/gola-utils/model"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
+	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
@@ -29,6 +30,11 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		},
 	}))
 
+	corsConfig := corsModel.CorsConfig{
+		AllowedOrigins: configData.AllowedOrigins,
+	}
+
+	router.Use(cors.CORSMiddleware(corsConfig))
 	golaLoggerRegistry := logging.NewLoggerEntry()
 
 	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
