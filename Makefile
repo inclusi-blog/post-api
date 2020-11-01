@@ -21,6 +21,9 @@ build: install_deps
 create_user:
 	docker exec -it gola-db /bin/sh /sql/create_user.sh
 
+create_user_dev:
+	docker exec -it gola-db /bin/sh /sql/create_user_dev.sh
+
 run_migration:
 	docker-compose -f docker-compose.db.yml up -d post-migration
 

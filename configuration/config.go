@@ -9,6 +9,7 @@ type ConfigData struct {
 	LogLevel              string                       `json:"log_level" binding:"required"`
 	ContentReadTimeConfig map[string]int               `json:"content_read_time_config" binding:"required"`
 	MinimumPostReadTime   int                          `json:"minimum_post_read_time" binding:"required"`
+	Environment           string                       `json:"environment" binding:"required"`
 }
 
 func (configData *ConfigData) GetDBConnectionPoolConfig() model.DBConnectionPoolConfig {
