@@ -283,3 +283,33 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenServiceFails() {
 	suite.Nil(err)
 	suite.Equal(string(bytesData), string(suite.recorder.Body.Bytes()))
 }
+
+// GetAllDraft Test Scripts
+
+func (suite *DraftControllerTest) TestGetAllDraft_WhenAPISuccess() {
+	allDraftReq := models.GetAllDraftRequest{
+		UserID:     "1",
+		StartValue: "1",
+		Limit:      "5",
+	}
+
+	jsonBytes, err := json.Marshal(allDraftReq)
+	suite.Nil(err)
+
+	suite.mockDraftService.EXPECT().GetAllDraft(allDraftReq, suite.context).Return([]db.AllDraft{}, nil).Times(1)
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/get-all-draft", bytes.NewBufferString(string(jsonBytes)))
+	suite.draftController.GetAllDraft(suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestGetAllDraft_WhenBadRequest() {
+
+	requestBody := `{user_id:"1",start_value:"1",limit:1}`
+
+	suite.mockDraftService.EXPECT().GetAllDraft(requestBody, suite.context).Return([]db.AllDraft{}, nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/get-all-draft", bytes.NewBufferString(requestBody))
+
+	suite.draftController.GetAllDraft(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}

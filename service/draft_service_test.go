@@ -240,3 +240,81 @@ func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
 }
+
+//GetAllDraft Tests
+
+func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError() {
+	allDraftReq := models.GetAllDraftRequest{
+		UserID:     "1",
+		StartValue: "1",
+		Limit:      "5",
+	}
+
+	var allDraftActual []db.AllDraft
+	var allDraft []db.Draft
+
+	var allDraftExpected []db.AllDraft
+
+	draft := db.AllDraft{
+		DraftID:   "121212",
+		UserID:    "12",
+		PostData:  models.JSONString{},
+		TitleData: "https://some-url.com",
+		Tagline:   "My first Data",
+		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	}
+
+	allDraftActual = append(allDraftActual, draft)
+
+	expectedDraft := db.AllDraft{
+		DraftID:   "121212",
+		UserID:    "12",
+		PostData:  models.JSONString{},
+		TitleData: "https://some-url.com",
+		Tagline:   "My first Data",
+		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	}
+
+	allDraftExpected = append(allDraftExpected, expectedDraft)
+
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, nil).Times(1)
+
+	allDraftExpected, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Equal(allDraftExpected, allDraftExpected)
+	suite.Nil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsError() {
+	allDraftReq := models.GetAllDraftRequest{
+		UserID:     "1",
+		StartValue: "1",
+		Limit:      "5",
+	}
+	var expectedDraft []db.AllDraft
+	var allDraft []db.Draft
+
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, errors.New("something went wrong")).Times(1)
+
+	draftData, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Equal(expectedDraft, draftData)
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.PostServiceFailureError, expectedError)
+}
+
+func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoRowError() {
+	allDraftReq := models.GetAllDraftRequest{
+		UserID:     "1",
+		StartValue: "1",
+		Limit:      "5",
+	}
+
+	var expectedDraft []db.AllDraft
+	var allDraft []db.Draft
+
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, sql.ErrNoRows).Times(1)
+
+	draftData, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Equal(expectedDraft, draftData)
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.NoDraftFoundError, expectedError)
+}
