@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
-	github.com/gola-glitch/gola-utils v0.0.0-20201101110808-9da63f09f06e
+	github.com/gola-glitch/gola-utils v0.0.0-20201109181421-0d714de9fa4b // indirect
 	github.com/golang/mock v1.4.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
