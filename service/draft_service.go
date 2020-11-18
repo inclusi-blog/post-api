@@ -101,8 +101,8 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 		DraftID:      draftData.DraftID,
 		UserID:       draftData.UserID,
 		PostData:     draftData.PostData,
-		PreviewImage: draftData.PreviewImage.String,
-		Tagline:      draftData.Tagline.String,
+		PreviewImage: &draftData.PreviewImage.String,
+		Tagline:      &draftData.Tagline.String,
 		Interest:     draftData.Interest,
 	}
 

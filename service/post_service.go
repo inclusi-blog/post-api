@@ -44,8 +44,8 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		DraftID:      dbDraft.DraftID,
 		UserID:       dbDraft.UserID,
 		PostData:     dbDraft.PostData,
-		PreviewImage: dbDraft.PreviewImage.String,
-		Tagline:      dbDraft.Tagline.String,
+		PreviewImage: &dbDraft.PreviewImage.String,
+		Tagline:      &dbDraft.Tagline.String,
 		Interest:     dbDraft.Interest,
 	}
 
@@ -56,12 +56,12 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		return validationErr
 	}
 
-	if draft.Tagline == "" {
-		draft.Tagline = metaData.Tagline
+	if *draft.Tagline == "" {
+		draft.Tagline = &metaData.Tagline
 	}
 
-	if draft.PreviewImage == "" {
-		draft.PreviewImage = metaData.PreviewImage
+	if *draft.PreviewImage == "" {
+		draft.PreviewImage = &metaData.PreviewImage
 	}
 
 	post := db.PublishPost{
@@ -86,8 +86,8 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	previewPost := db.PreviewPost{
 		PostID:       postID,
 		Title:        metaData.Title,
-		Tagline:      draft.Tagline,
-		PreviewImage: draft.PreviewImage,
+		Tagline:      *draft.Tagline,
+		PreviewImage: *draft.PreviewImage,
 		LikeCount:    0,
 		CommentCount: 0,
 		ViewTime:     0,

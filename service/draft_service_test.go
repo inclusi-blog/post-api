@@ -156,6 +156,8 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() {
 	draftID := "121212"
+	tmpTagline := "My first Data"
+	tmpPreviewPost := "https://some-url.com"
 
 	draft := db.DraftDB{
 		DraftID:  "121212",
@@ -176,8 +178,8 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() 
 		DraftID:      "121212",
 		UserID:       "12",
 		PostData:     models.JSONString{},
-		PreviewImage: "https://some-url.com",
-		Tagline:      "My first Data",
+		PreviewImage: &tmpPreviewPost,
+		Tagline:      &tmpTagline,
 		Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
 	}
 
@@ -246,8 +248,8 @@ func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
-		StartValue: "1",
-		Limit:      "5",
+		StartValue: 1,
+		Limit:      5,
 	}
 
 	var allDraftActual []db.AllDraft
@@ -255,12 +257,14 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 
 	var allDraftExpected []db.AllDraft
 
+	tmpTagline := "My first Data"
+
 	draft := db.AllDraft{
 		DraftID:   "121212",
 		UserID:    "12",
 		PostData:  models.JSONString{},
 		TitleData: "https://some-url.com",
-		Tagline:   "My first Data",
+		Tagline:   &tmpTagline,
 		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
 	}
 
@@ -271,7 +275,7 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 		UserID:    "12",
 		PostData:  models.JSONString{},
 		TitleData: "https://some-url.com",
-		Tagline:   "My first Data",
+		Tagline:   &tmpTagline,
 		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
 	}
 
@@ -287,8 +291,8 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsError() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
-		StartValue: "1",
-		Limit:      "5",
+		StartValue: 1,
+		Limit:      5,
 	}
 	var expectedDraft []db.AllDraft
 	var allDraft []db.Draft
@@ -304,8 +308,8 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsError()
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoRowError() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
-		StartValue: "1",
-		Limit:      "5",
+		StartValue: 1,
+		Limit:      5,
 	}
 
 	var expectedDraft []db.AllDraft

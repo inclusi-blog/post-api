@@ -4,15 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/golang/mock/gomock"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/suite"
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/service/test_helper"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type PostServiceTest struct {
@@ -45,6 +46,8 @@ func (suite *PostServiceTest) TearDownTest() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
 	draftDB := db.DraftDB{
 		DraftID: "1231212",
 		UserID:  "1",
@@ -69,8 +72,8 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "",
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -87,7 +90,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 	previewPost := db.PreviewPost{
 		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
-		Tagline:      draft.Tagline,
+		Tagline:      *draft.Tagline,
 		PreviewImage: "https://www.some-url.com",
 		LikeCount:    0,
 		CommentCount: 0,
@@ -107,6 +110,10 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
+
+	tmpPreviewImage := ""
+	tmpTagLine := ""
+
 	draftDB := db.DraftDB{
 		DraftID: "1231212",
 		UserID:  "1",
@@ -131,8 +138,8 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "",
-		Tagline:      "",
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -149,7 +156,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 	previewPost := db.PreviewPost{
 		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
-		Tagline:      draft.Tagline,
+		Tagline:      *draft.Tagline,
 		PreviewImage: "https://www.some-url.com",
 		LikeCount:    0,
 		CommentCount: 0,
@@ -207,14 +214,17 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		},
 	}
 
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
+
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "this is some tag line",
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -260,14 +270,17 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 		},
 	}
 
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
+
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "",
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -309,14 +322,18 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
 	}
+
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
+
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "",
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},
@@ -333,7 +350,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 	previewPost := db.PreviewPost{
 		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
-		Tagline:      draft.Tagline,
+		Tagline:      *draft.Tagline,
 		PreviewImage: "https://www.some-url.com",
 		LikeCount:    0,
 		CommentCount: 0,
