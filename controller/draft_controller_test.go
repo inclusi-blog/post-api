@@ -289,8 +289,8 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenServiceFails() {
 func (suite *DraftControllerTest) TestGetAllDraft_WhenAPISuccess() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
-		StartValue: "1",
-		Limit:      "5",
+		StartValue: 1,
+		Limit:      5,
 	}
 
 	jsonBytes, err := json.Marshal(allDraftReq)
