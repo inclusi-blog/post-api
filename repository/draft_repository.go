@@ -28,7 +28,7 @@ const (
 	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
 	FetchDraft       = "SELECT draft_id, user_id, tagline, preview_image, interest, post_data FROM DRAFTS WHERE draft_id = $1"
 	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
-	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3 ORDER BY created_at"
+	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3 ORDER BY created_at DESC"
 )
 
 type draftRepository struct {
