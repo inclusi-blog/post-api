@@ -8,6 +8,6 @@ type UpsertDraft struct {
 
 type GetAllDraftRequest struct {
 	UserID     string `json:"user_id" binding:"required" db:"USER_ID"`
-	StartValue string `json:"start_value" binding:"required" `
-	Limit      string `json:"limit" binding:"required" `
+	StartValue int    `json:"start_value" binding:"required" `
+	Limit      int    `json:"limit" binding:"required" `
 }
