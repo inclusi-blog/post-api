@@ -2,6 +2,9 @@ package init
 
 import (
 	"context"
+	"net/http"
+	"post-api/configuration"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
 	cors "github.com/gola-glitch/gola-utils/middleware/cors"
@@ -10,8 +13,6 @@ import (
 	corsModel "github.com/gola-glitch/gola-utils/model"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
-	"post-api/configuration"
 )
 
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
@@ -68,5 +69,6 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	postGroup := defaultRouterGroup.Group("/post")
 	{
 		postGroup.POST("/publish", postController.PublishPost)
+		postGroup.GET("/update-likes/:post_id", postController.UpdateLikes)
 	}
 }

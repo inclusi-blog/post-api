@@ -9,3 +9,7 @@ type PublishPost struct {
 	ReadTime  int               `json:"read_time" db:"read_time"`
 	ViewCount int               `json:"view_count" db:"view_count"`
 }
+
+type LikedByRes struct {
+	LikedByID string `json:"id" db:"id"`
+}
