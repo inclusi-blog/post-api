@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"post-api/constants"
 	"post-api/models/db"
+	"post-api/models/request"
 	"post-api/repository"
 	"post-api/utils"
 
@@ -16,6 +17,7 @@ import (
 
 type PostService interface {
 	PublishPost(ctx context.Context, draftUID string) *golaerror.Error
+	UpdateLikedBy(userID, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
 }
 
 type postService struct {
@@ -103,6 +105,42 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	logger.Infof("Successfully stored the preview post in preview post repository")
 
 	return nil
+}
+
+func (service postService) UpdateLikedBy(userID, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "UpdateLikedBy")
+	logger.Infof("Saving post data to draft repository")
+
+	var likedByCount request.LikedByCount
+
+	id, err := service.repository.GetLikesIdByPost(ctx, postID, userID)
+	if err != nil {
+		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+		return likedByCount, constants.StoryInternalServerError(err.Error())
+	}
+	if id == "" {
+		err := service.repository.SaveUserToLikedBy(postID, userID, ctx)
+		if err != nil {
+			logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+			return likedByCount, constants.StoryInternalServerError(err.Error())
+		}
+	} else {
+		err := service.repository.RemoveUserFromLikedBy(postID, userID, ctx)
+		if err != nil {
+			logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+			return likedByCount, constants.StoryInternalServerError(err.Error())
+		}
+	}
+
+	likeCount, err := service.repository.GetLikeCountByPost(ctx, postID)
+	if err != nil {
+		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+		return likedByCount, constants.StoryInternalServerError(err.Error())
+	}
+
+	likedByCount.LikeCount = likeCount
+
+	return likedByCount, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.PreviewPostsRepository) PostService {
