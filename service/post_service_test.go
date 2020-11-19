@@ -214,17 +214,14 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		},
 	}
 
-	tmpPreviewImage := "https://www.some-url.com"
-	tmpTagLine := ""
-
 	draft := db.Draft{
 		DraftID: "1231212",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: &tmpPreviewImage,
-		Tagline:      &tmpTagLine,
+		PreviewImage: &draftDB.PreviewImage.String,
+		Tagline:      &draftDB.Tagline.String,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
 		},

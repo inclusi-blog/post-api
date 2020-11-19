@@ -42,13 +42,14 @@ func (suite *PostValidatorTest) TearDownTest() {
 }
 
 func (suite *PostValidatorTest) TestValidate_ValidPost() {
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: "this is some tagline",
+		Tagline: &tagline,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
@@ -57,15 +58,16 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 	suite.Nil(err)
 	suite.Equal(32, metaData.ReadTime)
 	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", metaData.Title)
-	suite.Equal("this is some tagline", draft.Tagline)
+	suite.Equal(&tagline, draft.Tagline)
 }
 
 func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID:  "a1v2b31n",
 		UserID:   "1",
 		PostData: models.JSONString{},
-		Tagline:  "this is some tagline",
+		Tagline:  &tagline,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
@@ -78,13 +80,14 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 }
 
 func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline:  "this is some tagline",
+		Tagline:  &tagline,
 		Interest: models.JSONString{},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
@@ -95,13 +98,14 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 }
 
 func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: "this is some tagline",
+		Tagline: &tagline,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": ""}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
@@ -118,13 +122,14 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 		"poem": 50,
 	}
 
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: "this is some tagline",
+		Tagline: &tagline,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
@@ -142,13 +147,14 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 	}
 	suite.configData.MinimumPostReadTime = 50
 
+	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
 		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: "this is some tagline",
+		Tagline: &tagline,
 		Interest: models.JSONString{
 			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
 		},
