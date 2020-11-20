@@ -1,3 +1,3 @@
-FROM postgres:latest
+FROM gola05/flyway_alpine:latest
 
-EXPOSE 5432
+COPY /database /home/gola/sql

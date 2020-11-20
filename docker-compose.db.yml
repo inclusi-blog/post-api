@@ -1,10 +1,7 @@
 version: "3.7"
 services:
   gola-db:
-    image: gola-db
-    build:
-      context: .
-      dockerfile: infrastructure/Migrate.Dockerfile
+    image: postgres:latest
     restart: always
     container_name: gola-db
     env_file:
@@ -19,10 +16,11 @@ services:
 
   post-migration:
     container_name: post-migration
-    image: flyway/flyway
+    image: post-migration
+    build:
+      context: .
+      dockerfile: infrastructure/Migrate.Dockerfile
     command: -url=jdbc:postgresql://gola-db:5432/post -schemas=post -user=post -password=gola -connectRetries=60 migrate
-    volumes:
-      - ./database/.:/flyway/sql
     depends_on:
       - gola-db
     networks:

@@ -53,10 +53,15 @@ stop-db:
 
 publish: docker_login
 	docker tag post-api $(ARTIFACTORY_USER)/post-api:$(REVISION); \
-	docker push $(ARTIFACTORY_USER)/post-api:$(REVISION)
+	docker tag post-migration $(ARTIFACTORY_USER)/post-migration:$(REVISION); \
+	docker push $(ARTIFACTORY_USER)/post-api:$(REVISION); \
+	docker push $(ARTIFACTORY_USER)/post-migration:$(REVISION);
 
 start: create-db create_user run_migration run_test_migration build
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml up -d
+
+start-with-tracer: create-db create_user run_migration run_test_migration build
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml -f docker-compose-tracing.yaml up -d
 
 stop:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v

@@ -17,6 +17,7 @@ services:
       - GOSUMDB=off
     volumes:
       - ./configuration:/home/gola/configuration
+      - .env:/home/gola/.env
       - data-volume:/data-volume
     command: ["/bin/sh" , "-c", "sleep 5 && /home/gola/post-api"]
 
