@@ -86,3 +86,26 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenDBReturnsError()
 
 	suite.NotNil(err)
 }
+
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsAPostAvailable() {
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+
+	suite.Nil(err)
+	err = suite.postsRepository.SaveInitialLike(suite.goContext, postID)
+	suite.Nil(err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsNoPostAvailable() {
+	err := suite.postsRepository.SaveInitialLike(suite.goContext, 1)
+	suite.NotNil(err)
+}
