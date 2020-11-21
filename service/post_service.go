@@ -104,6 +104,14 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Successfully stored the preview post in preview post repository")
 
+	defer func() {
+		err = service.repository.SaveInitialLike(ctx, postID)
+		if err != nil {
+			logger.Errorf("error occurred while inserting initial like for post id %v, Error %v", postID, err)
+			return
+		}
+	}()
+
 	return nil
 }
 

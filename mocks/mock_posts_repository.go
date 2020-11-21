@@ -48,3 +48,46 @@ func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post interface{}) *go
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePost", reflect.TypeOf((*MockPostsRepository)(nil).CreatePost), ctx, post)
 }
+
+// GetLikeCountByPost mocks base method
+func (m *MockPostsRepository) GetLikeCountByPost(ctx context.Context, postID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLikeCountByPost", ctx, postID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLikeCountByPost indicates an expected call of GetLikeCountByPost
+func (mr *MockPostsRepositoryMockRecorder) GetLikeCountByPost(ctx, postID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLikeCountByPost", reflect.TypeOf((*MockPostsRepository)(nil).GetLikeCountByPost), ctx, postID)
+}
+
+// AppendOrRemoveUserFromLikedBy mocks base method
+func (m *MockPostsRepository) AppendOrRemoveUserFromLikedBy(postID, userID string, ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AppendOrRemoveUserFromLikedBy", postID, userID, ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AppendOrRemoveUserFromLikedBy indicates an expected call of AppendOrRemoveUserFromLikedBy
+func (mr *MockPostsRepositoryMockRecorder) AppendOrRemoveUserFromLikedBy(postID, userID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendOrRemoveUserFromLikedBy", reflect.TypeOf((*MockPostsRepository)(nil).AppendOrRemoveUserFromLikedBy), postID, userID, ctx)
+}
+
+// SaveInitialLike mocks base method
+func (m *MockPostsRepository) SaveInitialLike(ctx context.Context, postID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveInitialLike", ctx, postID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveInitialLike indicates an expected call of SaveInitialLike
+func (mr *MockPostsRepositoryMockRecorder) SaveInitialLike(ctx, postID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInitialLike", reflect.TypeOf((*MockPostsRepository)(nil).SaveInitialLike), ctx, postID)
+}
