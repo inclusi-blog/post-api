@@ -61,5 +61,6 @@
     * Don't push the code if tests are failing and functionality doesn't have a test (test is mandatory, without test a feature shouldn't exist).
     * before pushing do a make format to make sure all the code are formatted properly
     * Lets try not to comment codes in codebase instead if we want some code back for that only we have git we can get the code from the commit and chery pick it, which is one of the best practices :)
+    * try build the code before pushing it to make sure it compiles, sometime we misses sending dependencies at the router level
     
 **Please strictly follow the above dev practices which eventually helps to evolve as a good programmer** PS.(any fool can write code that a computer can understand but a good programmer write code that humans can understand - Martin Fowler)
