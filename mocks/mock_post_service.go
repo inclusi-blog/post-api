@@ -8,6 +8,7 @@ import (
 	context "context"
 	golaerror "github.com/gola-glitch/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
+	request "post-api/models/request"
 	reflect "reflect"
 )
 
@@ -46,4 +47,19 @@ func (m *MockPostService) PublishPost(ctx context.Context, draftUID string) *gol
 func (mr *MockPostServiceMockRecorder) PublishPost(ctx, draftUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishPost", reflect.TypeOf((*MockPostService)(nil).PublishPost), ctx, draftUID)
+}
+
+// LikePost mocks base method
+func (m *MockPostService) LikePost(userID int64, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LikePost", userID, postID, ctx)
+	ret0, _ := ret[0].(request.LikedByCount)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// LikePost indicates an expected call of LikePost
+func (mr *MockPostServiceMockRecorder) LikePost(userID, postID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LikePost", reflect.TypeOf((*MockPostService)(nil).LikePost), userID, postID, ctx)
 }

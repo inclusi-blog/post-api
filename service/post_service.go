@@ -10,6 +10,7 @@ import (
 	"post-api/models/request"
 	"post-api/repository"
 	"post-api/utils"
+	"strconv"
 
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -17,7 +18,7 @@ import (
 
 type PostService interface {
 	PublishPost(ctx context.Context, draftUID string) *golaerror.Error
-	UpdateLikedBy(userID, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
+	LikePost(userID int64, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
 }
 
 type postService struct {
@@ -115,19 +116,30 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	return nil
 }
 
-func (service postService) UpdateLikedBy(userID, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
-	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "UpdateLikedBy")
+func (service postService) LikePost(userID int64, postUID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "LikePost")
 	logger.Infof("Saving post data to draft repository")
+
+	postID, err := service.repository.GetPostID(ctx, postUID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.Errorf("not post found for post uid %v", postID)
+			return request.LikedByCount{}, &constants.PostNotFoundErr
+		}
+		logger.Errorf("error occurred while fetching post if for the give post uid %v, Error: %v", postID, err)
+		return request.LikedByCount{}, constants.StoryInternalServerError(err.Error())
+	}
 
 	var likedByCount request.LikedByCount
 
-	err := service.repository.AppendOrRemoveUserFromLikedBy(postID, userID, ctx)
+	err = service.repository.AppendOrRemoveUserFromLikedBy(strconv.FormatInt(postID, 10), strconv.FormatInt(userID, 10), ctx)
 	if err != nil {
 		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
 	}
 
-	likeCount, err := service.repository.GetLikeCountByPost(ctx, postID)
+	likeCount, err := service.repository.GetLikeCountByPost(ctx, strconv.FormatInt(postID, 10))
 	if err != nil {
 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())

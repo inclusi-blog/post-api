@@ -58,7 +58,7 @@ func (postController PostController) UpdateLikes(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with get draft request for user %v", "12")
 
-	res, err := postController.postService.UpdateLikedBy(userID, postID, ctx)
+	res, err := postController.postService.LikePost(userID, postID, ctx)
 	if err != nil {
 		log.Errorf("Error occurred in post service while updating likedby in likes table %v. Error %v", "12", err.Error())
 		ctx.AbortWithStatus(http.StatusInternalServerError)

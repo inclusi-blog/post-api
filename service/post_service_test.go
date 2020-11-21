@@ -8,7 +8,9 @@ import (
 	"post-api/mocks"
 	"post-api/models"
 	"post-api/models/db"
+	"post-api/models/request"
 	"post-api/service/test_helper"
+	"strconv"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -432,4 +434,75 @@ func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
 	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenSuccess() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(strconv.FormatInt(1, 10), strconv.FormatInt(1, 10), suite.goContext).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, strconv.FormatInt(1, 10)).Return("1", nil).Times(1)
+
+	expectedCount := request.LikedByCount{LikeCount: "1"}
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.Nil(err)
+	suite.Equal(expectedCount, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenGetPostIDFailsWithError() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(0), errors.New("something went wrong")).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(strconv.FormatInt(0, 10), strconv.FormatInt(0, 10), suite.goContext).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, strconv.FormatInt(0, 10)).Return("1", nil).Times(0)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+	suite.Equal(request.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenGetPostIDFailsWithSQLNoRowsError() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(0), sql.ErrNoRows).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(strconv.FormatInt(0, 10), strconv.FormatInt(0, 10), suite.goContext).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, strconv.FormatInt(0, 10)).Return("1", nil).Times(0)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(&constants.PostNotFoundErr, err)
+	suite.Equal(request.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenAppendOrRemoveUserLikeByFails() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(strconv.FormatInt(1, 10), strconv.FormatInt(1, 10), suite.goContext).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, strconv.FormatInt(1, 10)).Return("1", nil).Times(0)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+	suite.Equal(request.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenGetCountByPostFails() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(strconv.FormatInt(1, 10), strconv.FormatInt(1, 10), suite.goContext).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, strconv.FormatInt(1, 10)).Return("", errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+	suite.Equal(request.LikedByCount{}, likeCount)
 }
