@@ -18,6 +18,7 @@ type PostsRepository interface {
 	GetLikeCountByPost(ctx context.Context, postID string) (string, error)
 	AppendOrRemoveUserFromLikedBy(postID string, userID string, ctx context.Context) error
 	SaveInitialLike(ctx context.Context, postID int64) error
+	GetPostID(ctx context.Context, postUUID string) (int64, error)
 }
 
 type postRepository struct {
@@ -29,6 +30,7 @@ const (
 	GetLikedByCount       = "SELECT array_length(liked_by, 1) FROM likes WHERE post_id=$1 "
 	UpdateOrRemoveLikedBy = "UPDATE likes SET liked_by = case when (SELECT count(id) as id  FROM likes WHERE post_id=$1 AND $2=ANY(liked_by)) = '1' then array_remove(liked_by, $2) else array_append(liked_by, $2) end where post_id = $1"
 	InitialLike           = "INSERT INTO likes (liked_by, post_id) VALUES ('{}', $1)"
+	FetchPostID           = "SELECT id as postID FROM posts WHERE puid = $1"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) (int64, error) {
@@ -109,6 +111,22 @@ func (repository postRepository) SaveInitialLike(ctx context.Context, postID int
 	logger.Infof("One row affected for inserting initial like for post id %v", postID)
 
 	return nil
+}
+
+func (repository postRepository) GetPostID(ctx context.Context, postUUID string) (int64, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "GetPostID")
+
+	logger.Infof("Fetching post id for given post uuid %v", postUUID)
+	var postID int64
+	err := repository.db.GetContext(ctx, &postID, FetchPostID, postUUID)
+
+	if err != nil {
+		logger.Errorf("error occurred while fetching post id from post table for give post uid %v Error: %v", postUUID, err)
+		return 0, err
+	}
+
+	logger.Info("Successfully fetched post id from post table for given post uid")
+	return postID, nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {

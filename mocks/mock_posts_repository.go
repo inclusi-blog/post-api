@@ -91,3 +91,18 @@ func (mr *MockPostsRepositoryMockRecorder) SaveInitialLike(ctx, postID interface
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInitialLike", reflect.TypeOf((*MockPostsRepository)(nil).SaveInitialLike), ctx, postID)
 }
+
+// GetPostID mocks base method
+func (m *MockPostsRepository) GetPostID(ctx context.Context, postUUID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPostID", ctx, postUUID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPostID indicates an expected call of GetPostID
+func (mr *MockPostsRepositoryMockRecorder) GetPostID(ctx, postUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostID", reflect.TypeOf((*MockPostsRepository)(nil).GetPostID), ctx, postUUID)
+}

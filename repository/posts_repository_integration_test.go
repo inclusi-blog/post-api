@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
@@ -108,4 +109,30 @@ func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsAPos
 func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsNoPostAvailable() {
 	err := suite.postsRepository.SaveInitialLike(suite.goContext, 1)
 	suite.NotNil(err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsAPost() {
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	expectedPostID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+
+	suite.Nil(err)
+	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, post.PUID)
+	suite.Nil(err)
+	suite.Equal(expectedPostID, actualPostID)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsNoPost() {
+	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, "qw23e5tsa")
+	suite.NotNil(err)
+	suite.Equal(sql.ErrNoRows, err)
+	suite.Zero(actualPostID)
 }
