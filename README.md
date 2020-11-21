@@ -60,5 +60,6 @@
     * Run all the test for each and every commit (objective of making a commit is when we are having a commit it should not have any errors, even though the commit related files are passing it is always better to run all tests).
     * Don't push the code if tests are failing and functionality doesn't have a test (test is mandatory, without test a feature shouldn't exist).
     * before pushing do a make format to make sure all the code are formatted properly
+    * Lets try not to comment codes in codebase instead if we want some code back for that only we have git we can get the code from the commit and chery pick it, which is one of the best practices :)
     
 **Please strictly follow the above dev practices which eventually helps to evolve as a good programmer** PS.(any fool can write code that a computer can understand but a good programmer write code that humans can understand - Martin Fowler)
