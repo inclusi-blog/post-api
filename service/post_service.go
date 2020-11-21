@@ -113,23 +113,31 @@ func (service postService) UpdateLikedBy(userID, postID string, ctx context.Cont
 
 	var likedByCount request.LikedByCount
 
-	id, err := service.repository.GetLikesIdByPost(ctx, postID, userID)
+	// Native Way of Liked By Implementation
+
+	// id, err := service.repository.GetLikesIdByPost(ctx, postID, userID)
+	// if err != nil {
+	// 	logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+	// 	return likedByCount, constants.StoryInternalServerError(err.Error())
+	// }
+	// if id == "" {
+	// 	err := service.repository.SaveUserToLikedBy(postID, userID, ctx)
+	// 	if err != nil {
+	// 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+	// 		return likedByCount, constants.StoryInternalServerError(err.Error())
+	// 	}
+	// } else {
+	// 	err := service.repository.RemoveUserFromLikedBy(postID, userID, ctx)
+	// 	if err != nil {
+	// 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+	// 		return likedByCount, constants.StoryInternalServerError(err.Error())
+	// 	}
+	// }
+
+	err := service.repository.AppendOrRemoveUserFromLikedBy(postID, userID, ctx)
 	if err != nil {
-		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
-	}
-	if id == "" {
-		err := service.repository.SaveUserToLikedBy(postID, userID, ctx)
-		if err != nil {
-			logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
-			return likedByCount, constants.StoryInternalServerError(err.Error())
-		}
-	} else {
-		err := service.repository.RemoveUserFromLikedBy(postID, userID, ctx)
-		if err != nil {
-			logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
-			return likedByCount, constants.StoryInternalServerError(err.Error())
-		}
 	}
 
 	likeCount, err := service.repository.GetLikeCountByPost(ctx, postID)
