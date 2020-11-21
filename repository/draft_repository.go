@@ -28,7 +28,7 @@ const (
 	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
 	FetchDraft       = "SELECT draft_id, user_id, tagline, preview_image, interest, post_data FROM DRAFTS WHERE draft_id = $1"
 	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
-	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 LIMIT $2 OFFSET $3 ORDER BY created_at DESC"
+	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
 )
 
 type draftRepository struct {
@@ -140,13 +140,20 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 
 	var allDraft []db.Draft
 
-	err := repository.db.SelectContext(ctx, &allDraft, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
+	rows, err := repository.db.QueryContext(ctx, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching all draft from draft repository %v", err)
 		return allDraft, err
 	}
 
+	for rows.Next() {
+		var draft db.Draft
+		if scanErr := rows.Scan(&draft.DraftID, &draft.UserID, &draft.Tagline, &draft.Interest, &draft.PostData); scanErr != nil {
+			return []db.Draft{}, scanErr
+		}
+		allDraft = append(allDraft, draft)
+	}
 	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
 
 	return allDraft, nil
