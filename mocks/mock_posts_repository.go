@@ -50,10 +50,10 @@ func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post interface{}) *go
 }
 
 // GetLikeCountByPost mocks base method
-func (m *MockPostsRepository) GetLikeCountByPost(ctx context.Context, postID string) (string, error) {
+func (m *MockPostsRepository) GetLikeCountByPost(ctx context.Context, postID int64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLikeCountByPost", ctx, postID)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -65,7 +65,7 @@ func (mr *MockPostsRepositoryMockRecorder) GetLikeCountByPost(ctx, postID interf
 }
 
 // AppendOrRemoveUserFromLikedBy mocks base method
-func (m *MockPostsRepository) AppendOrRemoveUserFromLikedBy(postID, userID string, ctx context.Context) error {
+func (m *MockPostsRepository) AppendOrRemoveUserFromLikedBy(postID, userID int64, ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AppendOrRemoveUserFromLikedBy", postID, userID, ctx)
 	ret0, _ := ret[0].(error)

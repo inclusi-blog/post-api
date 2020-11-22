@@ -1,7 +1,7 @@
 package request
 
 type LikedByCount struct {
-	LikeCount string `json:"like_count"`
+	LikeCount int64 `json:"like_count"`
 }
 
 type PostLikeRequest struct {

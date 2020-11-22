@@ -10,7 +10,6 @@ import (
 	"post-api/models/request"
 	"post-api/repository"
 	"post-api/utils"
-	"strconv"
 
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -133,13 +132,13 @@ func (service postService) LikePost(userID int64, postUID string, ctx context.Co
 
 	var likedByCount request.LikedByCount
 
-	err = service.repository.AppendOrRemoveUserFromLikedBy(strconv.FormatInt(postID, 10), strconv.FormatInt(userID, 10), ctx)
+	err = service.repository.AppendOrRemoveUserFromLikedBy(postID, userID, ctx)
 	if err != nil {
 		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
 	}
 
-	likeCount, err := service.repository.GetLikeCountByPost(ctx, strconv.FormatInt(postID, 10))
+	likeCount, err := service.repository.GetLikeCountByPost(ctx, postID)
 	if err != nil {
 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
