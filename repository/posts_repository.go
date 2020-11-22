@@ -15,8 +15,8 @@ import (
 
 type PostsRepository interface {
 	CreatePost(ctx context.Context, post db.PublishPost) (int64, error)
-	GetLikeCountByPost(ctx context.Context, postID string) (string, error)
-	AppendOrRemoveUserFromLikedBy(postID string, userID string, ctx context.Context) error
+	GetLikeCountByPost(ctx context.Context, postID int64) (int64, error)
+	AppendOrRemoveUserFromLikedBy(postID int64, userID int64, ctx context.Context) error
 	SaveInitialLike(ctx context.Context, postID int64) error
 	GetPostID(ctx context.Context, postUUID string) (int64, error)
 }
@@ -51,26 +51,25 @@ func (repository postRepository) CreatePost(ctx context.Context, post db.Publish
 	return postID, nil
 }
 
-func (repository postRepository) GetLikeCountByPost(ctx context.Context, postID string) (string, error) {
+func (repository postRepository) GetLikeCountByPost(ctx context.Context, postID int64) (int64, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "GetLikeCountByPost")
 
 	logger.Infof("Fetching likedby count from likes table for the given post id %v", postID)
 
-	var likeCount sql.NullString
+	var likeCount sql.NullInt64
 
 	err := repository.db.GetContext(ctx, &likeCount, GetLikedByCount, postID)
 
-	if err != nil && err.Error() != sql.ErrNoRows.Error() {
+	if err != nil {
 		logger.Errorf("Error occurred while fetching likedby count from likes table %v", err.Error())
-		return likeCount.String, err
+		return 0, err
 	}
 
 	logger.Infof("Successfully fetching likedby count from likes table for given post id %v", postID)
 
-	return likeCount.String, nil
+	return likeCount.Int64, nil
 }
-
-func (repository postRepository) AppendOrRemoveUserFromLikedBy(postID string, userID string, ctx context.Context) error {
+func (repository postRepository) AppendOrRemoveUserFromLikedBy(postID int64, userID int64, ctx context.Context) error {
 	logger := logging.GetLogger(ctx)
 	log := logger.WithField("class", "PostsRepository").WithField("method", "AppendOrRemoveUserFromLikedBy")
 
