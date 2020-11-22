@@ -22,16 +22,16 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 		DratID string `json:"draft_id" binding:"required"`
 	}
 
-	var request publishRequest
+	var publishPostRequest publishRequest
 
-	if err := ctx.ShouldBindBodyWith(&request, binding.JSON); err != nil {
-		logger.Errorf("Error occurred while binding request body %v", err)
+	if err := ctx.ShouldBindBodyWith(&publishPostRequest, binding.JSON); err != nil {
+		logger.Errorf("Error occurred while binding publishPostRequest body %v", err)
 		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
 		return
 	}
 
-	id := request.DratID
-	logger.Infof("Successfully bind request body for draft id %v", id)
+	id := publishPostRequest.DratID
+	logger.Infof("Successfully bind publishPostRequest body for draft id %v", id)
 
 	publishErr := controller.postService.PublishPost(ctx, id)
 
