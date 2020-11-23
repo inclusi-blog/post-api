@@ -26,7 +26,7 @@ type DraftController struct {
 // @Failure 400
 // @Failure 500
 // @Router /api/post/v1/draft/upsertDraft [post]
-func (draftController DraftController) SaveDraft(ctx *gin.Context) {
+func (controller DraftController) SaveDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "SavePostDraft")
@@ -44,7 +44,7 @@ func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with upsert draft request for user %v", "12")
 
-	draftSaveErr := draftController.service.SaveDraft(upsertPost, ctx)
+	draftSaveErr := controller.service.SaveDraft(upsertPost, ctx)
 
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving draft for user %v. Error %v", "12", draftSaveErr)
@@ -57,7 +57,7 @@ func (draftController DraftController) SaveDraft(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (draftController DraftController) SaveTagline(ctx *gin.Context) {
+func (controller DraftController) SaveTagline(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "SaveTagline")
@@ -75,7 +75,7 @@ func (draftController DraftController) SaveTagline(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with save tagline request for user %v", "12")
 
-	draftSaveErr := draftController.service.UpsertTagline(upsertTagline, ctx)
+	draftSaveErr := controller.service.UpsertTagline(upsertTagline, ctx)
 
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
@@ -88,7 +88,7 @@ func (draftController DraftController) SaveTagline(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (draftController DraftController) SaveInterests(ctx *gin.Context) {
+func (controller DraftController) SaveInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "SaveInterests")
@@ -106,7 +106,7 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with save interests request for user %v", "12")
 
-	draftSaveErr := draftController.service.UpsertInterests(upsertInterests, ctx)
+	draftSaveErr := controller.service.UpsertInterests(upsertInterests, ctx)
 
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving interests for user %v. Error %v", "12", draftSaveErr)
@@ -120,7 +120,7 @@ func (draftController DraftController) SaveInterests(ctx *gin.Context) {
 }
 
 // TODO need to change it to path param also need to cover service failure test case
-func (draftController DraftController) GetDraft(ctx *gin.Context) {
+func (controller DraftController) GetDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "GetDraft")
@@ -137,7 +137,7 @@ func (draftController DraftController) GetDraft(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with get draft request for user %v", "12")
 
-	draftData, draftSaveErr := draftController.service.GetDraft(draftUID, ctx)
+	draftData, draftSaveErr := controller.service.GetDraft(draftUID, ctx)
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
@@ -149,7 +149,7 @@ func (draftController DraftController) GetDraft(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, draftData)
 }
 
-func (draftController DraftController) SavePreviewImage(ctx *gin.Context) {
+func (controller DraftController) SavePreviewImage(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "SavePreviewImage")
@@ -166,7 +166,7 @@ func (draftController DraftController) SavePreviewImage(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with image save request for user %v", "12")
 
-	imageSaveErr := draftController.service.SavePreviewImage(imageSaveRequest, ctx)
+	imageSaveErr := controller.service.SavePreviewImage(imageSaveRequest, ctx)
 	if imageSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving image for user %v. Error %v", "12", imageSaveErr)
 		constants.RespondWithGolaError(ctx, imageSaveErr)
@@ -180,7 +180,7 @@ func (draftController DraftController) SavePreviewImage(ctx *gin.Context) {
 	})
 }
 
-func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
+func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
 	log := logger.WithField("class", "DraftController").WithField("method", "GetAllDraft")
@@ -198,7 +198,7 @@ func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with get all draft request for user %v", "12")
 
-	allDraftData, draftSaveErr := draftController.service.GetAllDraft(allDraftReq, ctx)
+	allDraftData, draftSaveErr := controller.service.GetAllDraft(allDraftReq, ctx)
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftSaveErr)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
@@ -209,6 +209,7 @@ func (draftController DraftController) GetAllDraft(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, allDraftData)
 }
+
 func NewDraftController(service service.DraftService) DraftController {
 	return DraftController{
 		service: service,
