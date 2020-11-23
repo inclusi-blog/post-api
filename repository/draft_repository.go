@@ -4,6 +4,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"post-api/models"
 	"post-api/models/db"
@@ -20,6 +21,7 @@ type DraftRepository interface {
 	GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error)
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
+	DeleteDraft(ctx context.Context, draftUID string) error
 }
 
 const (
@@ -29,6 +31,7 @@ const (
 	FetchDraft       = "SELECT draft_id, user_id, tagline, preview_image, interest, post_data FROM DRAFTS WHERE draft_id = $1"
 	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
 	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+	DeleteDraft      = "DELETE FROM drafts where draft_id = $1"
 )
 
 type draftRepository struct {
@@ -115,7 +118,6 @@ func (repository draftRepository) SaveTaglineToDraft(taglineSaveRequest request.
 	return nil
 }
 
-// TODO Need test for this
 func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveInterestsToDraft")
 	logger.Info("Inserting interests or upserting to the draft for the given draft id")
@@ -132,7 +134,6 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 	return nil
 }
 
-// This method is for getting all the drafts of specific user
 func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "GetAllDraft")
 
@@ -157,6 +158,32 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
 
 	return allDraft, nil
+}
+
+func (repository draftRepository) DeleteDraft(ctx context.Context, draftUID string) error {
+	logger := logging.GetLogger(ctx).WithField("class", "").WithField("method", "DeleteDraft")
+
+	logger.Infof("Deleting draft for the given draft uid %v", draftUID)
+
+	result, err := repository.db.ExecContext(ctx, DeleteDraft, draftUID)
+
+	if err != nil {
+		logger.Errorf("error occurred while deleting draft from draft repository for draft id %v", draftUID)
+		return err
+	}
+	affectedRows, err := result.RowsAffected()
+
+	if err != nil {
+		logger.Errorf("error occurred while fetchin affected rows for delete draft for draft id %v", draftUID)
+		return err
+	}
+
+	if affectedRows != 1 {
+		logger.Errorf("draft not found or more than on draft deleted for draft id %v", draftUID)
+		return sql.ErrNoRows
+	}
+	logger.Info("Successfully deleted draft")
+	return nil
 }
 
 func NewDraftRepository(db *sqlx.DB) DraftRepository {

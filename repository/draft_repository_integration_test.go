@@ -32,15 +32,15 @@ func (suite *DraftRepositoryIntegrationTest) SetupTest() {
 	err := godotenv.Load("../docker-compose-test.env")
 	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
-	db, err := sqlx.Open("postgres", connectionString)
+	database, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		panic(fmt.Sprintln("Could not connect to test DB", err))
 	}
-	fmt.Print(db)
-	suite.db = db
+	fmt.Print(database)
+	suite.db = database
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
-	suite.draftRepository = NewDraftRepository(db)
-	suite.dbHelper = helper.NewDbHelper(db)
+	suite.draftRepository = NewDraftRepository(database)
+	suite.dbHelper = helper.NewDbHelper(database)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TearDownTest() {
@@ -268,6 +268,7 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasNoValues()
 	suite.Zero(len(res))
 
 }
+
 func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasValues() {
 
 	getAllDraftRequest := models.GetAllDraftRequest{UserID: "3", StartValue: 0, Limit: 3}
@@ -323,7 +324,7 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultiple
 
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesForInbetweenPages() {
+func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesForInBetweenPages() {
 
 	getAllDraftRequest := models.GetAllDraftRequest{UserID: "3", StartValue: 1, Limit: 3}
 
@@ -379,4 +380,25 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftN
 	interestErr := suite.draftRepository.SaveInterestsToDraft(interstRequest, suite.goContext)
 	suite.Nil(interestErr)
 
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenDbDeletesDraft() {
+	draft := models.UpsertDraft{
+		DraftID: "q2w3e4r5t6y1",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.TitleTestDataMoreThan100Len),
+		},
+	}
+	err := suite.draftRepository.SavePostDraft(draft, suite.goContext)
+	suite.Nil(err)
+
+	err = suite.draftRepository.DeleteDraft(suite.goContext, "q2w3e4r5t6y1")
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenNoDraftFound() {
+	err := suite.draftRepository.DeleteDraft(suite.goContext, "q2w3e4r5t6y1")
+	suite.NotNil(err)
+	suite.Equal(sql.ErrNoRows, err)
 }
