@@ -3,6 +3,8 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"net/http/httptest"
 	"post-api/constants"
@@ -10,6 +12,8 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
+	"post-api/service/test_helper"
+	"post-api/validators"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +37,9 @@ func (suite *DraftControllerTest) SetupTest() {
 	suite.recorder = httptest.NewRecorder()
 	suite.context, _ = gin.CreateTestContext(suite.recorder)
 	suite.draftController = NewDraftController(suite.mockDraftService)
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("validPostUID", validators.ValidPostUID)
+	}
 }
 
 func (suite *DraftControllerTest) TearDownTest() {
@@ -149,8 +156,6 @@ func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
 }
 
-// SaveInterests Test Scripts
-
 func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
 	newInterest := request.InterestsSaveRequest{
 		Interests: models.JSONString{
@@ -191,8 +196,6 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
-
-// GetDraft Test Scripts
 
 func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	DraftID := "121212"
@@ -284,8 +287,6 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenServiceFails() {
 	suite.Equal(string(bytesData), string(suite.recorder.Body.Bytes()))
 }
 
-// GetAllDraft Test Scripts
-
 func (suite *DraftControllerTest) TestGetAllDraft_WhenAPISuccess() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
@@ -312,4 +313,78 @@ func (suite *DraftControllerTest) TestGetAllDraft_WhenBadRequest() {
 
 	suite.draftController.GetAllDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestDeleteDraft_WhenSuccess() {
+	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/q2w3e4r5t6y7", nil)
+	params := gin.Params{
+		gin.Param{
+			Key:   "draft_id",
+			Value: "q2w3e4r5t6y7",
+		},
+	}
+	suite.context.Params = params
+
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(nil).Times(1)
+
+	suite.draftController.DeleteDraft(suite.context)
+
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+	suite.Equal(`{"status":"deleted"}`, suite.recorder.Body.String())
+}
+
+func (suite *DraftControllerTest) TestDeleteDraft_WhenBadRequest() {
+	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/1", nil)
+
+	suite.mockDraftService.EXPECT().DeleteDraft("1", suite.context).Return(nil).Times(0)
+
+	jsonBytes, err := json.Marshal(&constants.PayloadValidationError)
+	suite.Nil(err)
+
+	suite.draftController.DeleteDraft(suite.context)
+
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+}
+
+func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithNotFound() {
+	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/q2w3e4r5t6y7", nil)
+	params := gin.Params{
+		gin.Param{
+			Key:   "draft_id",
+			Value: "q2w3e4r5t6y7",
+		},
+	}
+	suite.context.Params = params
+
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(&constants.NoDraftFoundError).Times(1)
+
+	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
+	suite.Nil(err)
+
+	suite.draftController.DeleteDraft(suite.context)
+
+	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+}
+
+func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithGenericError() {
+	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/q2w3e4r5t6y7", nil)
+	params := gin.Params{
+		gin.Param{
+			Key:   "draft_id",
+			Value: "q2w3e4r5t6y7",
+		},
+	}
+	suite.context.Params = params
+
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	jsonBytes, err := json.Marshal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong))
+	suite.Nil(err)
+
+	suite.draftController.DeleteDraft(suite.context)
+
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 }

@@ -210,6 +210,34 @@ func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, allDraftData)
 }
 
+func (controller DraftController) DeleteDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "DeleteDraft")
+
+	logger.Info("Entering the controller layer to delete draft")
+
+	var draftDeleteRequest request.DraftDeleteRequest
+
+	if err := ctx.ShouldBindUri(&draftDeleteRequest); err != nil {
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Successfully bind request uri with draft delete request for draft id %v", draftDeleteRequest.DraftID)
+
+	err := controller.service.DeleteDraft(draftDeleteRequest.DraftID, ctx)
+
+	if err != nil {
+		logger.Errorf("error occurred while deleting draft for draft id %v", draftDeleteRequest.DraftID)
+		constants.RespondWithGolaError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "deleted",
+	})
+	return
+}
+
 func NewDraftController(service service.DraftService) DraftController {
 	return DraftController{
 		service: service,
