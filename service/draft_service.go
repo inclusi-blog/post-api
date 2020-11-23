@@ -133,7 +133,7 @@ func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, c
 
 	var allDraftData []db.AllDraft
 
-	DraftData, err := service.draftRepository.GetAllDraft(ctx, allDraftReq)
+	draftData, err := service.draftRepository.GetAllDraft(ctx, allDraftReq)
 	if err != nil {
 		logger.Errorf("Error occurred while getting all draft from repository %v", err)
 		if err == sql.ErrNoRows {
@@ -143,22 +143,22 @@ func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, c
 		return allDraftData, &constants.PostServiceFailureError
 	}
 
-	for _, val := range DraftData {
+	for _, dbDraft := range draftData {
 		var draft db.AllDraft
-		draft.DraftID = val.DraftID
-		draft.PostData = val.PostData
-		draft.Tagline = val.Tagline
-		draft.Interest = val.Interest
-		draft.UserID = val.UserID
+		draft.DraftID = dbDraft.DraftID
+		draft.PostData = dbDraft.PostData
+		draft.Tagline = dbDraft.Tagline
+		draft.Interest = dbDraft.Interest
+		draft.UserID = dbDraft.UserID
 
-		title, err := utils.GetTitleFromSlateJson(ctx, val.PostData)
+		title, err := utils.GetTitleFromSlateJson(ctx, dbDraft.PostData)
 		if err != nil {
-			logger.Errorf("Error occurred while converting title json to string %v .%v", val.DraftID, err)
+			logger.Errorf("Error occurred while converting title json to string %v .%v", dbDraft.DraftID, err)
 			return allDraftData, &constants.ConvertTitleToStringError
 		}
 
 		draft.TitleData = title
-
+		allDraftData = append(allDraftData, draft)
 	}
 
 	logger.Info("Successfully stored got draft details")

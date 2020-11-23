@@ -9,6 +9,7 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
+	"post-api/service/test_helper"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -243,8 +244,6 @@ func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
 }
 
-//GetAllDraft Tests
-
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError() {
 	allDraftReq := models.GetAllDraftRequest{
 		UserID:     "1",
@@ -252,39 +251,79 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 		Limit:      5,
 	}
 
-	var allDraftActual []db.AllDraft
-	var allDraft []db.Draft
+	tagline := "My first Data"
+	previewImage := "some preview image"
 
-	var allDraftExpected []db.AllDraft
-
-	tmpTagline := "My first Data"
-
-	draft := db.AllDraft{
-		DraftID:   "121212",
-		UserID:    "12",
-		PostData:  models.JSONString{},
-		TitleData: "https://some-url.com",
-		Tagline:   &tmpTagline,
-		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	draft := []db.Draft{
+		{
+			DraftID: "q2w3e4r5u78i",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			PreviewImage: &previewImage,
+			Tagline:      &tagline,
+			Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
+		{
+			DraftID: "q2w3e4r5u781",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			PreviewImage: &previewImage,
+			Tagline:      &tagline,
+			Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
+		{
+			DraftID: "q2w3e4r5u782",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			PreviewImage: &previewImage,
+			Tagline:      &tagline,
+			Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
 	}
 
-	allDraftActual = append(allDraftActual, draft)
-
-	expectedDraft := db.AllDraft{
-		DraftID:   "121212",
-		UserID:    "12",
-		PostData:  models.JSONString{},
-		TitleData: "https://some-url.com",
-		Tagline:   &tmpTagline,
-		Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+	expectedDraft := []db.AllDraft{
+		{
+			DraftID: "q2w3e4r5u78i",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
+			Tagline:   &tagline,
+			Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
+		{
+			DraftID: "q2w3e4r5u781",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
+			Tagline:   &tagline,
+			Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
+		{
+			DraftID: "q2w3e4r5u782",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(test_helper.LargeTextData),
+			},
+			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
+			Tagline:   &tagline,
+			Interest:  models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
 	}
 
-	allDraftExpected = append(allDraftExpected, expectedDraft)
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draft, nil).Times(1)
 
-	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, nil).Times(1)
-
-	allDraftExpected, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
-	suite.Equal(allDraftExpected, allDraftExpected)
+	allDraftActual, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Equal(expectedDraft, allDraftActual)
 	suite.Nil(expectedError)
 }
 
@@ -294,15 +333,43 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsError()
 		StartValue: 1,
 		Limit:      5,
 	}
-	var expectedDraft []db.AllDraft
-	var allDraft []db.Draft
-
-	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, errors.New("something went wrong")).Times(1)
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return([]db.Draft{}, errors.New("something went wrong")).Times(1)
 
 	draftData, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
-	suite.Equal(expectedDraft, draftData)
+	suite.Nil(draftData)
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
+}
+
+func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsInvalidData() {
+	allDraftReq := models.GetAllDraftRequest{
+		UserID:     "1",
+		StartValue: 1,
+		Limit:      5,
+	}
+
+	tagline := "My first Data"
+	previewImage := "some preview image"
+
+	draft := []db.Draft{
+		{
+			DraftID: "q2w3e4r5u78i",
+			UserID:  "12",
+			PostData: models.JSONString{
+				JSONText: types.JSONText(`{`),
+			},
+			PreviewImage: &previewImage,
+			Tagline:      &tagline,
+			Interest:     models.JSONString{JSONText: types.JSONText(`[{"id": "1","name":"sports"},{"id":"2","name":"economy"}]`)},
+		},
+	}
+
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draft, nil).Times(1)
+
+	allDraftActual, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Nil(allDraftActual)
+	suite.NotNil(expectedError)
+	suite.Equal(&constants.ConvertTitleToStringError, expectedError)
 }
 
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoRowError() {
@@ -312,13 +379,10 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoRowEr
 		Limit:      5,
 	}
 
-	var expectedDraft []db.AllDraft
-	var allDraft []db.Draft
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return([]db.Draft{}, sql.ErrNoRows).Times(1)
 
-	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(allDraft, sql.ErrNoRows).Times(1)
-
-	draftData, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
-	suite.Equal(expectedDraft, draftData)
+	actualDrafts, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
+	suite.Nil(actualDrafts)
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.NoDraftFoundError, expectedError)
 }
