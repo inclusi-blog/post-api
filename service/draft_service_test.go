@@ -101,7 +101,6 @@ func (suite *DraftServiceTest) TestUpsertTagline_WhenDraftRepositoryReturnsError
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
 
-//UpsertInterests Tests
 func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsNoError() {
 	saveRequest := request.InterestsSaveRequest{
 		Interests: models.JSONString{
@@ -152,8 +151,6 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
-
-//GetDraft Tests
 
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() {
 	draftID := "121212"
@@ -385,4 +382,27 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoRowEr
 	suite.Nil(actualDrafts)
 	suite.NotNil(expectedError)
 	suite.Equal(&constants.NoDraftFoundError, expectedError)
+}
+
+func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnNoError() {
+	suite.mockDraftRepository.EXPECT().DeleteDraft(suite.goContext, "qwertyuiop12").Return(nil).Times(1)
+
+	err := suite.draftService.DeleteDraft("qwertyuiop12", suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnsNotFoundError() {
+	suite.mockDraftRepository.EXPECT().DeleteDraft(suite.goContext, "qwertyuiop12").Return(sql.ErrNoRows).Times(1)
+
+	err := suite.draftService.DeleteDraft("qwertyuiop12", suite.goContext)
+	suite.NotNil(err)
+	suite.Equal(&constants.NoDraftFoundError, err)
+}
+
+func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnsGenericError() {
+	suite.mockDraftRepository.EXPECT().DeleteDraft(suite.goContext, "qwertyuiop12").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	err := suite.draftService.DeleteDraft("qwertyuiop12", suite.goContext)
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
 }
