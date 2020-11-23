@@ -20,6 +20,6 @@ type PreviewImageSaveRequest struct {
 	PreviewImageUrl string `json:"preview_image" binding:"required" db:"preview_image"`
 }
 
-type DraftDeleteRequest struct {
+type DraftURIRequest struct {
 	DraftID string `uri:"draft_id" binding:"required,validPostUID"`
 }

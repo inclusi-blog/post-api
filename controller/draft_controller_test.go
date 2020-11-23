@@ -198,30 +198,51 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 }
 
 func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
-	DraftID := "121212"
+	DraftID := "q3w4e5r5t6y7"
 	params := gin.Params{
 		gin.Param{
 			Key:   "draft_id",
-			Value: "121212",
+			Value: "q3w4e5r5t6y7",
 		},
 	}
 	suite.context.Params = params
 
 	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(1)
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/121212", nil)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
 
 func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
-	DraftID := ""
+	DraftID := "q3w4e5r5t6y"
 
 	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(0)
 
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft", nil)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y", nil)
 
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestGetDraft_WhenServiceFails() {
+	DraftID := "q3w4e5r5t6y7"
+	params := gin.Params{
+		gin.Param{
+			Key:   "draft_id",
+			Value: "q3w4e5r5t6y7",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
+	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
+	suite.Nil(err)
+
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, &constants.NoDraftFoundError).Times(1)
+
+	suite.draftController.GetDraft(suite.context)
+
+	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 }
 
 func (suite *DraftControllerTest) TestSavePreviewImage_WhenAPISuccess() {
