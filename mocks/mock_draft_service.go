@@ -122,3 +122,17 @@ func (mr *MockDraftServiceMockRecorder) SavePreviewImage(imageSaveRequest, ctx i
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePreviewImage", reflect.TypeOf((*MockDraftService)(nil).SavePreviewImage), imageSaveRequest, ctx)
 }
+
+// DeleteDraft mocks base method
+func (m *MockDraftService) DeleteDraft(draftID string, ctx context.Context) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDraft", draftID, ctx)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// DeleteDraft indicates an expected call of DeleteDraft
+func (mr *MockDraftServiceMockRecorder) DeleteDraft(draftID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), draftID, ctx)
+}

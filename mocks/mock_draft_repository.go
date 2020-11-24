@@ -121,3 +121,17 @@ func (mr *MockDraftRepositoryMockRecorder) UpsertPreviewImage(ctx, saveRequest i
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPreviewImage", reflect.TypeOf((*MockDraftRepository)(nil).UpsertPreviewImage), ctx, saveRequest)
 }
+
+// DeleteDraft mocks base method
+func (m *MockDraftRepository) DeleteDraft(ctx context.Context, draftUID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDraft", ctx, draftUID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteDraft indicates an expected call of DeleteDraft
+func (mr *MockDraftRepositoryMockRecorder) DeleteDraft(ctx, draftUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftRepository)(nil).DeleteDraft), ctx, draftUID)
+}

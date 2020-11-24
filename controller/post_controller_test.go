@@ -84,7 +84,7 @@ func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
 	postID := "q2w3e4r5tqaz"
 
-	likeCount := request.LikedByCount{LikeCount: "1"}
+	likeCount := request.LikedByCount{LikeCount: 1}
 	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(1)
 
 	params := gin.Params{
@@ -105,7 +105,7 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
 func (suite *PostControllerTest) TestUpdateLikes_WhenBadRequest() {
 	postID := "1"
 
-	likeCount := request.LikedByCount{LikeCount: "1"}
+	likeCount := request.LikedByCount{LikeCount: 1}
 	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(0)
 
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/1", nil)
