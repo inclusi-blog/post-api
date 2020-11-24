@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
+	github.com/go-playground/validator/v10 v10.2.0
 	github.com/gola-glitch/gola-utils v0.0.0-20201109184203-f981778adb53
 	github.com/golang/mock v1.4.3
 	github.com/jmoiron/sqlx v1.2.0
