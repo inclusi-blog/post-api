@@ -49,7 +49,8 @@ create-db:
 start-db: create-db create_user run_migration run_test_migration
 
 stop-db:
-	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v && \
+	docker rmi post-migration && docker rmi post-api && docker image prune -f || true
 
 publish: docker_login
 	docker tag post-api $(ARTIFACTORY_USER)/post-api:$(REVISION); \
@@ -64,7 +65,8 @@ start-with-tracer: create-db create_user run_migration run_test_migration build
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml -f docker-compose-tracing.yaml up -d
 
 stop:
-	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v
+	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml down -v && \
+	docker rmi post-migration && docker rmi post-api && docker image prune -f || true
 
 test: install_deps
 	docker-compose -f docker-compose.test.yml \
