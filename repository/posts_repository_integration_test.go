@@ -227,3 +227,57 @@ func (suite *PostsRepositoryIntegrationTest) TestGetLikeCountByPost_WhenInValidP
 	suite.Equal(int64(0), likeCount)
 
 }
+
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsAPostAvailable() {
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r42",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+
+	suite.Nil(err)
+	err = suite.postsRepository.SaveInitialComment(suite.goContext, postID)
+	suite.Nil(err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsNoPostAvailable() {
+	err := suite.postsRepository.SaveInitialComment(suite.goContext, 1)
+	suite.NotNil(err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenInValidPostID() {
+
+	post := db.PublishPost{
+		PUID:   "1q323e4r4e43",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+	suite.Nil(err)
+
+	saveLikeErr := suite.postsRepository.SaveInitialComment(suite.goContext, postID)
+	suite.Nil(saveLikeErr)
+
+	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, postID)
+	suite.Nil(err)
+
+	suite.Equal("[]", comments)
+
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenThereIsNoPostAvailable() {
+	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, 111)
+	suite.NotNil(sql.ErrNoRows, err)
+	suite.Equal("", comments)
+}

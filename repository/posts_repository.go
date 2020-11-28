@@ -19,6 +19,8 @@ type PostsRepository interface {
 	AppendOrRemoveUserFromLikedBy(postID int64, userID int64, ctx context.Context) error
 	SaveInitialLike(ctx context.Context, postID int64) error
 	GetPostID(ctx context.Context, postUUID string) (int64, error)
+	GetCommentsByPostID(ctx context.Context, postID int64) (string, error)
+	SaveInitialComment(ctx context.Context, postID int64) error
 }
 
 type postRepository struct {
@@ -31,6 +33,8 @@ const (
 	UpdateOrRemoveLikedBy = "UPDATE likes SET liked_by = case when (SELECT count(id) as id  FROM likes WHERE post_id=$1 AND $2=ANY(liked_by)) = '1' then array_remove(liked_by, $2) else array_append(liked_by, $2) end where post_id = $1"
 	InitialLike           = "INSERT INTO likes (liked_by, post_id) VALUES ('{}', $1)"
 	FetchPostID           = "SELECT id as postID FROM posts WHERE puid = $1"
+	GetCommentsByPostID   = "SELECT comments FROM comments WHERE post_id = $1"
+	InitialComment        = "INSERT INTO comments (comments, post_id) VALUES ('[]', $1)"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) (int64, error) {
@@ -126,6 +130,49 @@ func (repository postRepository) GetPostID(ctx context.Context, postUUID string)
 
 	logger.Info("Successfully fetched post id from post table for given post uid")
 	return postID, nil
+}
+
+func (repository postRepository) GetCommentsByPostID(ctx context.Context, postID int64) (string, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "GetCommentsByPostID")
+
+	logger.Infof("Fetching comments for given post id %v", postID)
+	var comments sql.NullString
+	err := repository.db.GetContext(ctx, &comments, GetCommentsByPostID, postID)
+
+	if err != nil {
+		logger.Errorf("error occurred while fetching comments from comments table for give post uid %v Error: %v", postID, err)
+		return comments.String, err
+	}
+
+	logger.Info("Successfully fetched comments from comments table for given post uid")
+	return comments.String, nil
+}
+
+func (repository postRepository) SaveInitialComment(ctx context.Context, postID int64) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "SaveInitialComment")
+
+	logger.Infof("saving initial empty comment for post id %v", postID)
+	result, err := repository.db.ExecContext(ctx, InitialComment, postID)
+
+	if err != nil {
+		logger.Errorf("Error occurred while saving initial comments for post id %v", postID)
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+
+	if err != nil {
+		logger.Errorf("Error occurred while getting the affected rows for post initial comments insert %v", postID)
+		return err
+	}
+
+	if affected != 1 {
+		return errors.New(fmt.Sprintf("more than one row or nor row affected for post id %v ,affected rows %v", postID, affected))
+	}
+
+	logger.Infof("One row affected for inserting initial comments for post id %v", postID)
+
+	return nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {
