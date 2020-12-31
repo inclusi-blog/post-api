@@ -78,3 +78,17 @@ func (mr *MockPostServiceMockRecorder) UnlikePost(userId, postId, ctx interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlikePost", reflect.TypeOf((*MockPostService)(nil).UnlikePost), userId, postId, ctx)
 }
+
+// CommentPost mocks base method
+func (m *MockPostService) CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommentPost", ctx, userId, postId, comment)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// CommentPost indicates an expected call of CommentPost
+func (mr *MockPostServiceMockRecorder) CommentPost(ctx, userId, postId, comment interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommentPost", reflect.TypeOf((*MockPostService)(nil).CommentPost), ctx, userId, postId, comment)
+}

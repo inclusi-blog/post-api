@@ -13,6 +13,7 @@ import (
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models/response"
+	"post-api/service/test_helper"
 	"post-api/validators"
 	"testing"
 )
@@ -243,4 +244,42 @@ func (suite *PostControllerTest) TestUnlike_WhenUnlikeUpdateServiceFailsWithNotF
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestComment_WhenSuccess() {
+	commentRequest := `{"post_uid": "1q2w3e4r5t6y","comment": "this is some comment"}`
+	suite.mockPostService.EXPECT().CommentPost(suite.context, "some-user", "1q2w3e4r5t6y", "this is some comment").Return(nil).Times(1)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/comment", bytes.NewBufferString(commentRequest))
+
+	suite.postController.Comment(suite.context)
+
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestComment_WhenBadRequest() {
+	commentRequest := `{"comment": "this is some comment"}`
+	suite.mockPostService.EXPECT().CommentPost(suite.context, "some-user", "1q2w3e4r5t6y", "this is some comment").Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/comment", bytes.NewBufferString(commentRequest))
+
+	suite.postController.Comment(suite.context)
+	expectedErr := &constants.PayloadValidationError
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	suite.Equal(string(marshal), suite.recorder.Body.String())
+}
+
+func (suite *PostControllerTest) TestComment_WhenPostServiceCommentFails() {
+	commentRequest := `{"post_uid": "1q2w3e4r5t6y","comment": "this is some comment"}`
+	suite.mockPostService.EXPECT().CommentPost(suite.context, "some-user", "1q2w3e4r5t6y", "this is some comment").Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/comment", bytes.NewBufferString(commentRequest))
+
+	suite.postController.Comment(suite.context)
+	marshal, err := json.Marshal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong))
+	suite.Nil(err)
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	suite.Equal(string(marshal), suite.recorder.Body.String())
 }

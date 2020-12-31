@@ -18,6 +18,7 @@ type PostService interface {
 	PublishPost(ctx context.Context, draftUID, userId string) *golaerror.Error
 	LikePost(userID string, postID string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
 	UnlikePost(userId string, postId string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
+	CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error
 }
 
 type postService struct {
@@ -119,7 +120,7 @@ func (service postService) UnlikePost(userId string, postId string, ctx context.
 
 	var likedByCount response.LikedByCount
 
-	err := service.repository.UnlikePost(ctx,userId, postId)
+	err := service.repository.UnlikePost(ctx, userId, postId)
 	if err != nil {
 		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
@@ -134,6 +135,21 @@ func (service postService) UnlikePost(userId string, postId string, ctx context.
 	likedByCount.LikeCount = likeCount
 
 	return likedByCount, nil
+}
+
+func (service postService) CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "CommentPost")
+	logger.Infof("Commenting on post %v by user %v", postId, userId)
+
+	err := service.repository.CommentPost(ctx, userId, comment, postId)
+
+	if err != nil {
+		logger.Errorf("Error occurred while user %v commenting on post %v", userId, postId)
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully commented on post %v by user %v", postId, userId)
+	return nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator) PostService {

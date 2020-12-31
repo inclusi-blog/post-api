@@ -317,3 +317,15 @@ func (suite *PostServiceTest) TestUnlikePost_WhenGetCountByPostFails() {
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
 	suite.Equal(response.LikedByCount{}, likeCount)
 }
+
+func (suite *PostServiceTest) TestComment_WhenRepositoryCommentFails() {
+	suite.mockPostsRepository.EXPECT().CommentPost(suite.goContext, "some-user", "this is some comment", "1q2w3e4r5t6y").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	err := suite.postService.CommentPost(suite.goContext, "some-user", "1q2w3e4r5t6y", "this is some comment")
+	suite.NotNil(err)
+}
+
+func (suite *PostServiceTest) TestComment_WhenRepositoryCommentReturnsNoError() {
+	suite.mockPostsRepository.EXPECT().CommentPost(suite.goContext, "some-user", "this is some comment", "1q2w3e4r5t6y").Return(nil).Times(1)
+	err := suite.postService.CommentPost(suite.goContext, "some-user", "1q2w3e4r5t6y", "this is some comment")
+	suite.Nil(err)
+}

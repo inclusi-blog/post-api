@@ -103,6 +103,34 @@ func (controller PostController) Unlike(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+func (controller PostController) Comment(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "Comment")
+	logger.Infof("Entering controller to comment on post")
+
+	var commentRequest request.CommentPost
+
+	err := ctx.ShouldBindBodyWith(&commentRequest, binding.JSON)
+
+	if err != nil {
+		logger.Errorf("Error occurred while binding commentRequest body %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Successfully bind body with post comment request by user %v", "some-user")
+
+	commentErr := controller.postService.CommentPost(ctx, "some-user", commentRequest.PostUID, commentRequest.Comment)
+
+	if commentErr != nil {
+		logger.Errorf("Error occurred while commenting on post by user %v, Error %v", "some-user", commentErr)
+		constants.RespondWithGolaError(ctx, commentErr)
+		return
+	}
+
+	logger.Infof("Successfully commented on post %v", commentRequest.PostUID)
+	ctx.Status(http.StatusOK)
+}
+
 func NewPostController(postService service.PostService) PostController {
 	return PostController{postService: postService}
 }
