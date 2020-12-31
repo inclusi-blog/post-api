@@ -69,6 +69,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	postGroup := defaultRouterGroup.Group("/post")
 	{
 		postGroup.POST("/publish", postController.PublishPost)
-		postGroup.GET("/update-likes/:post_id", postController.UpdateLikes)
+		postGroup.GET("/:post_id/like", postController.Like)
+		postGroup.GET("/:post_id/unlike", postController.Unlike)
 	}
 }

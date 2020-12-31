@@ -6,7 +6,7 @@ import (
 	"context"
 	"post-api/constants"
 	"post-api/models/db"
-	"post-api/models/request"
+	"post-api/models/response"
 	"post-api/repository"
 	"post-api/utils"
 
@@ -16,7 +16,8 @@ import (
 
 type PostService interface {
 	PublishPost(ctx context.Context, draftUID, userId string) *golaerror.Error
-	LikePost(userID string, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
+	LikePost(userID string, postID string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
+	UnlikePost(userId string, postId string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
 }
 
 type postService struct {
@@ -89,11 +90,11 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 	return nil
 }
 
-func (service postService) LikePost(userID string, postUID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+func (service postService) LikePost(userID string, postUID string, ctx context.Context) (response.LikedByCount, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "LikePost")
 	logger.Infof("Saving post data to draft repository")
 
-	var likedByCount request.LikedByCount
+	var likedByCount response.LikedByCount
 
 	err := service.repository.LikePost(postUID, userID, ctx)
 	if err != nil {
@@ -102,6 +103,29 @@ func (service postService) LikePost(userID string, postUID string, ctx context.C
 	}
 
 	likeCount, err := service.repository.GetLikesCountByPostID(ctx, postUID)
+	if err != nil {
+		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
+		return likedByCount, constants.StoryInternalServerError(err.Error())
+	}
+
+	likedByCount.LikeCount = likeCount
+
+	return likedByCount, nil
+}
+
+func (service postService) UnlikePost(userId string, postId string, ctx context.Context) (response.LikedByCount, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "LikePost")
+	logger.Infof("Saving post data to draft repository")
+
+	var likedByCount response.LikedByCount
+
+	err := service.repository.UnlikePost(ctx,userId, postId)
+	if err != nil {
+		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
+		return likedByCount, constants.StoryInternalServerError(err.Error())
+	}
+
+	likeCount, err := service.repository.GetLikesCountByPostID(ctx, postId)
 	if err != nil {
 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())

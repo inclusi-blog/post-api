@@ -7,7 +7,7 @@ import (
 	"post-api/mocks"
 	"post-api/models"
 	"post-api/models/db"
-	"post-api/models/request"
+	"post-api/models/response"
 	"post-api/service/test_helper"
 	"testing"
 
@@ -244,7 +244,7 @@ func (suite *PostServiceTest) TestLikePost_WhenSuccess() {
 	suite.mockPostsRepository.EXPECT().LikePost(postUUID, "some-user", suite.goContext).Return(nil).Times(1)
 	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
 
-	expectedCount := request.LikedByCount{LikeCount: 1}
+	expectedCount := response.LikedByCount{LikeCount: 1}
 
 	likeCount, err := suite.postService.LikePost("some-user", postUUID, suite.goContext)
 
@@ -262,7 +262,7 @@ func (suite *PostServiceTest) TestLikePost_WhenRepositoryLikePostFails() {
 
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(request.LikedByCount{}, likeCount)
+	suite.Equal(response.LikedByCount{}, likeCount)
 }
 
 func (suite *PostServiceTest) TestLikePost_WhenGetCountByPostFails() {
@@ -275,5 +275,45 @@ func (suite *PostServiceTest) TestLikePost_WhenGetCountByPostFails() {
 
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(request.LikedByCount{}, likeCount)
+	suite.Equal(response.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestUnlikePost_WhenSuccess() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+
+	expectedCount := response.LikedByCount{LikeCount: 1}
+
+	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
+
+	suite.Nil(err)
+	suite.Equal(expectedCount, likeCount)
+}
+
+func (suite *PostServiceTest) TestUnlikePost_WhenRepositoryUnlikePostFails() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(0)
+
+	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+	suite.Equal(response.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestUnlikePost_WhenGetCountByPostFails() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(0), errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+	suite.Equal(response.LikedByCount{}, likeCount)
 }

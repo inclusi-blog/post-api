@@ -12,7 +12,7 @@ import (
 	"net/http/httptest"
 	"post-api/constants"
 	"post-api/mocks"
-	"post-api/models/request"
+	"post-api/models/response"
 	"post-api/validators"
 	"testing"
 )
@@ -81,10 +81,10 @@ func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
+func (suite *PostControllerTest) TestLike_WhenSuccess() {
 	postID := "q2w3e4r5tqaz"
 
-	likeCount := request.LikedByCount{LikeCount: 1}
+	likeCount := response.LikedByCount{LikeCount: 1}
 	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(likeCount, nil).Times(1)
 
 	params := gin.Params{
@@ -95,18 +95,18 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
 	}
 	suite.context.Params = params
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
+	suite.postController.Like(suite.context)
 	jsonBytes, err := json.Marshal(likeCount)
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenBadRequest() {
+func (suite *PostControllerTest) TestLike_WhenBadRequest() {
 	postID := "1"
 
-	likeCount := request.LikedByCount{LikeCount: 1}
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(0)
+	likeCount := response.LikedByCount{LikeCount: 1}
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(likeCount, nil).Times(0)
 
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/1", nil)
 	params := gin.Params{
@@ -116,17 +116,17 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenBadRequest() {
 		},
 	}
 	suite.context.Params = params
-	suite.postController.UpdateLikes(suite.context)
+	suite.postController.Like(suite.context)
 	jsonBytes, err := json.Marshal(constants.PayloadValidationError)
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFails() {
+func (suite *PostControllerTest) TestLike_WhenLikeUpdateServiceFails() {
 	postID := "q2w3e4r5tqaz"
 
-	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(request.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(response.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
 
 	params := gin.Params{
 		gin.Param{
@@ -136,17 +136,17 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFails() {
 	}
 	suite.context.Params = params
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
+	suite.postController.Like(suite.context)
 	jsonBytes, err := json.Marshal(constants.StoryInternalServerError("something went wrong"))
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFailsWithNotFoundPostForGivenPostID() {
+func (suite *PostControllerTest) TestLike_WhenLikeUpdateServiceFailsWithNotFoundPostForGivenPostID() {
 	postID := "q2w3e4r5tqaz"
 
-	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(request.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(response.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
 
 	params := gin.Params{
 		gin.Param{
@@ -156,7 +156,89 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFailsWithN
 	}
 	suite.context.Params = params
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
+	suite.postController.Like(suite.context)
+	jsonBytes, err := json.Marshal(&constants.PostNotFoundErr)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestUnlike_WhenSuccess() {
+	postID := "q2w3e4r5tqaz"
+
+	likeCount := response.LikedByCount{LikeCount: 1}
+	suite.mockPostService.EXPECT().UnlikePost("some-user", postID, suite.context).Return(likeCount, nil).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "q2w3e4r5tqaz",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/q2w3e4r5tqaz/unlike", nil)
+	suite.postController.Unlike(suite.context)
+	jsonBytes, err := json.Marshal(likeCount)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestUnlike_WhenBadRequest() {
+	postID := "1"
+
+	likeCount := response.LikedByCount{LikeCount: 1}
+	suite.mockPostService.EXPECT().UnlikePost("some-user", postID, suite.context).Return(likeCount, nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1/unlike", nil)
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1",
+		},
+	}
+	suite.context.Params = params
+	suite.postController.Unlike(suite.context)
+	jsonBytes, err := json.Marshal(constants.PayloadValidationError)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestUnlike_WhenUnlikeUpdateServiceFails() {
+	postID := "q2w3e4r5tqaz"
+
+	suite.mockPostService.EXPECT().UnlikePost("some-user", postID, suite.context).Return(response.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "q2w3e4r5tqaz",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/q2w3e4r5tqaz/unlike", nil)
+	suite.postController.Unlike(suite.context)
+	jsonBytes, err := json.Marshal(constants.StoryInternalServerError("something went wrong"))
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestUnlike_WhenUnlikeUpdateServiceFailsWithNotFoundPostForGivenPostID() {
+	postID := "q2w3e4r5tqaz"
+
+	suite.mockPostService.EXPECT().UnlikePost("some-user", postID, suite.context).Return(response.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "q2w3e4r5tqaz",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/q2w3e4r5tqaz/unlike", nil)
+	suite.postController.Unlike(suite.context)
 	jsonBytes, err := json.Marshal(&constants.PostNotFoundErr)
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
