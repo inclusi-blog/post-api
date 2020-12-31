@@ -34,7 +34,7 @@ var doc = `{
                 "tags": [
                     "draft"
                 ],
-                "summary": "SavePostDraft",
+                "summary": "CreateNewPostWithData",
                 "parameters": [
                     {
                         "description": "Request Body",

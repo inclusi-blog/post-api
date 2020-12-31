@@ -4,7 +4,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/models/request"
@@ -16,24 +15,23 @@ import (
 )
 
 type PostService interface {
-	PublishPost(ctx context.Context, draftUID string) *golaerror.Error
-	LikePost(userID int64, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
+	PublishPost(ctx context.Context, draftUID, userId string) *golaerror.Error
+	LikePost(userID string, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error)
 }
 
 type postService struct {
-	repository             repository.PostsRepository
-	draftRepository        repository.DraftRepository
-	previewPostsRepository repository.PreviewPostsRepository
-	validator              utils.PostValidator
+	repository      repository.PostsRepository
+	draftRepository repository.DraftRepository
+	validator       utils.PostValidator
 }
 
-func (service postService) PublishPost(ctx context.Context, draftUID string) *golaerror.Error {
+func (service postService) PublishPost(ctx context.Context, draftUID string, userId string) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "PublishPost")
-	dbDraft, err := service.draftRepository.GetDraft(ctx, draftUID)
+	dbDraft, err := service.draftRepository.GetDraft(ctx, draftUID, userId)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching draft from draft repository %v", err)
-		if err == sql.ErrNoRows {
+		if err.Error() == constants.NoDraftFoundCode {
 			logger.Errorf("Error occurred while getting draft data, no draft found for draft id %v .%v", draftUID, err)
 			return &constants.NoDraftFoundError
 		}
@@ -46,8 +44,8 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 		DraftID:      dbDraft.DraftID,
 		UserID:       dbDraft.UserID,
 		PostData:     dbDraft.PostData,
-		PreviewImage: &dbDraft.PreviewImage.String,
-		Tagline:      &dbDraft.Tagline.String,
+		PreviewImage: &dbDraft.PreviewImage,
+		Tagline:      &dbDraft.Tagline,
 		Interest:     dbDraft.Interest,
 	}
 
@@ -67,16 +65,19 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 	}
 
 	post := db.PublishPost{
-		PUID:      draftUID,
-		UserID:    "1",
-		PostData:  draft.PostData,
-		ReadTime:  metaData.ReadTime,
-		ViewCount: 0,
+		PUID:         draftUID,
+		UserID:       draft.UserID,
+		PostData:     draft.PostData,
+		ReadTime:     metaData.ReadTime,
+		Interest:     draft.Interest,
+		Title:        metaData.Title,
+		Tagline:      *draft.Tagline,
+		PreviewImage: *draft.PreviewImage,
 	}
 
 	logger.Infof("Saving post in post repository for post id %v", draftUID)
 
-	postID, err := service.repository.CreatePost(ctx, post)
+	err = service.repository.CreatePost(ctx, post)
 
 	if err != nil {
 		logger.Errorf("Error occurred while publishing post in post repository %v", err)
@@ -85,60 +86,22 @@ func (service postService) PublishPost(ctx context.Context, draftUID string) *go
 
 	logger.Infof("Successfully saved story for post id %v", draftUID)
 
-	previewPost := db.PreviewPost{
-		PostID:       postID,
-		Title:        metaData.Title,
-		Tagline:      *draft.Tagline,
-		PreviewImage: *draft.PreviewImage,
-		LikeCount:    0,
-		CommentCount: 0,
-		ViewTime:     0,
-	}
-
-	_, err = service.previewPostsRepository.SavePreview(ctx, previewPost)
-
-	if err != nil {
-		logger.Errorf("Error occurred while saving preview post for post id %v .%v", post.PUID, err)
-		return constants.StoryInternalServerError(err.Error())
-	}
-
-	logger.Infof("Successfully stored the preview post in preview post repository")
-
-	defer func() {
-		err = service.repository.SaveInitialLike(ctx, postID)
-		if err != nil {
-			logger.Errorf("error occurred while inserting initial like for post id %v, Error %v", postID, err)
-			return
-		}
-	}()
-
 	return nil
 }
 
-func (service postService) LikePost(userID int64, postUID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+func (service postService) LikePost(userID string, postUID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "LikePost")
 	logger.Infof("Saving post data to draft repository")
 
-	postID, err := service.repository.GetPostID(ctx, postUID)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			logger.Errorf("not post found for post uid %v", postID)
-			return request.LikedByCount{}, &constants.PostNotFoundErr
-		}
-		logger.Errorf("error occurred while fetching post if for the give post uid %v, Error: %v", postID, err)
-		return request.LikedByCount{}, constants.StoryInternalServerError(err.Error())
-	}
-
 	var likedByCount request.LikedByCount
 
-	err = service.repository.AppendOrRemoveUserFromLikedBy(postID, userID, ctx)
+	err := service.repository.LikePost(postUID, userID, ctx)
 	if err != nil {
 		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
 	}
 
-	likeCount, err := service.repository.GetLikeCountByPost(ctx, postID)
+	likeCount, err := service.repository.GetLikesCountByPostID(ctx, postUID)
 	if err != nil {
 		logger.Errorf("Error occurred while Getting like id in likes repository %v", err)
 		return likedByCount, constants.StoryInternalServerError(err.Error())
@@ -149,11 +112,10 @@ func (service postService) LikePost(userID int64, postUID string, ctx context.Co
 	return likedByCount, nil
 }
 
-func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.PreviewPostsRepository) PostService {
+func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator) PostService {
 	return postService{
-		repository:             postsRepository,
-		draftRepository:        draftRepository,
-		previewPostsRepository: previewPostsRepository,
-		validator:              validator,
+		repository:      postsRepository,
+		draftRepository: draftRepository,
+		validator:       validator,
 	}
 }

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<changelog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="http://www.liquigraph.org/schema/1.0/liquigraph.xsd">
+    <changeset id="create-draft-id-unique-constraint" author="Hariharan">
+        <query>CREATE CONSTRAINT draft_id_unique ON (draft:Draft) ASSERT draft.draftId IS UNIQUE</query>
+    </changeset>
+    <changeset id="create-user-id-unique-constraint" author="Hariharan">
+        <query>CREATE CONSTRAINT person_id_unique ON (person:Person) ASSERT person.userId IS UNIQUE</query>
+    </changeset>
+    <changeset id="create-unique-name-on-interest" author="Hariharan">
+        <query>CREATE CONSTRAINT interest_name_unique ON (interest:Interest) ASSERT interest.name IS UNIQUE</query>
+    </changeset>
+    <changeset id="create-unique-name-on-category" author="Hariharan">
+        <query>CREATE CONSTRAINT category_name_unique ON (category:Category) ASSERT category.name IS UNIQUE</query>
+    </changeset>
+    <changeset id="create-unique-post" author="Hariharan">
+        <query>CREATE CONSTRAINT post_unique ON (post:Post) ASSERT (post.puid, post.title, post.postData, post.tagline, post.readTime) IS NODE KEY</query>
+    </changeset>
+    <changeset id="create-post-publish-audit-property-constraint" author="Hariharan">
+        <query>CREATE CONSTRAINT post_publish_audit_property_constraint IF NOT EXISTS ON ()-[audit:PUBLISHED]-() ASSERT EXISTS (audit.createdAt)</query>
+    </changeset>
+    <changeset id="create-base-interest-and-parent-interests" author="Hariharan">
+        <query>CREATE (interest:Category:Interest{name: "Art"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Entertainment"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Culture"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Health"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Industry"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Personal development"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Politics"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Software"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Science"})</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Poem"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Short stories"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Books"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Literature"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Grammar"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Comics"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Music"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Design"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Creativity"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Dance"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Drawing"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Animation"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Movies"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Series"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Anime"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Cartoon"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (interest:Interest{name: "Animation"}) MATCH (entertainment:Category{name: "Entertainment"}) MERGE (interest)-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Gaming"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) MATCH (interest:Interest{name: "Music"}) MERGE (interest)-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "News"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Cinema"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Exposed"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Unpopular opinion"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Cooking"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Food"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Agriculture"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Festival"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Language"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Philosophy"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Travel"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Clothing"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Sacred places"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Environment"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "History"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Astrology"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Ritual"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Freedom"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Lifestyle"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Pets"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (health:Category{name: "Health"}) MATCH (interest:Interest{name: "Food"}) MERGE (interest)-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Fitness"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Self-care"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Skin-care"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Diet"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Yoga"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Mental Health"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Health tips"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Work"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Leadership"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Startup"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) MATCH (interest:Interest{name: "Design"}) MERGE (interest)-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Engineering"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Entrepreneurship"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Venture capitalist"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Product management"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Media"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Business"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Economy"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Photography"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Tourism"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Freelancing"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Videography"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Automobile"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Finance"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Share market"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) MATCH (interest:Interest{name: "Creativity"}) MERGE (interest)-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Learning"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Exploring"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Money"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Writing"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Productivity"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Motivation"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Dream"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Growth"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Skill"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) MATCH (interest:Interest{name: "Finance"}) MERGE (interest)-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Stock market"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Self"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Education"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Election"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Development"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Social"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "Environment"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "History"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "Finance"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Law and order"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "IT"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Photo editing"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Video editing"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Hacking"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Programming"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Technology"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Invention"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Astronomy"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Archeology"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Theories"})-[:BELONGS_TO]->(science)</query>
+    </changeset>
+    <changeset id="create-comment-constraints" author="Hariharan">
+        <query>CREATE CONSTRAINT unique_comment IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.comment);</query>
+        <query>CREATE CONSTRAINT unique_comment_audit IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.createdAt);</query>
+        <query>CREATE CONSTRAINT unique_comment_id IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.commentId);</query>
+    </changeset>
+</changelog>

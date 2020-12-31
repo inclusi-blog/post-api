@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models/db"
+	"post-api/service/test_helper"
 	"testing"
 )
 
@@ -38,7 +39,6 @@ func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() 
 	expectedData := []db.Interest{
 		{
 			Name: "some-interests",
-			ID:   "1",
 		},
 	}
 	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(expectedData, nil).Times(1)
@@ -50,15 +50,15 @@ func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() 
 }
 
 func (suite *InterestsServiceTest) TestGetInterests_WhenDbReturnsError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, sql.ErrNoRows).Times(1)
+	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
 	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
 	suite.NotNil(err)
 	suite.Equal(&constants.PostServiceFailureError, err)
 	suite.Len(interests, 0)
 }
 
-func (suite *InterestsServiceTest) TestGetInterests_WhenNoDataReturnedWithNoError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, nil).Times(1)
+func (suite *InterestsServiceTest) TestGetInterests_WhenNoDataReturnedWithError() {
+	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, errors.New(constants.NoInterestsFoundCode)).Times(1)
 	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
 	suite.NotNil(err)
 	suite.Equal(&constants.NoInterestsFoundError, err)

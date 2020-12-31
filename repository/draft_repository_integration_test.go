@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
+	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"os"
+	"post-api/constants"
 	"post-api/dbhelper"
 	"post-api/models"
 	"post-api/models/db"
@@ -12,8 +15,6 @@ import (
 	"post-api/service/test_helper"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/jmoiron/sqlx/types"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,10 @@ import (
 
 type DraftRepositoryIntegrationTest struct {
 	suite.Suite
-	db              *sqlx.DB
+	db              neo4j.Session
+	driver          neo4j.Driver
+	adminDb         neo4j.Session
+	adminDriver     neo4j.Driver
 	goContext       context.Context
 	draftRepository DraftRepository
 	dbHelper        helper.DbHelper
@@ -31,21 +35,38 @@ type DraftRepositoryIntegrationTest struct {
 func (suite *DraftRepositoryIntegrationTest) SetupTest() {
 	err := godotenv.Load("../docker-compose-test.env")
 	suite.Nil(err)
-	connectionString := dbhelper.BuildConnectionString()
-	database, err := sqlx.Open("postgres", connectionString)
-	if err != nil {
-		panic(fmt.Sprintln("Could not connect to test DB", err))
-	}
-	fmt.Print(database)
-	suite.db = database
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
-	suite.draftRepository = NewDraftRepository(database)
-	suite.dbHelper = helper.NewDbHelper(database)
+	logger := logging.GetLogger(context.Background())
+	configForNeo4j40 := func(conf *neo4j.Config) { conf.Encrypted = false }
+	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""), configForNeo4j40)
+	suite.Nil(err)
+	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""), configForNeo4j40)
+	suite.Nil(err)
+	suite.NotNil(suite.adminDriver)
+	suite.NotNil(suite.driver)
+
+	logger.Info("logging")
+	sessionConfig := neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite, DatabaseName: os.Getenv("DB_SERVICE_NAME")}
+	suite.db, err = suite.driver.NewSession(sessionConfig)
+	suite.Nil(err)
+	suite.adminDb, err = suite.adminDriver.NewSession(sessionConfig)
+	suite.Nil(err)
+
+	suite.draftRepository = NewDraftRepository(suite.db)
+	suite.dbHelper = helper.NewDbHelper(suite.adminDb)
+	suite.createSampleUser()
 }
 
 func (suite *DraftRepositoryIntegrationTest) TearDownTest() {
 	suite.ClearDraftData()
-	_ = suite.db.Close()
+	err := suite.driver.Close()
+	suite.Nil(err)
+	err = suite.adminDriver.Close()
+	suite.Nil(err)
+	err = suite.db.Close()
+	suite.Nil(err)
+	err = suite.adminDb.Close()
+	suite.Nil(err)
 }
 
 func (suite *DraftRepositoryIntegrationTest) ClearDraftData() {
@@ -59,346 +80,444 @@ func TestDraftRepositoryIntegrationTest(t *testing.T) {
 	suite.Run(t, new(DraftRepositoryIntegrationTest))
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenNewDraft() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenUpsertPost() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-	newDraft.PostData = models.JSONString{
-		JSONText: types.JSONText(`{}`),
-	}
-	err = suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_ShouldReturnErrorWhenUserIDIsString() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1hb12kb12",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
+func (suite *DraftRepositoryIntegrationTest) TestIsDraftPresentWhenThereIsNoDraft() {
+	err := suite.draftRepository.IsDraftPresent(suite.goContext, "1q2w3e4r5t6y", "some-user")
 	suite.NotNil(err)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsSuccess() {
+func (suite *DraftRepositoryIntegrationTest) TestIsDraftPresentWhenThereIsADraft() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+	}
+	err := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(err)
+	err = suite.draftRepository.IsDraftPresent(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestCreateNewPostWithData_WhenDbReturnsNoError() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+	}
+	err := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestCreateNewPostWithData_WhenAlreadyADraftPresent() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+	}
+	err := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(err)
+	err = suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.NotNil(err)
+	suite.True(neo4j.IsClientError(err))
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpdateDraft_WhenThereIsADraft() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText("[{children: { text: \"some text\"}]"),
+		},
+	}
+
+	err := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(err)
+	draft.PostData = models.JSONString{
+		JSONText: types.JSONText(test_helper.LargeTextData),
+	}
+	err = suite.draftRepository.UpdateDraft(draft, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpdateDraft_WhenThereIsNoADraft() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText("[{children: { text: \"some text\"}]"),
+		},
+	}
+
+	err := suite.draftRepository.UpdateDraft(draft, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveTaglineToDraft_WhenThereIsADraft() {
+	draft := models.UpsertDraft{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText("[{children: { text: \"some text\"}]"),
+		},
+	}
 	saveRequest := request.TaglineSaveRequest{
-		UserID:  "1",
-		DraftID: "1b2b2b23h",
-		Tagline: "this is some tagline that will be stored",
+		UserID:  "some-user",
+		DraftID: "1q2w3e4r5t6y",
+		Tagline: "this is some tagline",
+	}
+	err := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(err)
+	draft.PostData = models.JSONString{
+		JSONText: types.JSONText(test_helper.LargeTextData),
+	}
+	err = suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
+	suite.Nil(err)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestSaveTaglineToDraft_WhenThereIsNoADraft() {
+	saveRequest := request.TaglineSaveRequest{
+		UserID:  "some-user",
+		DraftID: "1q2w3e4r5t6y",
+		Tagline: "this is some tagline",
 	}
 
 	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
-
 	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenUpsertDbReturnsSuccess() {
-	saveRequest := request.TaglineSaveRequest{
-		UserID:  "1",
-		DraftID: "1b2b2b23h",
-		Tagline: "this is some tagline that will be stored",
-	}
-
-	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
-
-	suite.Nil(err)
-
-	upsertRequest := request.TaglineSaveRequest{
-		UserID:  saveRequest.UserID,
-		DraftID: saveRequest.DraftID,
-		Tagline: "revereted",
-	}
-
-	err = suite.draftRepository.SaveTaglineToDraft(upsertRequest, suite.goContext)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsReturns() {
-	saveRequest := request.TaglineSaveRequest{
-		UserID:  "some-user-id",
-		DraftID: "1b2b2b23h",
-		Tagline: "this is some tagline that will be stored",
-	}
-
-	err := suite.draftRepository.SaveTaglineToDraft(saveRequest, suite.goContext)
-
-	suite.NotNil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "some post data"}`),
-		},
-	}
-
-	taglineSaveRequest := request.TaglineSaveRequest{
-		UserID:  "1",
-		DraftID: "abcdef124231",
-		Tagline: "this is some tagline for draft",
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-
-	err = suite.draftRepository.SaveTaglineToDraft(taglineSaveRequest, suite.goContext)
-	suite.Nil(err)
-
-	err = suite.draftRepository.SaveInterestsToDraft(request.InterestsSaveRequest{
-		UserID:  "1",
-		DraftID: "abcdef124231",
-		Interests: models.JSONString{
-			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
-		},
-	}, suite.goContext)
-
-	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, request.PreviewImageSaveRequest{
-		UserID:          "1",
-		DraftID:         "abcdef124231",
-		PreviewImageUrl: "https://www.some-url.com",
-	})
-
-	suite.Nil(err)
-
-	expectedDraft := db.DraftDB{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "some post data"}`),
-		},
-		PreviewImage: sql.NullString{String: "https://www.some-url.com", Valid: true},
-		Tagline: sql.NullString{
-			String: "this is some tagline for draft",
-			Valid:  true,
-		},
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
-		},
-	}
-
-	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
-	suite.Nil(err)
-	suite.Equal(expectedDraft, draft)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsError() {
-	draft, err := suite.draftRepository.GetDraft(suite.goContext, "abcdef124231")
-	suite.NotNil(err)
-	suite.Equal(sql.ErrNoRows, err)
-	suite.Equal(db.DraftDB{}, draft)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSuccess() {
-	newDraft := models.UpsertDraft{
-		DraftID: "abcdef124231",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`{"title": "hello"}`),
-		},
-	}
-
-	previewImageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          "1",
-		DraftID:         "abcdef124231",
-		PreviewImageUrl: "https://some-url",
-	}
-
-	err := suite.draftRepository.SavePostDraft(newDraft, suite.goContext)
-	suite.Nil(err)
-
-	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNewDraftSuccess() {
-	previewImageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          "1",
-		DraftID:         "abcdef124231",
-		PreviewImageUrl: "https://some-url",
-	}
-
-	err := suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
-	suite.Nil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNewDraftEmpty() {
-	previewImageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          "hello",
-		DraftID:         "abcedsc",
-		PreviewImageUrl: "https://some-url",
-	}
-
-	err := suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
-	suite.NotNil(err)
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasNoValues() {
-
-	req := models.GetAllDraftRequest{UserID: "3", StartValue: 1, Limit: 3}
-
-	res, err := suite.draftRepository.GetAllDraft(suite.goContext, req)
-
-	suite.Nil(err)
-
-	suite.Zero(len(res))
-
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasValues() {
-
-	getAllDraftRequest := models.GetAllDraftRequest{UserID: "3", StartValue: 0, Limit: 3}
-
-	draft := models.UpsertDraft{DraftID: "11", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-
-	expectedDraft := []db.Draft{{DraftID: draft.DraftID, UserID: draft.UserID, PostData: draft.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}}}
-
-	err := suite.draftRepository.SavePostDraft(draft, suite.goContext)
-	suite.Nil(err)
-
-	getAllDraftResponse, err := suite.draftRepository.GetAllDraft(suite.goContext, getAllDraftRequest)
-
-	suite.Nil(err)
-
-	suite.Equal(expectedDraft, getAllDraftResponse)
-
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesUsingPagination() {
-
-	getAllDraftRequest := models.GetAllDraftRequest{UserID: "3", StartValue: 0, Limit: 3}
-
-	draft1 := models.UpsertDraft{DraftID: "11", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft2 := models.UpsertDraft{DraftID: "12", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft3 := models.UpsertDraft{DraftID: "13", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft4 := models.UpsertDraft{DraftID: "14", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-
-	expectedDraft := []db.Draft{{DraftID: draft4.DraftID, UserID: draft1.UserID, PostData: draft1.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}},
-		{DraftID: draft3.DraftID, UserID: draft3.UserID, PostData: draft3.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}},
-		{DraftID: draft2.DraftID, UserID: draft2.UserID, PostData: draft2.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}}}
-
-	draft1Err := suite.draftRepository.SavePostDraft(draft1, suite.goContext)
-	suite.Nil(draft1Err)
-
-	draft2Err := suite.draftRepository.SavePostDraft(draft2, suite.goContext)
-	suite.Nil(draft2Err)
-
-	draft3Err := suite.draftRepository.SavePostDraft(draft3, suite.goContext)
-	suite.Nil(draft3Err)
-
-	draft4Err := suite.draftRepository.SavePostDraft(draft3, suite.goContext)
-	suite.Nil(draft4Err)
-
-	err := suite.draftRepository.SavePostDraft(draft4, suite.goContext)
-	suite.Nil(err)
-
-	getAllDraftResponse, err := suite.draftRepository.GetAllDraft(suite.goContext, getAllDraftRequest)
-
-	suite.Nil(err)
-
-	suite.Equal(expectedDraft, getAllDraftResponse)
-
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesForInBetweenPages() {
-
-	getAllDraftRequest := models.GetAllDraftRequest{UserID: "3", StartValue: 1, Limit: 3}
-
-	draft1 := models.UpsertDraft{DraftID: "11", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft2 := models.UpsertDraft{DraftID: "12", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft3 := models.UpsertDraft{DraftID: "13", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-	draft4 := models.UpsertDraft{DraftID: "14", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-
-	expectedDraft := []db.Draft{{DraftID: draft3.DraftID, UserID: draft3.UserID, PostData: draft3.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}},
-		{DraftID: draft2.DraftID, UserID: draft2.UserID, PostData: draft2.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}},
-		{DraftID: draft1.DraftID, UserID: draft1.UserID, PostData: draft1.PostData, PreviewImage: nil, Tagline: nil, Interest: models.JSONString{JSONText: types.JSONText(``)}}}
-
-	draft1Err := suite.draftRepository.SavePostDraft(draft1, suite.goContext)
-	suite.Nil(draft1Err)
-
-	draft2Err := suite.draftRepository.SavePostDraft(draft2, suite.goContext)
-	suite.Nil(draft2Err)
-
-	draft3Err := suite.draftRepository.SavePostDraft(draft3, suite.goContext)
-	suite.Nil(draft3Err)
-
-	draft4Err := suite.draftRepository.SavePostDraft(draft3, suite.goContext)
-	suite.Nil(draft4Err)
-
-	err := suite.draftRepository.SavePostDraft(draft4, suite.goContext)
-	suite.Nil(err)
-
-	getAllDraftResponse, err := suite.draftRepository.GetAllDraft(suite.goContext, getAllDraftRequest)
-
-	suite.Nil(err)
-
-	suite.Equal(expectedDraft, getAllDraftResponse)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftAvailable() {
+	suite.insertInterestEntries()
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
 
-	draft := models.UpsertDraft{DraftID: "11", UserID: "3", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
-
-	draftErr := suite.draftRepository.SavePostDraft(draft, suite.goContext)
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
 	suite.Nil(draftErr)
 
-	interstRequest := request.InterestsSaveRequest{UserID: "3", DraftID: "11", Interests: models.JSONString{JSONText: types.JSONText(``)}}
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
 
-	interestErr := suite.draftRepository.SaveInterestsToDraft(interstRequest, suite.goContext)
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
 	suite.Nil(interestErr)
-
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftNotAvailable() {
+	suite.insertInterestEntries()
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user-one", DraftID: "13", Interest: ""}
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+}
 
-	interstRequest := request.InterestsSaveRequest{UserID: "3", DraftID: "13", Interests: models.JSONString{JSONText: types.JSONText(``)}}
+func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsADraftAvailable() {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
 
-	interestErr := suite.draftRepository.SaveInterestsToDraft(interstRequest, suite.goContext)
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
 	suite.Nil(interestErr)
 
-}
-
-func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenDbDeletesDraft() {
-	draft := models.UpsertDraft{
-		DraftID: "q2w3e4r5t6y1",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(test_helper.TitleTestDataMoreThan100Len),
-		},
+	draftDB, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	expectedDraft := db.DraftDB{
+		DraftID:      "1q2w3e4r5t6y",
+		UserID:       "some-user",
+		PostData:     postData,
+		PreviewImage: "",
+		Tagline:      "",
+		Interest:     []string{"Art"},
 	}
-	err := suite.draftRepository.SavePostDraft(draft, suite.goContext)
 	suite.Nil(err)
-
-	err = suite.draftRepository.DeleteDraft(suite.goContext, "q2w3e4r5t6y1")
-	suite.Nil(err)
+	suite.Equal(expectedDraft.PreviewImage, draftDB.PreviewImage)
+	suite.Equal(expectedDraft.DraftID, draftDB.DraftID)
+	suite.Equal(expectedDraft.Interest, draftDB.Interest)
+	suite.Equal(expectedDraft.UserID, draftDB.UserID)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenNoDraftFound() {
-	err := suite.draftRepository.DeleteDraft(suite.goContext, "q2w3e4r5t6y1")
+func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsNoDraftAvailable() {
+	suite.insertInterestEntries()
+	draftDB, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
 	suite.NotNil(err)
-	suite.Equal(sql.ErrNoRows, err)
+	suite.Equal(db.DraftDB{}, draftDB)
+	suite.Equal(constants.NoDraftFoundCode, err.Error())
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenThereIsADraft() {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t6y",
+		PreviewImageUrl: "this is some url",
+	}
+
+	draftErr = suite.draftRepository.UpsertPreviewImage(suite.goContext, imageSaveRequest)
+	suite.Nil(draftErr)
+	draftDB, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	expectedDraft := db.DraftDB{
+		DraftID:      "1q2w3e4r5t6y",
+		UserID:       "some-user",
+		PostData:     postData,
+		PreviewImage: "this is some url",
+		Tagline:      "",
+		Interest:     []string{"Art"},
+	}
+	suite.Nil(err)
+	suite.Equal(expectedDraft.PreviewImage, draftDB.PreviewImage)
+	suite.Equal(expectedDraft.DraftID, draftDB.DraftID)
+	suite.Equal(expectedDraft.Interest, draftDB.Interest)
+	suite.Equal(expectedDraft.UserID, draftDB.UserID)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenThereIsNoDraft() {
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t6y",
+		PreviewImageUrl: "this is some url",
+	}
+
+	draftErr := suite.draftRepository.UpsertPreviewImage(suite.goContext, imageSaveRequest)
+	suite.Nil(draftErr)
+	draftDB, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(db.DraftDB{}, draftDB)
+	suite.Equal(constants.NoDraftFoundCode, err.Error())
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenThereIsADraft() {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t6y",
+		PreviewImageUrl: "this is some url",
+	}
+
+	draftErr = suite.draftRepository.UpsertPreviewImage(suite.goContext, imageSaveRequest)
+	suite.Nil(draftErr)
+	draftDB, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	expectedDraft := db.DraftDB{
+		DraftID:      "1q2w3e4r5t6y",
+		UserID:       "some-user",
+		PostData:     postData,
+		PreviewImage: "this is some url",
+		Tagline:      "",
+		Interest:     []string{"Art"},
+	}
+	suite.Nil(err)
+	suite.Equal(expectedDraft.PreviewImage, draftDB.PreviewImage)
+	suite.Equal(expectedDraft.DraftID, draftDB.DraftID)
+	suite.Equal(expectedDraft.Interest, draftDB.Interest)
+	suite.Equal(expectedDraft.UserID, draftDB.UserID)
+
+	draftErr = suite.draftRepository.DeleteDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(draftErr)
+
+	draftAfterDeleted, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(constants.NoDraftFoundCode, err.Error())
+	suite.Equal(db.DraftDB{}, draftAfterDeleted)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenThereIsNoDraft() {
+	draftBeforeDelete, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(db.DraftDB{}, draftBeforeDelete)
+	suite.Equal(constants.NoDraftFoundCode, err.Error())
+
+	draftErr := suite.draftRepository.DeleteDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(draftErr)
+
+	draftAfterDeleted, err := suite.draftRepository.GetDraft(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(db.DraftDB{}, draftAfterDeleted)
+	suite.Equal(constants.NoDraftFoundCode, err.Error())
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenLimitSentShouldReturnDraftInThatRange() {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t6y",
+		PreviewImageUrl: "this is some url",
+	}
+
+	draftErr = suite.draftRepository.UpsertPreviewImage(suite.goContext, imageSaveRequest)
+	suite.Nil(draftErr)
+
+	secondPostData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	secondDraft := models.UpsertDraft{DraftID: "1q2w3e4r5t61", UserID: "some-user", PostData: secondPostData}
+	secondDraftInterests := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t61", Interest: "Art"}
+	secondDraftPreviewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t61",
+		PreviewImageUrl: "this is some url",
+	}
+
+	_ = suite.draftRepository.CreateNewPostWithData(secondDraft, suite.goContext)
+	_ = suite.draftRepository.SaveInterestsToDraft(secondDraftInterests, suite.goContext)
+	_ = suite.draftRepository.UpsertPreviewImage(suite.goContext, secondDraftPreviewImageSaveRequest)
+
+	thirdPostData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	thirdDraft := models.UpsertDraft{DraftID: "1q2w3e4r5t62", UserID: "some-user", PostData: thirdPostData}
+	thirdDraftInterestSaveRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t62", Interest: "Art"}
+	thirdDraftPreviewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t62",
+		PreviewImageUrl: "this is some url",
+	}
+
+	_ = suite.draftRepository.CreateNewPostWithData(thirdDraft, suite.goContext)
+	_ = suite.draftRepository.SaveInterestsToDraft(thirdDraftInterestSaveRequest, suite.goContext)
+	_ = suite.draftRepository.UpsertPreviewImage(suite.goContext, thirdDraftPreviewImageSaveRequest)
+	allDraftRequest := models.GetAllDraftRequest{
+		UserID:     "some-user",
+		StartValue: 1,
+		Limit:      2,
+	}
+	allDraft, draftErr := suite.draftRepository.GetAllDraft(suite.goContext, allDraftRequest)
+	suite.Nil(draftErr)
+	suite.Len(allDraft, 2)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenLimitSentShouldReturnDraftsWithRangeZeroToThree() {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+
+	imageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t6y",
+		PreviewImageUrl: "this is some url",
+	}
+
+	draftErr = suite.draftRepository.UpsertPreviewImage(suite.goContext, imageSaveRequest)
+	suite.Nil(draftErr)
+
+	secondPostData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	secondDraft := models.UpsertDraft{DraftID: "1q2w3e4r5t61", UserID: "some-user", PostData: secondPostData}
+	secondDraftInterests := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t61", Interest: "Art"}
+	secondDraftPreviewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t61",
+		PreviewImageUrl: "this is some url",
+	}
+
+	_ = suite.draftRepository.CreateNewPostWithData(secondDraft, suite.goContext)
+	_ = suite.draftRepository.SaveInterestsToDraft(secondDraftInterests, suite.goContext)
+	_ = suite.draftRepository.UpsertPreviewImage(suite.goContext, secondDraftPreviewImageSaveRequest)
+
+	thirdPostData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	thirdDraft := models.UpsertDraft{DraftID: "1q2w3e4r5t62", UserID: "some-user", PostData: thirdPostData}
+	thirdDraftInterestSaveRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t62", Interest: "Art"}
+	thirdDraftPreviewImageSaveRequest := request.PreviewImageSaveRequest{
+		UserID:          "some-user",
+		DraftID:         "1q2w3e4r5t62",
+		PreviewImageUrl: "this is some url",
+	}
+
+	_ = suite.draftRepository.CreateNewPostWithData(thirdDraft, suite.goContext)
+	_ = suite.draftRepository.SaveInterestsToDraft(thirdDraftInterestSaveRequest, suite.goContext)
+	_ = suite.draftRepository.UpsertPreviewImage(suite.goContext, thirdDraftPreviewImageSaveRequest)
+	allDraftRequest := models.GetAllDraftRequest{
+		UserID:     "some-user",
+		StartValue: 0,
+		Limit:      3,
+	}
+	allDraft, draftErr := suite.draftRepository.GetAllDraft(suite.goContext, allDraftRequest)
+	suite.Nil(draftErr)
+	suite.Len(allDraft, 3)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenThereIsNoDraft() {
+	suite.insertInterestEntries()
+	allDraftRequest := models.GetAllDraftRequest{
+		UserID:     "some-user",
+		StartValue: 0,
+		Limit:      3,
+	}
+	allDraft, draftErr := suite.draftRepository.GetAllDraft(suite.goContext, allDraftRequest)
+	suite.NotNil(draftErr)
+	suite.Len(allDraft, 0)
+	suite.Equal(constants.NoDraftFoundCode, draftErr.Error())
+}
+
+func (suite *DraftRepositoryIntegrationTest) insertInterestEntries() {
+	interests := []string{
+		"CREATE (interest:Category:Interest{name: 'Art'})",
+		"CREATE (interest:Category:Interest{name: 'Entertainment'})",
+		"CREATE (interest:Category:Interest{name: 'Culture'})",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Poem'})-[:BELONGS_TO]->(art)",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Short stories'})-[:BELONGS_TO]->(art)",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Books'})-[:BELONGS_TO]->(art)",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Literature'})-[:BELONGS_TO]->(art)",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Grammar'})-[:BELONGS_TO]->(art)",
+		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Comics'})-[:BELONGS_TO]->(art)",
+		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Movies'})-[:BELONGS_TO]->(entertainment)",
+		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Series'})-[:BELONGS_TO]->(entertainment)",
+		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Anime'})-[:BELONGS_TO]->(entertainment)",
+		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Cartoon'})-[:BELONGS_TO]->(entertainment)",
+		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Animation'})-[:BELONGS_TO]->(entertainment)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Cooking'})-[:BELONGS_TO]->(culture)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Food'})-[:BELONGS_TO]->(culture)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Agriculture'})-[:BELONGS_TO]->(culture)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Festival'})-[:BELONGS_TO]->(culture)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Language'})-[:BELONGS_TO]->(culture)",
+		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Philosophy'})-[:BELONGS_TO]->(culture)",
+	}
+	for _, query := range interests {
+		_, err := suite.adminDb.Run(query, nil)
+		suite.Nil(err)
+	}
+}
+
+func (suite *DraftRepositoryIntegrationTest) createSampleUser() {
+	_, err := suite.adminDb.Run("CREATE (person:Person{ userId: $userId})", map[string]interface{}{
+		"userId": "some-user",
+	})
+	suite.Nil(err)
 }

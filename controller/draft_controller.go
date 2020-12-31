@@ -29,7 +29,7 @@ type DraftController struct {
 func (controller DraftController) SaveDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
-	log := logger.WithField("class", "DraftController").WithField("method", "SavePostDraft")
+	log := logger.WithField("class", "DraftController").WithField("method", "CreateNewPostWithData")
 
 	log.Infof("Entered controller to upsert draft request for user %v", "12")
 	var upsertPost models.UpsertDraft
@@ -131,7 +131,7 @@ func (controller DraftController) GetDraft(ctx *gin.Context) {
 
 	logger.Infof("Request body bind successful with get draft request for user %v", "12")
 
-	draftData, draftGetErr := controller.service.GetDraft(draftURIRequest.DraftID, ctx)
+	draftData, draftGetErr := controller.service.GetDraft(draftURIRequest.DraftID, "some-user", ctx)
 	if draftGetErr != nil {
 		logger.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftGetErr)
 		constants.RespondWithGolaError(ctx, draftGetErr)
@@ -218,7 +218,7 @@ func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 
 	logger.Infof("Successfully bind request uri with draft delete request for draft id %v", draftDeleteRequest.DraftID)
 
-	err := controller.service.DeleteDraft(draftDeleteRequest.DraftID, ctx)
+	err := controller.service.DeleteDraft(draftDeleteRequest.DraftID, "some-user", ctx)
 
 	if err != nil {
 		logger.Errorf("error occurred while deleting draft for draft id %v", draftDeleteRequest.DraftID)

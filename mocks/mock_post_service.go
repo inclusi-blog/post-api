@@ -36,21 +36,21 @@ func (m *MockPostService) EXPECT() *MockPostServiceMockRecorder {
 }
 
 // PublishPost mocks base method
-func (m *MockPostService) PublishPost(ctx context.Context, draftUID string) *golaerror.Error {
+func (m *MockPostService) PublishPost(ctx context.Context, draftUID, userId string) *golaerror.Error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublishPost", ctx, draftUID)
+	ret := m.ctrl.Call(m, "PublishPost", ctx, draftUID, userId)
 	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
 // PublishPost indicates an expected call of PublishPost
-func (mr *MockPostServiceMockRecorder) PublishPost(ctx, draftUID interface{}) *gomock.Call {
+func (mr *MockPostServiceMockRecorder) PublishPost(ctx, draftUID, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishPost", reflect.TypeOf((*MockPostService)(nil).PublishPost), ctx, draftUID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishPost", reflect.TypeOf((*MockPostService)(nil).PublishPost), ctx, draftUID, userId)
 }
 
 // LikePost mocks base method
-func (m *MockPostService) LikePost(userID int64, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
+func (m *MockPostService) LikePost(userID, postID string, ctx context.Context) (request.LikedByCount, *golaerror.Error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LikePost", userID, postID, ctx)
 	ret0, _ := ret[0].(request.LikedByCount)

@@ -2,46 +2,26 @@ package helper
 
 import (
 	"context"
-	"fmt"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 )
 
 type DbHelper struct {
-	db *sqlx.DB
+	db neo4j.Session
 }
 
-func NewDbHelper(db *sqlx.DB) DbHelper {
+func NewDbHelper(db neo4j.Session) DbHelper {
 	return DbHelper{
 		db: db,
 	}
 }
 
 func (dbHelper DbHelper) ClearAll() error {
-	var tableInOrderDeletion = []string{
-		"DRAFTS",
-		"LIKES",
-		"PREVIEW_POSTS",
-		"POSTS",
-	}
-
-	tx := dbHelper.db.MustBegin()
 	logger := logging.GetLogger(context.Background())
-	for _, tableName := range tableInOrderDeletion {
-		sql := fmt.Sprintf("DELETE FROM %s", tableName)
-		_, e := tx.Exec(sql)
-		if e != nil {
-			logger.Error("Delete failed for", tableName, " : ", e.Error())
-			logger.Error("Retry attempted")
-			_, e := tx.Exec(sql)
-			if e != nil {
-				logger.Error("Delete failed again ", tableName, " : ", e.Error())
-				_ = tx.Rollback()
-				return e
-			}
-		}
+	_, err := dbHelper.db.Run("MATCH (node) detach delete node", map[string]interface{}{})
+	if err != nil {
+		logger.Error("unable to clear data")
+		return err
 	}
-
-	_ = tx.Commit()
 	return nil
 }

@@ -4,9 +4,10 @@ package repository
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"post-api/constants"
 	"post-api/models/db"
 )
 
@@ -15,12 +16,11 @@ type InterestsRepository interface {
 }
 
 type interestsRepository struct {
-	db *sqlx.DB
+	db neo4j.Session
 }
 
 const (
-	GetInterestsWithoutSelectedTags = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%' AND NAME NOT IN (:tags)"
-	GetInterests                    = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%'"
+	GetInterestsWithoutSelectedTags = "match (interest:Interest) where NOT interest.name IN $selectedInterests and interest.name =~ '(?i).*'+ $searchKeyword +'.*' return interest.name as name"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error) {
@@ -29,44 +29,47 @@ func (repository interestsRepository) GetInterests(ctx context.Context, searchKe
 	logger.Info("fetching over all interests")
 
 	var interests []db.Interest
-	selectionQuery := GetInterestsWithoutSelectedTags
-
-	if selectedTags == nil || len(selectedTags) == 0 {
-		logger.Info("Fetching all the interests related to search keyword")
-		selectionQuery = GetInterests
-	}
 
 	arg := map[string]interface{}{
-		"tags": selectedTags,
+		"selectedInterests": selectedTags,
+		"searchKeyword": searchKeyword,
 	}
 
-	updatedQuery := fmt.Sprintf(selectionQuery, searchKeyword)
+	result, err := repository.db.Run(GetInterestsWithoutSelectedTags, arg)
 
-	query, args, err := sqlx.Named(updatedQuery, arg)
 	if err != nil {
 		logger.Errorf("Error occurred while naming in query params for get interests %v", err)
 		return []db.Interest{}, err
 	}
 
-	query, args, err = sqlx.In(query, args...)
+	_, err = result.Summary()
+
 	if err != nil {
-		logger.Errorf("Error occurred while binding In query params for get interests %v", err)
+		logger.Errorf("Error occurred while getting summary  get interests %v", err)
 		return []db.Interest{}, err
 	}
 
-	query = repository.db.Rebind(query)
-	err = repository.db.SelectContext(ctx, &interests, query, args...)
-
-	if err != nil {
-		logger.Errorf("Error occurred while fetching over all interests from repository %v", err)
-		return nil, err
+	for result.Next() {
+		value, isPresent := result.Record().Get("name")
+		if !isPresent {
+			logger.Errorf("Error occurred while binding In query params for get interests %v", err)
+			return []db.Interest{}, err
+		}
+		if value != nil {
+			interest := value.(string)
+			interests = append(interests, db.Interest{Name: interest})
+		}
 	}
 
+	if len(interests) == 0 {
+		logger.Errorf("Error no interests found")
+		return []db.Interest{}, errors.New(constants.NoInterestsFoundCode)
+	}
 	logger.Info("Successfully fetched interests from db")
 
 	return interests, nil
 }
 
-func NewInterestRepository(db *sqlx.DB) InterestsRepository {
+func NewInterestRepository(db neo4j.Session) InterestsRepository {
 	return interestsRepository{db: db}
 }

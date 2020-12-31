@@ -19,10 +19,7 @@ build: install_deps
 	run --rm build-env /bin/sh -c "go build -mod=vendor -o ./bin/post-api"
 
 create_user:
-	docker exec -it gola-db /bin/sh /sql/create_user.sh
-
-create_user_dev:
-	docker exec -it gola-db /bin/sh /sql/create_user_dev.sh
+	docker exec -it gola-db /bin/sh /create_user.sh
 
 run_migration:
 	docker-compose -f docker-compose.db.yml up -d post-migration
@@ -44,7 +41,7 @@ clean:
 create-db:
 	docker network prune -f && docker volume prune -f && \
 	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d gola-db && \
-	sleep 100
+	sleep 130
 
 start-db: create-db create_user run_migration run_test_migration
 
@@ -85,9 +82,6 @@ golangci-lint: install_deps
 	    -e GOLANGCI_LINT_CACHE=/tmp/.cache \
         -v $(WORK_DIR):/post-api \
         golangci/golangci-lint:v1.21 /bin/sh -c "cd /post-api && mkdir -p /tmp/.cache && golangci-lint run -v ./... "
-
-dev_migration:
-	docker-compose -f docker-compose-db.dev.migration.yml up -d
 
 healthcheck: start
 	EXIT_CODE=$(shell ./docker-compose-scripts/test-scripts/verify_healthcheck.sh http://localhost:30003/api/post/healthz > /dev/null 2>&1; echo $$?); \

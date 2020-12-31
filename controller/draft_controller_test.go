@@ -158,11 +158,9 @@ func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
 
 func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
 	newInterest := request.InterestsSaveRequest{
-		Interests: models.JSONString{
-			JSONText: types.JSONText(`[{"id":"1","name":"sports"},{"id":"2","name":"economy"}]`),
-		},
-		DraftID: "121212",
-		UserID:  "1",
+		Interest: "sports",
+		DraftID:  "121212",
+		UserID:   "1",
 	}
 
 	suite.mockDraftService.EXPECT().UpsertInterests(newInterest, suite.context).Return(nil).Times(1)
@@ -207,7 +205,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(1)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, nil).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
@@ -216,7 +214,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
 	DraftID := "q3w4e5r5t6y"
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(0)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, nil).Times(0)
 
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y", nil)
 
@@ -237,7 +235,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenServiceFails() {
 	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
 	suite.Nil(err)
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, &constants.NoDraftFoundError).Times(1)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, &constants.NoDraftFoundError).Times(1)
 
 	suite.draftController.GetDraft(suite.context)
 
@@ -346,7 +344,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenSuccess() {
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(nil).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(nil).Times(1)
 
 	suite.draftController.DeleteDraft(suite.context)
 
@@ -357,7 +355,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenSuccess() {
 func (suite *DraftControllerTest) TestDeleteDraft_WhenBadRequest() {
 	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/1", nil)
 
-	suite.mockDraftService.EXPECT().DeleteDraft("1", suite.context).Return(nil).Times(0)
+	suite.mockDraftService.EXPECT().DeleteDraft("1", "some-user", suite.context).Return(nil).Times(0)
 
 	jsonBytes, err := json.Marshal(&constants.PayloadValidationError)
 	suite.Nil(err)
@@ -378,7 +376,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithNotFoun
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(&constants.NoDraftFoundError).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(&constants.NoDraftFoundError).Times(1)
 
 	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
 	suite.Nil(err)
@@ -399,7 +397,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithGeneric
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
 
 	jsonBytes, err := json.Marshal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong))
 	suite.Nil(err)

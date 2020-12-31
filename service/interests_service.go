@@ -24,13 +24,12 @@ func (service interestsService) GetInterests(ctx context.Context, searchKeyword 
 	logger.Info("Calling repository to get all interests")
 	interests, err := service.repository.GetInterests(ctx, searchKeyword, selectedTags)
 	if err != nil {
+		if err.Error() == constants.NoInterestsFoundCode {
+			logger.Errorf("No interests found for keyword, Error %v", err)
+			return nil, &constants.NoInterestsFoundError
+		}
 		logger.Errorf("error occurred while fetching over all interests from interest repository %v", err)
 		return nil, &constants.PostServiceFailureError
-	}
-
-	if len(interests) == 0 {
-		logger.Error("no results found for interests")
-		return nil, &constants.NoInterestsFoundError
 	}
 
 	logger.Info("successfully fetched interests")

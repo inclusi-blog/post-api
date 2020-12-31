@@ -4,177 +4,215 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/models/db"
 
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/jmoiron/sqlx"
 )
 
 type PostsRepository interface {
-	CreatePost(ctx context.Context, post db.PublishPost) (int64, error)
-	GetLikeCountByPost(ctx context.Context, postID int64) (int64, error)
-	AppendOrRemoveUserFromLikedBy(postID int64, userID int64, ctx context.Context) error
-	SaveInitialLike(ctx context.Context, postID int64) error
-	GetPostID(ctx context.Context, postUUID string) (int64, error)
-	GetCommentsByPostID(ctx context.Context, postID int64) (string, error)
-	SaveInitialComment(ctx context.Context, postID int64) error
+	CreatePost(ctx context.Context, post db.PublishPost) error
+	LikePost(postID string, userID string, ctx context.Context) error
+	UnlikePost(ctx context.Context, userId string, postId string) error
+	IsPostLikedByPerson(ctx context.Context, userId string, postId string) (bool, error)
+	CommentPost(ctx context.Context, userId string, comment string, postId string) error
+	GetLikesCountByPostID(ctx context.Context, postId string) (int64, error)
 }
 
 type postRepository struct {
-	db *sqlx.DB
+	db neo4j.Session
 }
 
 const (
-	PublishPost           = "INSERT INTO POSTS (puid, user_id, post_data, read_time, view_count) VALUES ($1, $2, $3, $4, $5) RETURNING id"
-	GetLikedByCount       = "SELECT array_length(liked_by, 1) FROM likes WHERE post_id=$1 "
-	UpdateOrRemoveLikedBy = "UPDATE likes SET liked_by = case when (SELECT count(id) as id  FROM likes WHERE post_id=$1 AND $2=ANY(liked_by)) = '1' then array_remove(liked_by, $2) else array_append(liked_by, $2) end where post_id = $1"
-	InitialLike           = "INSERT INTO likes (liked_by, post_id) VALUES ('{}', $1)"
-	FetchPostID           = "SELECT id as postID FROM posts WHERE puid = $1"
-	GetCommentsByPostID   = "SELECT comments FROM comments WHERE post_id = $1"
-	InitialComment        = "INSERT INTO comments (comments, post_id) VALUES ('[]', $1)"
+	PublishPost           = "MATCH (author:Person) WHERE author.userId = $userId MATCH (interest:Interest) WHERE interest.name IN $interests MERGE (post:Post{title: $title, puid: $puid, postData: $postData, tagline: $tagline, previewImage: $previewImage, readTime: $readTime})-[audit:PUBLISHED_BY{createdAt: timestamp()}]->(author) MERGE (post)-[:FALLS_UNDER]->(interest)"
+	IsPersonLikedThePost  = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post{ puid: $puid}) return EXISTS((user)-[:LIKED]->(post)) as isLiked"
+	CommentPost           = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:COMMENTED{commentId: apoc.create.uuid(), comment: $comment, createdAt: timestamp()}]->(post)"
+	LikePost              = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:LIKED]->(post)"
+	UnlikePost            = "MATCH (user:Person{ userId: $userId})-[like:LIKED]->(post: Post{ puid: $puid}) delete like"
+	GetLikeCountForPostID = "MATCH (readers:Person)-[likes:LIKED]->(post:Post{ puid: $puid}) RETURN count(likes) as likeCount"
 )
 
-func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) (int64, error) {
+func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) error {
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "CreatePost")
 
-	logger.Infof("Publishing the post in posts table for post postID %v", post.PUID)
+	logger.Infof("Publishing the post for postID %v", post.PUID)
 
-	var postID int64
-	err := repository.db.QueryRowContext(ctx, PublishPost, post.PUID, post.UserID, post.PostData, post.ReadTime, post.ViewCount).Scan(&postID)
+	result, err := repository.db.Run(PublishPost, map[string]interface{}{
+		"userId":       post.UserID,
+		"postData":     post.PostData.String(),
+		"puid":         post.PUID,
+		"readTime":     post.ReadTime,
+		"interests":    post.Interest,
+		"title":        post.Title,
+		"tagline":      post.Tagline,
+		"previewImage": post.PreviewImage,
+	})
 
 	if err != nil {
 		logger.Errorf("Error occurred while publishing user post in posts table %v", err)
-		return 0, err
+		return err
 	}
 
-	logger.Infof("Successfully posted the post in posts table for post postID %v", post.PUID)
-
-	return postID, nil
-}
-
-func (repository postRepository) GetLikeCountByPost(ctx context.Context, postID int64) (int64, error) {
-	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "GetLikeCountByPost")
-
-	logger.Infof("Fetching likedby count from likes table for the given post id %v", postID)
-
-	var likeCount sql.NullInt64
-
-	err := repository.db.GetContext(ctx, &likeCount, GetLikedByCount, postID)
+	_, err = result.Summary()
 
 	if err != nil {
-		logger.Errorf("Error occurred while fetching likedby count from likes table %v", err.Error())
-		return 0, err
+		logger.Errorf("Error while getting result summary for publish post %v", err)
+		return err
 	}
 
-	logger.Infof("Successfully fetching likedby count from likes table for given post id %v", postID)
+	logger.Infof("Successfully posted the post for post postID %v", post.PUID)
 
-	return likeCount.Int64, nil
+	return nil
 }
-func (repository postRepository) AppendOrRemoveUserFromLikedBy(postID int64, userID int64, ctx context.Context) error {
+
+func (repository postRepository) LikePost(postID string, userID string, ctx context.Context) error {
 	logger := logging.GetLogger(ctx)
-	log := logger.WithField("class", "PostsRepository").WithField("method", "AppendOrRemoveUserFromLikedBy")
+	log := logger.WithField("class", "PostsRepository").WithField("method", "LikePost")
 
 	log.Infof("updating the likedby in like table for post %v", postID)
 
-	_, err := repository.db.ExecContext(ctx, UpdateOrRemoveLikedBy, postID, userID)
+	result, err := repository.db.Run(LikePost, map[string]interface{}{
+		"userId": userID,
+		"puid":   postID,
+	})
 
 	if err != nil {
 		log.Errorf("Error occurred while updating liked by in likes table %v", err)
 		return err
 	}
 
-	return nil
-}
-
-func (repository postRepository) SaveInitialLike(ctx context.Context, postID int64) error {
-	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "SaveInitialLike")
-
-	logger.Infof("saving initial empty like for post id %v", postID)
-	result, err := repository.db.ExecContext(ctx, InitialLike, postID)
+	_, err = result.Summary()
 
 	if err != nil {
-		logger.Errorf("Error occurred while saving initial like for post id %v", postID)
+		log.Errorf("Error occurred while getting summary for post like update for post %v ,Error %v", postID, err)
 		return err
 	}
-
-	affected, err := result.RowsAffected()
-
-	if err != nil {
-		logger.Errorf("Error occurred while getting the affected rows for post initial like insert %v", postID)
-		return err
-	}
-
-	if affected != 1 {
-		return errors.New(fmt.Sprintf("more than one row or nor row affected for post id %v ,affected rows %v", postID, affected))
-	}
-
-	logger.Infof("One row affected for inserting initial like for post id %v", postID)
 
 	return nil
 }
 
-func (repository postRepository) GetPostID(ctx context.Context, postUUID string) (int64, error) {
-	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "GetPostID")
+func (repository postRepository) IsPostLikedByPerson(ctx context.Context, userId string, postId string) (bool, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "IsPostLikedByPerson")
 
-	logger.Infof("Fetching post id for given post uuid %v", postUUID)
-	var postID int64
-	err := repository.db.GetContext(ctx, &postID, FetchPostID, postUUID)
+	logger.Infof("Fetching user like status for post %v", postId)
+
+	result, err := repository.db.Run(IsPersonLikedThePost, map[string]interface{}{
+		"userId": userId,
+		"puid":   postId,
+	})
 
 	if err != nil {
-		logger.Errorf("error occurred while fetching post id from post table for give post uid %v Error: %v", postUUID, err)
+		logger.Errorf("Error occurred while fetching like status for user %v and post %v, Error %v", userId, postId, err)
+		return false, err
+	}
+
+	if result.Next() {
+		isLiked, isPresent := result.Record().Get("isLiked")
+
+		if !isPresent {
+			logger.Error("unable to get key value of isLiked from like status query")
+			return false, errors.New("unable to find key isLiked")
+		}
+
+		isPostLiked := isLiked.(bool)
+		return isPostLiked, nil
+	}
+
+	return false, errors.New("no results found")
+}
+
+func (repository postRepository) UnlikePost(ctx context.Context, userId string, postId string) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "IsPostLikedByPerson")
+
+	logger.Infof("unlike post of user id %v to post id %v", userId, postId)
+
+	result, err := repository.db.Run(UnlikePost, map[string]interface{}{
+		"userId": userId,
+		"puid":   postId,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while unliking the post %v by user %v", postId, userId)
+		return err
+	}
+
+	_, err = result.Summary()
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching result summary for unliking the post %v by user %v", postId, userId)
+		return err
+	}
+
+	logger.Infof("Successfully disliked post %v by user %v", postId, userId)
+
+	return nil
+}
+
+func (repository postRepository) CommentPost(ctx context.Context, userId string, comment string, postId string) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "CommentPost")
+
+	logger.Infof("Commenting on post %v by user %v", postId, userId)
+
+	result, err := repository.db.Run(CommentPost, map[string]interface{}{
+		"puid":    postId,
+		"userId":  userId,
+		"comment": comment,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while writing comment to post %v by user %v ,Error %v", postId, userId, err)
+		return err
+	}
+
+	_, err = result.Summary()
+
+	if err != nil {
+		logger.Errorf("Error occurred while getting summary for comment to post %v by user %v ,Error %v", postId, userId, err)
+		return err
+	}
+
+	logger.Infof("Successfully wrote comment to post %v by user %v", postId, userId)
+
+	return nil
+}
+
+func (repository postRepository) GetLikesCountByPostID(ctx context.Context, postId string) (int64, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "CommentPost")
+
+	logger.Infof("Fetching likes count for post %v", postId)
+
+	result, err := repository.db.Run(GetLikeCountForPostID, map[string]interface{}{
+		"puid": postId,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching like count for post %v, Error %v", postId, err)
 		return 0, err
 	}
 
-	logger.Info("Successfully fetched post id from post table for given post uid")
-	return postID, nil
-}
-
-func (repository postRepository) GetCommentsByPostID(ctx context.Context, postID int64) (string, error) {
-	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "GetCommentsByPostID")
-
-	logger.Infof("Fetching comments for given post id %v", postID)
-	var comments sql.NullString
-	err := repository.db.GetContext(ctx, &comments, GetCommentsByPostID, postID)
+	_, err = result.Summary()
 
 	if err != nil {
-		logger.Errorf("error occurred while fetching comments from comments table for give post uid %v Error: %v", postID, err)
-		return comments.String, err
+		logger.Errorf("Error occurred while fetching summary for get likes count for post %v, Error %v", postId, err)
+		return 0, err
 	}
 
-	logger.Info("Successfully fetched comments from comments table for given post uid")
-	return comments.String, nil
+	if result.Next() {
+		likeCount, isPresent := result.Record().Get("likeCount")
+		if !isPresent {
+			logger.Errorf("No like count key present either post not found for post id %v", postId)
+			return 0, errors.New("PostNotFound")
+		}
+		totalLikes := likeCount.(int64)
+
+		logger.Infof("Successfully fetched likes count for post id %v", postId)
+		return totalLikes, nil
+	}
+
+	return 0, errors.New("no row found")
 }
 
-func (repository postRepository) SaveInitialComment(ctx context.Context, postID int64) error {
-	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "SaveInitialComment")
-
-	logger.Infof("saving initial empty comment for post id %v", postID)
-	result, err := repository.db.ExecContext(ctx, InitialComment, postID)
-
-	if err != nil {
-		logger.Errorf("Error occurred while saving initial comments for post id %v", postID)
-		return err
-	}
-
-	affected, err := result.RowsAffected()
-
-	if err != nil {
-		logger.Errorf("Error occurred while getting the affected rows for post initial comments insert %v", postID)
-		return err
-	}
-
-	if affected != 1 {
-		return errors.New(fmt.Sprintf("more than one row or nor row affected for post id %v ,affected rows %v", postID, affected))
-	}
-
-	logger.Infof("One row affected for inserting initial comments for post id %v", postID)
-
-	return nil
-}
-
-func NewPostsRepository(db *sqlx.DB) PostsRepository {
+func NewPostsRepository(db neo4j.Session) PostsRepository {
 	return postRepository{db: db}
 }

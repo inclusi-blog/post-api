@@ -1,7 +1,7 @@
 package init
 
 import (
-	"github.com/jmoiron/sqlx"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/configuration"
 	"post-api/controller"
 	"post-api/repository"
@@ -15,7 +15,7 @@ var (
 	postController      controller.PostController
 )
 
-func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
+func Objects(db neo4j.Session, configData *configuration.ConfigData) {
 	draftRepository := repository.NewDraftRepository(db)
 	draftService := service.NewDraftService(draftRepository)
 	draftController = controller.NewDraftController(draftService)
@@ -24,7 +24,6 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
-	previewPostRepository := repository.NewPreviewPostsRepository(db)
-	postService := service.NewPostService(postRepository, draftRepository, postValidator, previewPostRepository)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator)
 	postController = controller.NewPostController(postService)
 }

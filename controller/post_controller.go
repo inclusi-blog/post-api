@@ -33,7 +33,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	id := publishPostRequest.DratID
 	logger.Infof("Successfully bind publishPostRequest body for draft id %v", id)
 
-	publishErr := controller.postService.PublishPost(ctx, id)
+	publishErr := controller.postService.PublishPost(ctx, id, "some-user")
 
 	if publishErr != nil {
 		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", id, publishErr)
@@ -63,7 +63,7 @@ func (controller PostController) UpdateLikes(ctx *gin.Context) {
 
 	log.Infof("Request body bind successful with get draft request for user %v", "12")
 
-	res, err := controller.postService.LikePost(int64(1), postLikeRequest.PostUID, ctx)
+	res, err := controller.postService.LikePost("some-user", postLikeRequest.PostUID, ctx)
 	if err != nil {
 		log.Errorf("Error occurred in post service while updating likedby in likes table %v. Error %v", "12", err.Error())
 		constants.RespondWithGolaError(ctx, err)

@@ -29,14 +29,6 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 
 	config := validator.configData.ContentReadTimeConfig
 
-	var interests []interface{}
-	err := draft.Interest.Unmarshal(&interests)
-
-	if err != nil {
-		logger.Errorf("Error occurred while validating draft interests for draft id %v .%v", id, err)
-		return models.MetaData{}, &constants.DraftInterestParseError
-	}
-
 	var postWordsCount int
 	var imageCount int
 	var readTime int
@@ -52,23 +44,21 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 
 	readTime = CountContentReadTime(postWordsCount)
 	CountImageReadTime(imageCount, &readTime)
-	for _, value := range interests {
-		interest := value.(map[string]interface{})
-		if interest["name"] == "" {
+	for _, interest := range draft.Interest {
+		if interest == "" {
 			return models.MetaData{}, &constants.DraftInterestParseError
 		}
-		configReadTime := config[interest["name"].(string)]
+		configReadTime := config[interest]
 		if configReadTime != 0 {
 			if readTime < configReadTime {
 				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)
 				return models.MetaData{}, &constants.InterestReadTimeDoesNotMeetErr
 			}
 			continue
-		} else {
-			if readTime < validator.configData.MinimumPostReadTime {
-				logger.Errorf("post doesn't meet minimum read time %v .%v", draftID, readTime)
-				return models.MetaData{}, &constants.ReadTimeNotMeetError
-			}
+		}
+		if readTime < validator.configData.MinimumPostReadTime {
+			logger.Errorf("post doesn't meet minimum read time %v .%v", draftID, readTime)
+			return models.MetaData{}, &constants.ReadTimeNotMeetError
 		}
 	}
 

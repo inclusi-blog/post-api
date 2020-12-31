@@ -1,7 +1,5 @@
 package request
 
-import "post-api/models"
-
 type TaglineSaveRequest struct {
 	UserID  string `json:"user_id" binding:"required" db:"user_id"`
 	DraftID string `json:"draft_id" binding:"required" db:"draft_id"`
@@ -9,9 +7,9 @@ type TaglineSaveRequest struct {
 }
 
 type InterestsSaveRequest struct {
-	UserID    string            `json:"user_id" binding:"required" db:"user_id" `
-	DraftID   string            `json:"draft_id" binding:"required" db:"draft_id" `
-	Interests models.JSONString `json:"interests" binding:"required" db:"interest" `
+	UserID   string `json:"user_id" binding:"required" db:"user_id" `
+	DraftID  string `json:"draft_id" binding:"required" db:"draft_id" `
+	Interest string `json:"interests" binding:"required" db:"interest" `
 }
 
 type PreviewImageSaveRequest struct {

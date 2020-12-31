@@ -2,11 +2,10 @@ version: "3.7"
 services:
   post-test-migration:
     container_name: post-test-migration
-    image: flyway/flyway
-    command: -url=jdbc:postgresql://gola-db:5432/post_test -schemas=post_test -user=post_test -password=gola -connectRetries=60 migrate
+    image: gola05/liquigraph:latest
     volumes:
-      - ./database/.:/flyway/sql
-      - test-volume:/test-volume
+      - ./database:/home/gola/database
+    command: --changelog /home/gola/database/changelog.xml --username gola_admin_test --password gola --database golatest --graph-db-uri jdbc:neo4j:bolt://gola-db:7687/
     networks:
       - gola-network
 

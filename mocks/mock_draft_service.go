@@ -80,18 +80,18 @@ func (mr *MockDraftServiceMockRecorder) UpsertInterests(interestRequest, ctx int
 }
 
 // GetDraft mocks base method
-func (m *MockDraftService) GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error) {
+func (m *MockDraftService) GetDraft(draftUID, userId string, ctx context.Context) (db.DraftDB, *golaerror.Error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDraft", draftUID, ctx)
-	ret0, _ := ret[0].(db.Draft)
+	ret := m.ctrl.Call(m, "GetDraft", draftUID, userId, ctx)
+	ret0, _ := ret[0].(db.DraftDB)
 	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }
 
 // GetDraft indicates an expected call of GetDraft
-func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, ctx interface{}) *gomock.Call {
+func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, userId, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, userId, ctx)
 }
 
 // GetAllDraft mocks base method
@@ -124,15 +124,15 @@ func (mr *MockDraftServiceMockRecorder) SavePreviewImage(imageSaveRequest, ctx i
 }
 
 // DeleteDraft mocks base method
-func (m *MockDraftService) DeleteDraft(draftID string, ctx context.Context) *golaerror.Error {
+func (m *MockDraftService) DeleteDraft(draftID, userId string, ctx context.Context) *golaerror.Error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteDraft", draftID, ctx)
+	ret := m.ctrl.Call(m, "DeleteDraft", draftID, userId, ctx)
 	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
 // DeleteDraft indicates an expected call of DeleteDraft
-func (mr *MockDraftServiceMockRecorder) DeleteDraft(draftID, ctx interface{}) *gomock.Call {
+func (mr *MockDraftServiceMockRecorder) DeleteDraft(draftID, userId, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), draftID, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), draftID, userId, ctx)
 }

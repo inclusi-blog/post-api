@@ -48,7 +48,7 @@ func TestPostControllerTestSuite(t *testing.T) {
 func (suite *PostControllerTest) TestPublishPost_WhenSuccess() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(nil).Times(1)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(nil).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
@@ -58,7 +58,7 @@ func (suite *PostControllerTest) TestPublishPost_WhenSuccess() {
 func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(nil).Times(0)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(nil).Times(0)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": ""}`))
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
@@ -71,7 +71,7 @@ func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(&constants.InternalServerError).Times(1)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(&constants.InternalServerError).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
 	suite.postController.PublishPost(suite.context)
 	expectedErr := &constants.InternalServerError
@@ -85,7 +85,7 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
 	postID := "q2w3e4r5tqaz"
 
 	likeCount := request.LikedByCount{LikeCount: 1}
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(1)
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(likeCount, nil).Times(1)
 
 	params := gin.Params{
 		gin.Param{
@@ -126,7 +126,7 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenBadRequest() {
 func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFails() {
 	postID := "q2w3e4r5tqaz"
 
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(request.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(request.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
 
 	params := gin.Params{
 		gin.Param{
@@ -146,7 +146,7 @@ func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFails() {
 func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFailsWithNotFoundPostForGivenPostID() {
 	postID := "q2w3e4r5tqaz"
 
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(request.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
+	suite.mockPostService.EXPECT().LikePost("some-user", postID, suite.context).Return(request.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
 
 	params := gin.Params{
 		gin.Param{
