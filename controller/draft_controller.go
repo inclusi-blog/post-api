@@ -31,7 +31,7 @@ func (controller DraftController) SaveDraft(ctx *gin.Context) {
 
 	log := logger.WithField("class", "DraftController").WithField("method", "CreateNewPostWithData")
 
-	log.Infof("Entered controller to upsert draft request for user %v", "12")
+	log.Infof("Entered controller to upsert draft request for user")
 	var upsertPost models.UpsertDraft
 
 	err := ctx.ShouldBindBodyWith(&upsertPost, binding.JSON)
@@ -42,7 +42,7 @@ func (controller DraftController) SaveDraft(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("Request body bind successful with upsert draft request for user %v", "12")
+	log.Infof("Request body bind successful with upsert draft request for user %v", upsertPost.UserID)
 
 	draftSaveErr := controller.service.SaveDraft(upsertPost, ctx)
 
@@ -52,7 +52,7 @@ func (controller DraftController) SaveDraft(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("writing response to draft request for user %v", "12")
+	log.Infof("writing response to draft request for user %v", upsertPost.UserID)
 
 	ctx.Status(http.StatusOK)
 }
@@ -104,7 +104,7 @@ func (controller DraftController) SaveInterests(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("Request body bind successful with save interests request for user %v", "12")
+	log.Infof("Request body bind successful with save interests request for user %v", upsertInterests.UserID)
 
 	draftSaveErr := controller.service.UpsertInterests(upsertInterests, ctx)
 
@@ -114,7 +114,7 @@ func (controller DraftController) SaveInterests(ctx *gin.Context) {
 		return
 	}
 
-	log.Infof("writing response to interests request for user %v", "12")
+	log.Infof("writing response to interests request for user %v", upsertInterests.UserID)
 
 	ctx.Status(http.StatusOK)
 }

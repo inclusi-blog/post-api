@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/constants"
 	"post-api/models"
@@ -32,7 +33,7 @@ const (
 	SavePostDraft    = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.data = $data"
 	SaveTagline      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.tagline = $tagline"
 	SaveInterests    = "MATCH (draft:Draft{ draftId: $draftId})-[audit:CREATED_BY]->(author:Person{userId: $userId}) MATCH (interest:Interest { name: $interestName}) MERGE (draft)-[:FALLS_UNDER]->(interest) SET audit.updatedAt = timestamp()"
-	FetchDraft       = "MATCH (tags:Interest)<-[:FALLS_UNDER]-(draft:Draft)-[:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId return draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData"
+	FetchDraft       = "MATCH (draft:Draft)-[:CREATED_BY]->(author:Person) OPTIONAL MATCH (tags:Interest)<-[:FALLS_UNDER]-(draft) where draft.draftId = $draftId and author.userId = $userId return draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData"
 	SavePreviewImage = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId set draft.previewImage = $previewImage, audit.updatedAt = timestamp()"
 	DeleteDraft      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId detach delete audit, draft"
 	FetchAllDraft    = "MATCH (draft:Draft)-[:CREATED_BY]->(author:Person) OPTIONAL match (draft)-[:FALLS_UNDER]->(tags:Interest) where author.userId = $userId return draft.draftId as draftId, author.userId as userId, draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData skip $offset limit $limit"
@@ -176,11 +177,8 @@ func (repository draftRepository) GetDraft(ctx context.Context, draftUID string,
 		postData := result.Record().GetByIndex(3)
 		if postData != nil {
 			postString := postData.(string)
-			marshalBytes, err := json.Marshal(postString)
-			err = json.Unmarshal(marshalBytes, &draft.PostData)
-			if err != nil {
-				logger.Errorf("invalid struct format while destructuring the post data %v", err)
-				return db.DraftDB{}, err
+			draft.PostData = models.JSONString{
+				JSONText: types.JSONText(postString),
 			}
 		}
 		draft.DraftID = draftUID

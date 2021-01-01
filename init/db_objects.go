@@ -29,16 +29,5 @@ func Db(configData *configuration.ConfigData) neo4j.Session {
 		logger.Fatalf("error occurred while creating session neo4j database %v", err)
 	}
 
-	defer func() {
-		err := driver.Close()
-		if err != nil {
-			logger.Errorf("unable to close db %v", err)
-		}
-		err = session.Close()
-		if err != nil {
-			logger.Errorf("unable to close session %v", err)
-		}
-	}()
-
 	return session
 }
