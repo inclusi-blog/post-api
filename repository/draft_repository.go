@@ -26,6 +26,7 @@ type DraftRepository interface {
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 	DeleteDraft(ctx context.Context, draftUID string, userId string) error
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftDB, error)
+	UpdatePublishedStatus(ctx context.Context, draftId, userId string, transaction neo4j.Transaction) error
 }
 
 const (
@@ -39,6 +40,7 @@ const (
 	SavePreviewImage = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId set draft.previewImage = $previewImage, audit.updatedAt = timestamp()"
 	DeleteDraft      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId detach delete audit, draft"
 	FetchAllDraft    = "MATCH (draft:Draft)-[:CREATED_BY]->(author:Person) OPTIONAL match (draft)-[:FALLS_UNDER]->(tags:Interest) where author.userId = $userId return draft.draftId as draftId, author.userId as userId, draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData skip $offset limit $limit"
+	SetPublishStatus = "MATCH (draft:Draft)-[:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.isPublished = true return draft.draftId as draftId"
 )
 
 type draftRepository struct {
@@ -367,6 +369,35 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
 
 	return drafts, nil
+}
+
+func (repository draftRepository) UpdatePublishedStatus(ctx context.Context, draftId, userId string, transaction neo4j.Transaction) error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "UpdatePublishedStatus")
+	logger.Infof("Writing draft %v status for post publish", draftId)
+
+	result, err := transaction.Run(SetPublishStatus, map[string]interface{}{
+		"draftId": draftId,
+		"userId":  userId,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while updating draft publish status for draft %v, Error %v", draftId, err)
+		return err
+	}
+
+	_, err = result.Summary()
+	if err != nil {
+		logger.Errorf("Error occurred while fetching summary for draft publish status update for draft %v, Error %v", draftId, err)
+		return err
+	}
+
+	if !result.Next() {
+		return errors.New(constants.NoDraftFoundCode)
+	}
+
+	logger.Infof("Successfully updated publish status for draft %v", draftId)
+
+	return nil
 }
 
 func NewDraftRepository(db neo4j.Session) DraftRepository {

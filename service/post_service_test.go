@@ -24,6 +24,7 @@ type PostServiceTest struct {
 	mockDraftsRepository      *mocks.MockDraftRepository
 	mockPreviewPostRepository *mocks.MockPreviewPostsRepository
 	mockPostValidator         *mocks.MockPostValidator
+	mockNeo4jSession          *mocks.MockSession
 	postService               PostService
 }
 
@@ -38,7 +39,8 @@ func (suite *PostServiceTest) SetupTest() {
 	suite.mockDraftsRepository = mocks.NewMockDraftRepository(suite.mockController)
 	suite.mockPostValidator = mocks.NewMockPostValidator(suite.mockController)
 	suite.mockPreviewPostRepository = mocks.NewMockPreviewPostsRepository(suite.mockController)
-	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator)
+	suite.mockNeo4jSession = mocks.NewMockSession(suite.mockController)
+	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator, suite.mockNeo4jSession)
 }
 
 func (suite *PostServiceTest) TearDownTest() {
@@ -69,7 +71,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		Interest:     []string{"sports", "economy"},
 	}
 
-	post := db.PublishPost{
+	_ = db.PublishPost{
 		PUID:         "1231212",
 		UserID:       "1",
 		PostData:     draft.PostData,
@@ -86,7 +88,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		Tagline:  "",
 		ReadTime: 22,
 	}, nil).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(nil).Times(1)
+	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
 }
@@ -117,17 +119,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		Interest:     []string{"sports", "economy"},
 	}
 
-	post := db.PublishPost{
-		PUID:         "1231212",
-		UserID:       "1",
-		PostData:     draft.PostData,
-		ReadTime:     22,
-		Interest:     []string{"sports", "economy"},
-		Title:        "Install apps via helm in kubernetes",
-		Tagline:      "",
-		PreviewImage: "https://www.some-url.com",
-	}
-
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:        "Install apps via helm in kubernetes",
@@ -135,15 +126,13 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		ReadTime:     22,
 		PreviewImage: "https://www.some-url.com",
 	}, nil).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(nil).Times(1)
+	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(nil).Times(0)
-
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
@@ -151,8 +140,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsNoDraftFoundError() {
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New(constants.NoDraftFoundCode)).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(nil).Times(0)
-
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(&constants.NoDraftFoundError, err)
@@ -181,23 +168,13 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 		Interest:     []string{"sports", "economy"},
 	}
 
-	post := db.PublishPost{
-		PUID:         "1231212",
-		UserID:       "some-user",
-		PostData:     draft.PostData,
-		ReadTime:     22,
-		Interest:     []string{"sports", "economy"},
-		Title:        "Install apps via helm in kubernetes",
-		Tagline:      "this is some tag line",
-		PreviewImage: "https://www.some-url.com",
-	}
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
 	}, nil).Times(1)
-	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(errors.New("something went wrong")).Times(1)
+	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, errors.New("something went wrong")).Times(1)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)

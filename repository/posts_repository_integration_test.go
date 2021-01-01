@@ -91,8 +91,13 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStor
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		suite.Nil(err)
+		return nil, err
+	})
 
+	suite.Nil(result)
 	suite.Nil(err)
 }
 
@@ -109,11 +114,17 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSamePostIsSavedD
 		Tagline:      "this is some tagline",
 		PreviewImage: "some-url",
 	}
-
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
-	suite.Nil(err)
-	err = suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		suite.Nil(err)
+		err = transaction.Commit()
+		suite.Nil(err)
+		err = suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.NotNil(err)
+
 }
 
 func (suite *PostsRepositoryIntegrationTest) TestLikePost_WhenUserLikes() {
@@ -130,7 +141,15 @@ func (suite *PostsRepositoryIntegrationTest) TestLikePost_WhenUserLikes() {
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -165,7 +184,15 @@ func (suite *PostsRepositoryIntegrationTest) TestIsPostLikedByPerson_WhenThereAr
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -197,7 +224,15 @@ func (suite *PostsRepositoryIntegrationTest) TestUnlikePost_WhenUserLikes() {
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -241,7 +276,15 @@ func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenUserCommentOnAP
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -269,7 +312,15 @@ func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenThereIsNoPost()
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -312,7 +363,15 @@ func (suite *PostsRepositoryIntegrationTest) TestGetLikesCountByPostID_WhenThere
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
@@ -363,7 +422,15 @@ func (suite *PostsRepositoryIntegrationTest) TestGetLikesCountByPostID_WhenThere
 		PreviewImage: "some-url",
 	}
 
-	err := suite.postsRepository.CreatePost(suite.goContext, post)
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		if err != nil {
+			err := transaction.Commit()
+			suite.Nil(err)
+		}
+		return nil, err
+	})
+	suite.Nil(result)
 	suite.Nil(err)
 
 	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)

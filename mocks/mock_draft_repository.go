@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	neo4j "github.com/neo4j/neo4j-go-driver/neo4j"
 	models "post-api/models"
 	db "post-api/models/db"
 	request "post-api/models/request"
@@ -176,4 +177,18 @@ func (m *MockDraftRepository) GetAllDraft(ctx context.Context, allDraftReq model
 func (mr *MockDraftRepositoryMockRecorder) GetAllDraft(ctx, allDraftReq interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetAllDraft), ctx, allDraftReq)
+}
+
+// UpdatePublishedStatus mocks base method
+func (m *MockDraftRepository) UpdatePublishedStatus(ctx context.Context, draftId, userId string, transaction neo4j.Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePublishedStatus", ctx, draftId, userId, transaction)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePublishedStatus indicates an expected call of UpdatePublishedStatus
+func (mr *MockDraftRepositoryMockRecorder) UpdatePublishedStatus(ctx, draftId, userId, transaction interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePublishedStatus", reflect.TypeOf((*MockDraftRepository)(nil).UpdatePublishedStatus), ctx, draftId, userId, transaction)
 }

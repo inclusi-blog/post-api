@@ -508,6 +508,36 @@ func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenThereIsNoDraf
 	suite.Equal(constants.NoDraftFoundCode, draftErr.Error())
 }
 
+func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsADraft()  {
+	suite.insertInterestEntries()
+	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.draftRepository.UpdatePublishedStatus(suite.goContext, draft.DraftID, draft.UserID, transaction)
+		suite.Nil(err)
+		return nil, err
+	})
+	suite.Nil(err)
+	suite.Nil(result)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsNoDraft()  {
+	suite.insertInterestEntries()
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.draftRepository.UpdatePublishedStatus(suite.goContext, "1q2w3e4r5t6y", "some-user", transaction)
+		suite.NotNil(err)
+		err = transaction.Close()
+		suite.Nil(err)
+		return nil, err
+	})
+	suite.NotNil(err)
+	suite.Nil(result)
+}
+
 func (suite *DraftRepositoryIntegrationTest) insertInterestEntries() {
 	interests := []string{
 		"CREATE (interest:Category:Interest{name: 'Art'})",

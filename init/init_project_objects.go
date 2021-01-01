@@ -24,6 +24,6 @@ func Objects(db neo4j.Session, configData *configuration.ConfigData) {
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
-	postService := service.NewPostService(postRepository, draftRepository, postValidator)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator, db)
 	postController = controller.NewPostController(postService)
 }

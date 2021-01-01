@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	neo4j "github.com/neo4j/neo4j-go-driver/neo4j"
 	db "post-api/models/db"
 	reflect "reflect"
 )
@@ -35,17 +36,17 @@ func (m *MockPostsRepository) EXPECT() *MockPostsRepositoryMockRecorder {
 }
 
 // CreatePost mocks base method
-func (m *MockPostsRepository) CreatePost(ctx context.Context, post db.PublishPost) error {
+func (m *MockPostsRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePost", ctx, post)
+	ret := m.ctrl.Call(m, "CreatePost", ctx, post, transaction)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreatePost indicates an expected call of CreatePost
-func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post interface{}) *gomock.Call {
+func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post, transaction interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePost", reflect.TypeOf((*MockPostsRepository)(nil).CreatePost), ctx, post)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePost", reflect.TypeOf((*MockPostsRepository)(nil).CreatePost), ctx, post, transaction)
 }
 
 // LikePost mocks base method

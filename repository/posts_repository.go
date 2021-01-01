@@ -12,7 +12,7 @@ import (
 )
 
 type PostsRepository interface {
-	CreatePost(ctx context.Context, post db.PublishPost) error
+	CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error
 	LikePost(postID string, userID string, ctx context.Context) error
 	UnlikePost(ctx context.Context, userId string, postId string) error
 	IsPostLikedByPerson(ctx context.Context, userId string, postId string) (bool, error)
@@ -33,12 +33,12 @@ const (
 	GetLikeCountForPostID = "MATCH (readers:Person)-[likes:LIKED]->(post:Post{ puid: $puid}) RETURN count(likes) as likeCount"
 )
 
-func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost) error {
+func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "CreatePost")
 
 	logger.Infof("Publishing the post for postID %v", post.PUID)
 
-	result, err := repository.db.Run(PublishPost, map[string]interface{}{
+	result, err := transaction.Run(PublishPost, map[string]interface{}{
 		"userId":       post.UserID,
 		"postData":     post.PostData.String(),
 		"puid":         post.PUID,

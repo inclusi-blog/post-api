@@ -21,7 +21,7 @@ require (
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.6.7
 	golang.org/x/tools v0.0.0-20200828161849-5deb26317202 // indirect
-	google.golang.org/appengine v1.6.6
-	gopkg.in/go-playground/validator.v8 v8.18.2
+	google.golang.org/appengine v1.6.6 // indirect
+	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

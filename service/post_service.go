@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/models/response"
@@ -25,6 +26,7 @@ type postService struct {
 	repository      repository.PostsRepository
 	draftRepository repository.DraftRepository
 	validator       utils.PostValidator
+	postTransaction neo4j.Session
 }
 
 func (service postService) PublishPost(ctx context.Context, draftUID string, userId string) *golaerror.Error {
@@ -79,10 +81,43 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 
 	logger.Infof("Saving post in post repository for post id %v", draftUID)
 
-	err = service.repository.CreatePost(ctx, post)
+	_, _ = service.postTransaction.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err = service.repository.CreatePost(ctx, post, transaction)
+		if err != nil {
+			logger.Errorf("Error occurred while publishing post in post repository %v", err)
+			err = transaction.Rollback()
+			if err != nil {
+				logger.Errorf("Error occurred while rolling back create post transaction %v", err)
+				return nil, err
+			}
+			return nil, err
+		}
+		err = service.draftRepository.UpdatePublishedStatus(ctx, draftUID, userId, transaction)
+		if err != nil {
+			err := transaction.Rollback()
+			if err != nil {
+				logger.Errorf("Error occurred while rolling back update published status for draft transaction %v", err)
+				return nil, err
+			}
+			logger.Errorf("Error occurred while updating draft publish status for draft id %v, Error %v", draftUID, err)
+			return nil, err
+		}
+
+		err := transaction.Commit()
+		if err != nil {
+			logger.Errorf("Error occurred while committing transaction changes for create post %v, Error %v", draftUID, err)
+			return nil, err
+		}
+		err = transaction.Close()
+		if err != nil {
+			logger.Errorf("unable to close transaction for create post of post td %v, Error %v", draftUID, err)
+			return nil, err
+		}
+		return nil, nil
+	})
 
 	if err != nil {
-		logger.Errorf("Error occurred while publishing post in post repository %v", err)
+		logger.Errorf("Error occurred while publishing draft for draft id %v, Error %v", draftUID, err)
 		return constants.StoryInternalServerError(err.Error())
 	}
 
@@ -152,10 +187,11 @@ func (service postService) CommentPost(ctx context.Context, userId, postId, comm
 	return nil
 }
 
-func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator) PostService {
+func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, session neo4j.Session) PostService {
 	return postService{
 		repository:      postsRepository,
 		draftRepository: draftRepository,
 		validator:       validator,
+		postTransaction: session,
 	}
 }
