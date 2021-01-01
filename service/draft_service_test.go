@@ -192,6 +192,35 @@ func (suite *DraftServiceTest) TestUpsertInterests_WhenDraftRepositoryReturnsErr
 	suite.Equal(&constants.PostServiceFailureError, expectedError)
 }
 
+func (suite *DraftServiceTest) TestDeleteInterest_WhenDraftRepositoryReturnsNoError() {
+	saveRequest := request.InterestsSaveRequest{
+		Interest: "sports",
+		DraftID:  "121212",
+		UserID:   "1",
+	}
+
+	suite.mockDraftRepository.EXPECT().DeleteInterest(suite.goContext, saveRequest).Return(nil).Times(1)
+
+	expectedError := suite.draftService.DeleteInterest(suite.goContext, saveRequest)
+
+	suite.Nil(expectedError)
+}
+
+func (suite *DraftServiceTest) TestDeleteInterest_WhenDraftRepositoryReturnsError() {
+	saveRequest := request.InterestsSaveRequest{
+		Interest: "sports",
+		DraftID:  "121212",
+		UserID:   "1",
+	}
+
+	suite.mockDraftRepository.EXPECT().DeleteInterest(suite.goContext, saveRequest).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	expectedError := suite.draftService.DeleteInterest(suite.goContext, saveRequest)
+
+	suite.NotNil(expectedError)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), expectedError)
+}
+
 func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsError() {
 	draftID := "121212"
 	expectedDraft := db.DraftDB{}
@@ -414,7 +443,7 @@ func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnNoError(
 func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnsGenericError() {
 	suite.mockDraftRepository.EXPECT().DeleteDraft(suite.goContext, "qwertyuiop12", "some-user").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
 
-	err := suite.draftService.DeleteDraft("qwertyuiop12", "some-user",suite.goContext)
+	err := suite.draftService.DeleteDraft("qwertyuiop12", "some-user", suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
 }

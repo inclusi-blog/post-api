@@ -195,6 +195,45 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
 
+func (suite *DraftControllerTest) TestDeleteInterest_WhenAPISuccess() {
+	newInterest := request.InterestsSaveRequest{
+		Interest: "sports",
+		DraftID:  "121212",
+		UserID:   "1",
+	}
+
+	suite.mockDraftService.EXPECT().DeleteInterest(suite.context, newInterest).Return(nil).Times(1)
+
+	jsonBytes, err := json.Marshal(newInterest)
+	suite.Nil(err)
+
+	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/delete-interests", bytes.NewBufferString(string(jsonBytes)))
+	suite.Nil(err)
+
+	suite.draftController.DeleteInterest(suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *DraftControllerTest) TestDeleteInterest_WhenBadRequest() {
+	newInterst := request.InterestsSaveRequest{}
+
+	requestBody := `{
+		"interests": "sports",
+		"user_id": "1"
+	  }`
+
+	suite.mockDraftService.EXPECT().DeleteInterest(suite.context, newInterst).Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsert-interests", bytes.NewBufferString(requestBody))
+
+	marshal, err := json.Marshal(constants.PayloadValidationError)
+	suite.Nil(err)
+
+	suite.draftController.DeleteInterest(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
+
 func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	DraftID := "q3w4e5r5t6y7"
 	params := gin.Params{

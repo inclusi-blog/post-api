@@ -22,6 +22,7 @@ type DraftService interface {
 	GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error)
 	SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error
 	DeleteDraft(draftID, userId string, ctx context.Context) *golaerror.Error
+	DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) *golaerror.Error
 }
 
 type draftService struct {
@@ -185,6 +186,21 @@ func (service draftService) DeleteDraft(draftID, userId string, ctx context.Cont
 
 	logger.Info("Successfully deleted draft from draft repository")
 
+	return nil
+}
+
+func (service draftService) DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "DeleteInterest")
+
+	logger.Infof("Deleting interest for draft %v", saveRequest.DraftID)
+
+	err := service.draftRepository.DeleteInterest(ctx, saveRequest)
+	if err != nil {
+		logger.Errorf("Error occurred while deleting interest in draft repository %v", saveRequest.DraftID)
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully deleted draft interest %v", saveRequest.DraftID)
 	return nil
 }
 

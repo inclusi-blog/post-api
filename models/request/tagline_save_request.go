@@ -9,7 +9,7 @@ type TaglineSaveRequest struct {
 type InterestsSaveRequest struct {
 	UserID   string `json:"user_id" binding:"required" db:"user_id" `
 	DraftID  string `json:"draft_id" binding:"required" db:"draft_id" `
-	Interest string `json:"interests" binding:"required" db:"interest" `
+	Interest string `json:"interest" binding:"required" db:"interest" `
 }
 
 type PreviewImageSaveRequest struct {

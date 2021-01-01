@@ -136,3 +136,17 @@ func (mr *MockDraftServiceMockRecorder) DeleteDraft(draftID, userId, ctx interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), draftID, userId, ctx)
 }
+
+// DeleteInterest mocks base method
+func (m *MockDraftService) DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInterest", ctx, saveRequest)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// DeleteInterest indicates an expected call of DeleteInterest
+func (mr *MockDraftServiceMockRecorder) DeleteInterest(ctx, saveRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInterest", reflect.TypeOf((*MockDraftService)(nil).DeleteInterest), ctx, saveRequest)
+}

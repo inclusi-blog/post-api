@@ -106,6 +106,20 @@ func (mr *MockDraftRepositoryMockRecorder) SaveInterestsToDraft(interestsSaveReq
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInterestsToDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveInterestsToDraft), interestsSaveRequest, ctx)
 }
 
+// DeleteInterest mocks base method
+func (m *MockDraftRepository) DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInterest", ctx, saveRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteInterest indicates an expected call of DeleteInterest
+func (mr *MockDraftRepositoryMockRecorder) DeleteInterest(ctx, saveRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInterest", reflect.TypeOf((*MockDraftRepository)(nil).DeleteInterest), ctx, saveRequest)
+}
+
 // GetDraft mocks base method
 func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID, userId string) (db.DraftDB, error) {
 	m.ctrl.T.Helper()

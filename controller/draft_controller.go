@@ -119,6 +119,37 @@ func (controller DraftController) SaveInterests(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+func (controller DraftController) DeleteInterest(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+
+	log := logger.WithField("class", "DraftController").WithField("method", "SaveInterests")
+
+	log.Infof("Entered controller to save Interests request for user %v", "12")
+	var upsertInterests request.InterestsSaveRequest
+
+	err := ctx.ShouldBindBodyWith(&upsertInterests, binding.JSON)
+
+	if err != nil {
+		log.Errorf("Unable to bind upsert interests request for user %v. Error %v", "12", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	log.Infof("Request body bind successful with save interests request for user %v", upsertInterests.UserID)
+
+	draftSaveErr := controller.service.DeleteInterest(ctx, upsertInterests)
+
+	if draftSaveErr != nil {
+		log.Errorf("Error occurred in draft service while saving interests for user %v. Error %v", "12", draftSaveErr)
+		constants.RespondWithGolaError(ctx, draftSaveErr)
+		return
+	}
+
+	log.Infof("writing response to interests request for user %v", upsertInterests.UserID)
+
+	ctx.Status(http.StatusOK)
+}
+
 func (controller DraftController) GetDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetDraft")
 	logger.Infof("Entered controller to get draft request for user %v", "12")

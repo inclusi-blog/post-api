@@ -21,6 +21,7 @@ type DraftRepository interface {
 	UpdateDraft(draft models.UpsertDraft, ctx context.Context) error
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
+	DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) error
 	GetDraft(ctx context.Context, draftUID string, userId string) (db.DraftDB, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 	DeleteDraft(ctx context.Context, draftUID string, userId string) error
@@ -33,6 +34,7 @@ const (
 	SavePostDraft    = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.data = $data"
 	SaveTagline      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.tagline = $tagline"
 	SaveInterests    = "MATCH (draft:Draft{ draftId: $draftId})-[audit:CREATED_BY]->(author:Person{userId: $userId}) MATCH (interest:Interest { name: $interestName}) MERGE (draft)-[:FALLS_UNDER]->(interest) SET audit.updatedAt = timestamp()"
+	DeleteInterest   = "MATCH (author:Person{userId: $userId})<-[:CREATED_BY]-(draft:Draft{draftId: $draftId})-[interest:FALLS_UNDER]->(tag:Interest{name: $interestName}) DELETE interest"
 	FetchDraft       = "MATCH (draft:Draft)-[:CREATED_BY]->(author:Person) OPTIONAL MATCH (tags:Interest)<-[:FALLS_UNDER]-(draft) where draft.draftId = $draftId and author.userId = $userId return draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData"
 	SavePreviewImage = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId set draft.previewImage = $previewImage, audit.updatedAt = timestamp()"
 	DeleteDraft      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId detach delete audit, draft"
@@ -215,6 +217,32 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 	}
 
 	logger.Infof("Successfully saved the Interests for draft id %v", interestsSaveRequest.Interest)
+	return nil
+}
+
+func (repository draftRepository) DeleteInterest(ctx context.Context, deleteInterestRequest request.InterestsSaveRequest) error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "DeleteInterest")
+	logger.Infof("Deleting interest for draft %v", deleteInterestRequest.DraftID)
+
+	result, err := repository.db.Run(DeleteInterest, map[string]interface{}{
+		"draftId":      deleteInterestRequest.DraftID,
+		"interestName": deleteInterestRequest.Interest,
+		"userId":       deleteInterestRequest.UserID,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while deleting draft interest %v", err)
+		return err
+	}
+
+	_, err = result.Summary()
+	if err != nil {
+		logger.Errorf("Error occurred while fetching summary while deleting draft interest %v", err)
+		return err
+	}
+
+	logger.Info("Successfully deleted draft interest")
+
 	return nil
 }
 

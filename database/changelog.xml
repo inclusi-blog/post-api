@@ -14,7 +14,7 @@
         <query>CREATE CONSTRAINT category_name_unique ON (category:Category) ASSERT category.name IS UNIQUE</query>
     </changeset>
     <changeset id="create-unique-post" author="Hariharan">
-        <query>CREATE CONSTRAINT post_unique ON (post:Post) ASSERT (post.puid, post.title, post.postData, post.tagline, post.readTime) IS NODE KEY</query>
+        <query>CREATE CONSTRAINT post_unique ON (post:Post) ASSERT (post.puid) IS NODE KEY</query>
     </changeset>
     <changeset id="create-post-publish-audit-property-constraint" author="Hariharan">
         <query>CREATE CONSTRAINT post_publish_audit_property_constraint IF NOT EXISTS ON ()-[audit:PUBLISHED]-() ASSERT EXISTS (audit.createdAt)</query>

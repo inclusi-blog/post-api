@@ -210,6 +210,28 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftN
 	suite.Nil(interestErr)
 }
 
+func (suite *DraftRepositoryIntegrationTest) TestDeleteInterest_WhenDraftAvailable() {
+	suite.insertInterestEntries()
+	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}}
+
+	draftErr := suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
+	suite.Nil(draftErr)
+
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user", DraftID: "1q2w3e4r5t6y", Interest: "Art"}
+
+	interestErr := suite.draftRepository.SaveInterestsToDraft(interestRequest, suite.goContext)
+	suite.Nil(interestErr)
+	interestErr = suite.draftRepository.DeleteInterest(suite.goContext, interestRequest)
+	suite.Nil(interestErr)
+}
+
+func (suite *DraftRepositoryIntegrationTest) TestDeleteInterest_WhenDraftNotAvailable() {
+	suite.insertInterestEntries()
+	interestRequest := request.InterestsSaveRequest{UserID: "some-user-one", DraftID: "13", Interest: ""}
+	interestErr := suite.draftRepository.DeleteInterest(suite.goContext, interestRequest)
+	suite.Nil(interestErr)
+}
+
 func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsADraftAvailable() {
 	suite.insertInterestEntries()
 	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
