@@ -20,6 +20,7 @@ type DraftDB struct {
 	PreviewImage string            `json:"preview_image" db:"previewImage"`
 	Tagline      string            `json:"tagline" db:"tagline"`
 	Interest     []string          `json:"interest" db:"interests"`
+	IsPublished  bool              `json:"is_published"`
 }
 
 type AllDraft struct {

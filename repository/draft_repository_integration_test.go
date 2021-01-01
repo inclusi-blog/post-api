@@ -253,12 +253,14 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsADraftAvail
 		PreviewImage: "",
 		Tagline:      "",
 		Interest:     []string{"Art"},
+		IsPublished:  false,
 	}
 	suite.Nil(err)
 	suite.Equal(expectedDraft.PreviewImage, draftDB.PreviewImage)
 	suite.Equal(expectedDraft.DraftID, draftDB.DraftID)
 	suite.Equal(expectedDraft.Interest, draftDB.Interest)
 	suite.Equal(expectedDraft.UserID, draftDB.UserID)
+	suite.Equal(expectedDraft.IsPublished, draftDB.IsPublished)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsNoDraftAvailable() {

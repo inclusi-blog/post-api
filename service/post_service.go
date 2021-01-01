@@ -81,7 +81,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 
 	logger.Infof("Saving post in post repository for post id %v", draftUID)
 
-	_, _ = service.postTransaction.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+	_, err = service.postTransaction.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		err = service.repository.CreatePost(ctx, post, transaction)
 		if err != nil {
 			logger.Errorf("Error occurred while publishing post in post repository %v", err)
@@ -103,16 +103,6 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 			return nil, err
 		}
 
-		err := transaction.Commit()
-		if err != nil {
-			logger.Errorf("Error occurred while committing transaction changes for create post %v, Error %v", draftUID, err)
-			return nil, err
-		}
-		err = transaction.Close()
-		if err != nil {
-			logger.Errorf("unable to close transaction for create post of post td %v, Error %v", draftUID, err)
-			return nil, err
-		}
 		return nil, nil
 	})
 
