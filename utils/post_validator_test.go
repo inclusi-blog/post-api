@@ -49,7 +49,7 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
+		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
@@ -101,7 +101,7 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
+		Tagline:  &tagline,
 		Interest: []string{""},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
@@ -123,7 +123,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
+		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
@@ -146,7 +146,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
+		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)

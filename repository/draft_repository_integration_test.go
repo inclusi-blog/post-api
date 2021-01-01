@@ -508,7 +508,7 @@ func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenThereIsNoDraf
 	suite.Equal(constants.NoDraftFoundCode, draftErr.Error())
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsADraft()  {
+func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsADraft() {
 	suite.insertInterestEntries()
 	postData := models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}
 	draft := models.UpsertDraft{DraftID: "1q2w3e4r5t6y", UserID: "some-user", PostData: postData}
@@ -525,7 +525,7 @@ func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThere
 	suite.Nil(result)
 }
 
-func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsNoDraft()  {
+func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThereIsNoDraft() {
 	suite.insertInterestEntries()
 	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		err := suite.draftRepository.UpdatePublishedStatus(suite.goContext, "1q2w3e4r5t6y", "some-user", transaction)

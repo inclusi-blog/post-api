@@ -32,7 +32,7 @@ func (repository interestsRepository) GetInterests(ctx context.Context, searchKe
 
 	arg := map[string]interface{}{
 		"selectedInterests": selectedTags,
-		"searchKeyword": searchKeyword,
+		"searchKeyword":     searchKeyword,
 	}
 
 	result, err := repository.db.Run(GetInterestsWithoutSelectedTags, arg)
