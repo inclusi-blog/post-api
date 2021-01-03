@@ -261,6 +261,7 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsADraftAvail
 	suite.Equal(expectedDraft.Interest, draftDB.Interest)
 	suite.Equal(expectedDraft.UserID, draftDB.UserID)
 	suite.Equal(expectedDraft.IsPublished, draftDB.IsPublished)
+	suite.NotEmpty(draftDB.CreatedAt)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsNoDraftAvailable() {
@@ -438,6 +439,8 @@ func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenLimitSentShou
 	allDraft, draftErr := suite.draftRepository.GetAllDraft(suite.goContext, allDraftRequest)
 	suite.Nil(draftErr)
 	suite.Len(allDraft, 2)
+	suite.Equal("1q2w3e4r5t61", allDraft[0].DraftID)
+	suite.Equal("1q2w3e4r5t6y", allDraft[1].DraftID)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestFetchAllDraft_WhenLimitSentShouldReturnDraftsWithRangeZeroToThree() {

@@ -8,6 +8,7 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
+	"post-api/models/response"
 	"post-api/service/test_helper"
 	"testing"
 
@@ -20,6 +21,7 @@ type DraftServiceTest struct {
 	suite.Suite
 	mockController      *gomock.Controller
 	goContext           context.Context
+	mockValidator       *mocks.MockPostValidator
 	mockDraftRepository *mocks.MockDraftRepository
 	draftService        DraftService
 }
@@ -31,7 +33,8 @@ func TestDraftServiceTestSuite(t *testing.T) {
 func (suite *DraftServiceTest) SetupTest() {
 	suite.mockController = gomock.NewController(suite.T())
 	suite.mockDraftRepository = mocks.NewMockDraftRepository(suite.mockController)
-	suite.draftService = NewDraftService(suite.mockDraftRepository)
+	suite.mockValidator = mocks.NewMockPostValidator(suite.mockController)
+	suite.draftService = NewDraftService(suite.mockDraftRepository, suite.mockValidator)
 	suite.goContext = context.WithValue(context.Background(), "someKey", "someValue")
 }
 
@@ -271,9 +274,10 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 	}
 
 	tagline := "My first Data"
+	thirdTagline := "படிப்படியாக உயர்ந்த எண்ணிக்கை"
 	previewImage := "some preview image"
 
-	draft := []db.DraftDB{
+	draftDBS := []db.DraftDB{
 		{
 			DraftID: "q2w3e4r5u78i",
 			UserID:  "12",
@@ -300,49 +304,37 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoError
 			PostData: models.JSONString{
 				JSONText: types.JSONText(test_helper.LargeTextData),
 			},
-			PreviewImage: previewImage,
-			Tagline:      tagline,
+			PreviewImage: "",
+			Tagline:      "",
 			Interest:     []string{"sports", "economy"},
 		},
 	}
 
 	expectedDraft := []db.AllDraft{
 		{
-			DraftID: "q2w3e4r5u78i",
-			UserID:  "12",
-			PostData: models.JSONString{
-				JSONText: types.JSONText(test_helper.LargeTextData),
-			},
+			DraftID:   "q2w3e4r5u78i",
 			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
 			Tagline:   &tagline,
 			Interest:  []string{"sports", "economy"},
 		},
 		{
-			DraftID: "q2w3e4r5u781",
-			UserID:  "12",
-			PostData: models.JSONString{
-				JSONText: types.JSONText(test_helper.LargeTextData),
-			},
+			DraftID:   "q2w3e4r5u781",
 			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
 			Tagline:   &tagline,
 			Interest:  []string{"sports", "economy"},
 		},
 		{
-			DraftID: "q2w3e4r5u782",
-			UserID:  "12",
-			PostData: models.JSONString{
-				JSONText: types.JSONText(test_helper.LargeTextData),
-			},
+			DraftID:   "q2w3e4r5u782",
 			TitleData: "தமிழ்நாட்டில் கொரோனா தொற்று பரவத் தொடங்கியபோது நோயாளிகளின் எண்ணிக்கை படிப்படியாக அதிகரித்து வந்தது. ",
-			Tagline:   &tagline,
+			Tagline:   &thirdTagline,
 			Interest:  []string{"sports", "economy"},
 		},
 	}
 
-	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draft, nil).Times(1)
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draftDBS, nil).Times(1)
 
 	allDraftActual, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
-	suite.Equal(expectedDraft, allDraftActual)
+	suite.Equal(*expectedDraft[2].Tagline, *allDraftActual[2].Tagline)
 	suite.Nil(expectedError)
 }
 
@@ -370,7 +362,7 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsInvalid
 	tagline := "My first Data"
 	previewImage := "some preview image"
 
-	draft := []db.DraftDB{
+	draftDb := []db.DraftDB{
 		{
 			DraftID: "q2w3e4r5u78i",
 			UserID:  "12",
@@ -383,12 +375,12 @@ func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsInvalid
 		},
 	}
 
-	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draft, nil).Times(1)
+	suite.mockDraftRepository.EXPECT().GetAllDraft(suite.goContext, allDraftReq).Return(draftDb, nil).Times(1)
 
 	allDraftActual, expectedError := suite.draftService.GetAllDraft(allDraftReq, suite.goContext)
 	suite.Nil(allDraftActual)
 	suite.NotNil(expectedError)
-	suite.Equal(&constants.ConvertTitleToStringError, expectedError)
+	suite.Equal(constants.StoryInternalServerError("unexpected end of JSON input"), expectedError)
 }
 
 func (suite *DraftServiceTest) TestGetAllDraft_WhenDraftRepositoryReturnsNoDraftFoundError() {
@@ -446,4 +438,184 @@ func (suite *DraftServiceTest) TestDeleteDraft_WhenDraftRepositoryReturnsGeneric
 	err := suite.draftService.DeleteDraft("qwertyuiop12", "some-user", suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+}
+
+func (suite *DraftServiceTest) TestValidateAndGetDraft_WhenDbReturnsNoError() {
+	userId := "some-user"
+	draftDb := db.DraftDB{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  userId,
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+		PreviewImage: "this is some preview image",
+		Tagline:      "this is some tagline",
+		Interest:     []string{"sports", "cricket"},
+		IsPublished:  false,
+		CreatedAt:    98765434567,
+	}
+
+	draft := db.Draft{
+		DraftID:      "1q2w3e4r5t6y",
+		PostData:     draftDb.PostData,
+		PreviewImage: &draftDb.PreviewImage,
+		Tagline:      &draftDb.Tagline,
+		Interest:     draftDb.Interest,
+	}
+
+	data := models.MetaData{
+		Title:        "இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சரா",
+		Tagline:      "this is new tagline",
+		ReadTime:     0,
+		PreviewImage: "this is some image",
+	}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, "1q2w3e4r5t6y", userId).Return(draftDb, nil).Times(1)
+	suite.mockValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(data, nil).Times(1)
+	expectedPreviewDraft := response.PreviewDraft{
+		DraftID:      "1q2w3e4r5t6y",
+		Title:        &data.Title,
+		Tagline:      &draftDb.Tagline,
+		Interest:     draftDb.Interest,
+		PreviewImage: &draftDb.PreviewImage,
+		AuthorName:   &userId,
+	}
+
+	actualPreviewDraft, err := suite.draftService.ValidateAndGetDraft(suite.goContext, "1q2w3e4r5t6y", userId)
+	suite.Nil(err)
+	suite.Equal(expectedPreviewDraft, actualPreviewDraft)
+}
+
+func (suite *DraftServiceTest) TestValidateAndGetDraft_WhenDbReturnsEmptyTagline() {
+	userId := "some-user"
+	draftDb := db.DraftDB{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  userId,
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+		PreviewImage: "this is some preview image",
+		Tagline:      "",
+		Interest:     []string{"sports", "cricket"},
+		IsPublished:  false,
+		CreatedAt:    98765434567,
+	}
+
+	draft := db.Draft{
+		DraftID:      "1q2w3e4r5t6y",
+		PostData:     draftDb.PostData,
+		PreviewImage: &draftDb.PreviewImage,
+		Tagline:      &draftDb.Tagline,
+		Interest:     draftDb.Interest,
+	}
+
+	data := models.MetaData{
+		Title:        "இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சரா",
+		Tagline:      "this is new tagline",
+		ReadTime:     0,
+		PreviewImage: "this is some image",
+	}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, "1q2w3e4r5t6y", userId).Return(draftDb, nil).Times(1)
+	suite.mockValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(data, nil).Times(1)
+	expectedPreviewDraft := response.PreviewDraft{
+		DraftID:      "1q2w3e4r5t6y",
+		Title:        &data.Title,
+		Tagline:      &data.Tagline,
+		Interest:     draftDb.Interest,
+		PreviewImage: &draftDb.PreviewImage,
+		AuthorName:   &userId,
+	}
+
+	actualPreviewDraft, err := suite.draftService.ValidateAndGetDraft(suite.goContext, "1q2w3e4r5t6y", userId)
+	suite.Nil(err)
+	suite.Equal(expectedPreviewDraft, actualPreviewDraft)
+}
+
+func (suite *DraftServiceTest) TestValidateAndGetDraft_WhenDbReturnsEmptyPreviewImageAndTagline() {
+	userId := "some-user"
+	draftDb := db.DraftDB{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  userId,
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: "",
+		Tagline:      "",
+		Interest:     []string{"sports", "cricket"},
+		IsPublished:  false,
+		CreatedAt:    98765434567,
+	}
+
+	draft := db.Draft{
+		DraftID:      "1q2w3e4r5t6y",
+		PostData:     draftDb.PostData,
+		PreviewImage: &draftDb.PreviewImage,
+		Tagline:      &draftDb.Tagline,
+		Interest:     draftDb.Interest,
+	}
+
+	data := models.MetaData{
+		Title:        "இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சரா",
+		Tagline:      "this is new tagline",
+		ReadTime:     0,
+		PreviewImage: "this is some image",
+	}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, "1q2w3e4r5t6y", userId).Return(draftDb, nil).Times(1)
+	suite.mockValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(data, nil).Times(1)
+	expectedPreviewDraft := response.PreviewDraft{
+		DraftID:      "1q2w3e4r5t6y",
+		Title:        &data.Title,
+		Tagline:      &data.Tagline,
+		Interest:     draftDb.Interest,
+		PreviewImage: &data.PreviewImage,
+		AuthorName:   &userId,
+	}
+
+	actualPreviewDraft, err := suite.draftService.ValidateAndGetDraft(suite.goContext, "1q2w3e4r5t6y", userId)
+	suite.Nil(err)
+	suite.Equal(expectedPreviewDraft, actualPreviewDraft)
+}
+
+func (suite *DraftServiceTest) TestValidateAndGetDraft_WhenDbReturnsError() {
+	userId := "some-user"
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, "1q2w3e4r5t6y", userId).Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
+
+	actualPreviewDraft, err := suite.draftService.ValidateAndGetDraft(suite.goContext, "1q2w3e4r5t6y", userId)
+	suite.NotNil(err)
+	suite.Equal(response.PreviewDraft{}, actualPreviewDraft)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+}
+
+func (suite *DraftServiceTest) TestValidateAndGetDraft_WhenValidationReturnsError() {
+	userId := "some-user"
+	draftDb := db.DraftDB{
+		DraftID: "1q2w3e4r5t6y",
+		UserID:  userId,
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.LargeTextData),
+		},
+		PreviewImage: "this is some preview image",
+		Tagline:      "this is some tagline",
+		Interest:     []string{"sports", "cricket"},
+		IsPublished:  false,
+		CreatedAt:    98765434567,
+	}
+
+	draft := db.Draft{
+		DraftID:      "1q2w3e4r5t6y",
+		PostData:     draftDb.PostData,
+		PreviewImage: &draftDb.PreviewImage,
+		Tagline:      &draftDb.Tagline,
+		Interest:     draftDb.Interest,
+	}
+
+	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, "1q2w3e4r5t6y", userId).Return(draftDb, nil).Times(1)
+	suite.mockValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
+	actualPreviewDraft, err := suite.draftService.ValidateAndGetDraft(suite.goContext, "1q2w3e4r5t6y", userId)
+	suite.NotNil(err)
+	suite.Equal(response.PreviewDraft{}, actualPreviewDraft)
+	suite.Equal(&constants.DraftValidationFailedError, err)
 }

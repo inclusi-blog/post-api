@@ -10,6 +10,7 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
+	"post-api/models/response"
 	"post-api/repository"
 	"post-api/utils"
 )
@@ -19,14 +20,16 @@ type DraftService interface {
 	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
 	UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error
 	GetDraft(draftUID, userId string, ctx context.Context) (db.DraftDB, *golaerror.Error)
-	GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error)
+	GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, *golaerror.Error)
 	SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error
 	DeleteDraft(draftID, userId string, ctx context.Context) *golaerror.Error
 	DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) *golaerror.Error
+	ValidateAndGetDraft(ctx context.Context, draftId, userId string) (response.PreviewDraft, *golaerror.Error)
 }
 
 type draftService struct {
 	draftRepository repository.DraftRepository
+	validator       utils.PostValidator
 }
 
 func (service draftService) UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error {
@@ -115,7 +118,7 @@ func (service draftService) GetDraft(draftUID, userId string, ctx context.Contex
 	return draftData, nil
 }
 
-func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error) {
+func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, *golaerror.Error) {
 
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetAllDraft")
 
@@ -134,20 +137,24 @@ func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, c
 	}
 
 	for _, dbDraft := range draftData {
-		var draft db.AllDraft
-		draft.DraftID = dbDraft.DraftID
-		draft.PostData = dbDraft.PostData
-		draft.Tagline = &dbDraft.Tagline
-		draft.Interest = dbDraft.Interest
-		draft.UserID = dbDraft.UserID
+		titleString, tagline, err := utils.GetTitleAndTaglineFromSlateJson(ctx, dbDraft.PostData)
 
-		title, err := utils.GetTitleFromSlateJson(ctx, dbDraft.PostData)
 		if err != nil {
 			logger.Errorf("Error occurred while converting title json to string %v .%v", dbDraft.DraftID, err)
-			return allDraftData, &constants.ConvertTitleToStringError
+			return allDraftData, constants.StoryInternalServerError(err.Error())
 		}
 
-		draft.TitleData = title
+		if dbDraft.Tagline == "" {
+			dbDraft.Tagline = tagline
+		}
+		draft := db.AllDraft{
+			DraftID:    dbDraft.DraftID,
+			TitleData:  titleString,
+			Tagline:    &dbDraft.Tagline,
+			Interest:   dbDraft.Interest,
+			CreatedAt:  dbDraft.CreatedAt,
+			AuthorName: allDraftReq.UserID,
+		}
 		allDraftData = append(allDraftData, draft)
 	}
 
@@ -204,8 +211,59 @@ func (service draftService) DeleteInterest(ctx context.Context, saveRequest requ
 	return nil
 }
 
-func NewDraftService(repository repository.DraftRepository) DraftService {
+func (service draftService) ValidateAndGetDraft(ctx context.Context, draftId, userId string) (response.PreviewDraft, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "ValidateAndGetDraft")
+
+	logger.Infof("Fetching draftDB for validation of draftDB id %v", draftId)
+
+	draftDB, err := service.draftRepository.GetDraft(ctx, draftId, userId)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching draft from db %v, Error %v", draftId, err)
+		return response.PreviewDraft{}, constants.StoryInternalServerError(err.Error())
+	}
+
+	draft := db.Draft{
+		DraftID:      draftId,
+		PostData:     draftDB.PostData,
+		PreviewImage: &draftDB.PreviewImage,
+		Tagline:      &draftDB.Tagline,
+		Interest:     draftDB.Interest,
+	}
+
+	metaData, draftValidationErr := service.validator.ValidateAndGetMetaData(draft, ctx)
+
+	if draftValidationErr != nil {
+		logger.Errorf("Error occurred while validating draft for draft id %v, Error %v", draftId, err)
+		return response.PreviewDraft{}, draftValidationErr
+	}
+
+	previewDraft := mapDraftToPreviewMetaData(draftDB, metaData, draftId, userId)
+
+	return previewDraft, nil
+}
+
+func mapDraftToPreviewMetaData(draftDB db.DraftDB, metaData models.MetaData, draftId string, userId string) response.PreviewDraft {
+	var previewDraft response.PreviewDraft
+
+	previewDraft.Tagline = &draftDB.Tagline
+	previewDraft.PreviewImage = &draftDB.PreviewImage
+	if draftDB.Tagline == "" {
+		previewDraft.Tagline = &metaData.Tagline
+	}
+	if draftDB.PreviewImage == "" {
+		previewDraft.PreviewImage = &metaData.PreviewImage
+	}
+	previewDraft.DraftID = draftId
+	previewDraft.Title = &metaData.Title
+	previewDraft.Interest = draftDB.Interest
+	previewDraft.AuthorName = &userId
+	return previewDraft
+}
+
+func NewDraftService(repository repository.DraftRepository, validator utils.PostValidator) DraftService {
 	return draftService{
 		draftRepository: repository,
+		validator:       validator,
 	}
 }

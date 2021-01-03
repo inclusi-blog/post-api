@@ -64,6 +64,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		draftGroup.POST("/upsert-preview-image", draftController.SavePreviewImage)
 		draftGroup.POST("/delete", draftController.DeleteDraft)
 		draftGroup.POST("/delete-interest", draftController.DeleteInterest)
+		draftGroup.GET("/preview-draft/:draft_id", draftController.GetPreviewDraft)
 	}
 
 	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)

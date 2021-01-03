@@ -62,7 +62,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 	}
 	draft := db.Draft{
 		DraftID: "1231212",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
@@ -83,7 +82,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
@@ -110,7 +109,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 	}
 	draft := db.Draft{
 		DraftID: "1231212",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
@@ -120,7 +118,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      "",
 		ReadTime:     22,
@@ -159,7 +157,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 
 	draft := db.Draft{
 		DraftID: "1231212",
-		UserID:  "some-user",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
@@ -169,7 +166,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
@@ -198,7 +195,6 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 
 	draft := db.Draft{
 		DraftID: "1231212",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
@@ -208,7 +204,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
 
 	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)

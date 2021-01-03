@@ -82,33 +82,51 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 	return nil
 }
 
-func GetTitleFromSlateJson(ctx context.Context, titleJson models.JSONString) (string, error) {
+func GetTitleAndTaglineFromSlateJson(ctx context.Context, titleJson models.JSONString) (string, string, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
 	var postData []interface{}
 	err := titleJson.Unmarshal(&postData)
 
 	if err != nil {
 		logger.Errorf("Error occurred while unmarshalling title text from slate json %v", err)
-		return "", err
+		return "", "", err
 	}
 
+	var tagline string
 	var titleString string
 	for _, data := range postData {
+		if tagline != "" && titleString != "" {
+			break
+		}
 		singleData := data.(map[string]interface{})
 		singleChildren := singleData["children"].([]interface{})
 		for _, childrenData := range singleChildren {
+			if tagline != "" && titleString != "" {
+				break
+			}
 			data := childrenData.(map[string]interface{})
 			textString := data["text"].(string)
 			if textString != "" {
-				if len(textString) > 100 {
-					titleString = string([]rune(textString)[:100])
-					break
+				logger.Info(textString)
+				if titleString == "" {
+					if len(textString) > 100 {
+						titleString = string([]rune(textString)[:100])
+						continue
+					}
+					titleString = textString
+					continue
 				}
-				titleString = textString
-				break
+				if tagline == "" {
+					if len(textString) > 100 {
+						tagline = string([]rune(textString)[:100])
+						continue
+					}
+					tagline = textString
+					continue
+				}
 			}
 		}
 	}
 
-	return titleString, nil
+	return titleString, tagline, nil
 }

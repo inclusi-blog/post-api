@@ -17,13 +17,13 @@ var (
 
 func Objects(db neo4j.Session, configData *configuration.ConfigData) {
 	draftRepository := repository.NewDraftRepository(db)
-	draftService := service.NewDraftService(draftRepository)
-	draftController = controller.NewDraftController(draftService)
 	interestsRepository := repository.NewInterestRepository(db)
 	interestsService := service.NewInterestsService(interestsRepository)
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
+	draftService := service.NewDraftService(draftRepository, postValidator)
+	draftController = controller.NewDraftController(draftService)
 	postService := service.NewPostService(postRepository, draftRepository, postValidator, db)
 	postController = controller.NewPostController(postService)
 }

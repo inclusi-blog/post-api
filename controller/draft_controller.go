@@ -263,6 +263,30 @@ func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 	return
 }
 
+func (controller DraftController) GetPreviewDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetPreviewDraft")
+	logger.Info("Entered preview draft controller")
+
+	var draftURIRequest request.DraftURIRequest
+	if err := ctx.ShouldBindUri(&draftURIRequest); err != nil {
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Request body bind successful with get draft request for user %v", "12")
+
+	draftData, draftGetErr := controller.service.ValidateAndGetDraft(ctx, draftURIRequest.DraftID, "some-user")
+	if draftGetErr != nil {
+		logger.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftGetErr)
+		constants.RespondWithGolaError(ctx, draftGetErr)
+		return
+	}
+
+	logger.Infof("writing response to draft data request for user %v %s", "12", draftURIRequest.DraftID)
+
+	ctx.JSON(http.StatusOK, draftData)
+}
+
 func NewDraftController(service service.DraftService) DraftController {
 	return DraftController{
 		service: service,

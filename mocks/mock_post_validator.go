@@ -36,17 +36,17 @@ func (m *MockPostValidator) EXPECT() *MockPostValidatorMockRecorder {
 	return m.recorder
 }
 
-// ValidateAndGetReadTime mocks base method
-func (m *MockPostValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
+// ValidateAndGetMetaData mocks base method
+func (m *MockPostValidator) ValidateAndGetMetaData(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateAndGetReadTime", draft, ctx)
+	ret := m.ctrl.Call(m, "ValidateAndGetMetaData", draft, ctx)
 	ret0, _ := ret[0].(models.MetaData)
 	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }
 
-// ValidateAndGetReadTime indicates an expected call of ValidateAndGetReadTime
-func (mr *MockPostValidatorMockRecorder) ValidateAndGetReadTime(draft, ctx interface{}) *gomock.Call {
+// ValidateAndGetMetaData indicates an expected call of ValidateAndGetMetaData
+func (mr *MockPostValidatorMockRecorder) ValidateAndGetMetaData(draft, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAndGetReadTime", reflect.TypeOf((*MockPostValidator)(nil).ValidateAndGetReadTime), draft, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAndGetMetaData", reflect.TypeOf((*MockPostValidator)(nil).ValidateAndGetMetaData), draft, ctx)
 }

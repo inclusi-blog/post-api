@@ -28,20 +28,32 @@ func TestCountContentReadTime(t *testing.T) {
 
 func TestGetTitleFromSlateJson(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleFromSlateJson(ctx, models.JSONString{
+	titleString, tagline, err := GetTitleAndTaglineFromSlateJson(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestData),
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Install apps via helm in kubernetes", titleString)
+	assert.Equal(t, "", tagline)
 }
 
 func TestGetTitleFromSlateJsonWhenTitleGreaterThan100Len(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleFromSlateJson(ctx, models.JSONString{
+	titleString, tagline, err := GetTitleAndTaglineFromSlateJson(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestDataMoreThan100Len),
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Install apps via helm in kubernetes Install apps via helm in kubernetes Install apps via helm in kub", titleString)
+	assert.Equal(t, "", tagline)
+}
+
+func TestGetTitleFromSlateJsonWhenLargePostData(t *testing.T) {
+	ctx := context.TODO()
+	titleString, tagline, err := GetTitleAndTaglineFromSlateJson(ctx, models.JSONString{
+		JSONText: types.JSONText(test_helper.LargeTextData),
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, "இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", titleString)
+	assert.Equal(t, "படிப்படியாக உயர்ந்த எண்ணிக்கை", tagline)
 }
 
 func TestGetNumberOfWords(t *testing.T) {

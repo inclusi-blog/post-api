@@ -45,14 +45,13 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.Nil(err)
 	suite.Equal(32, metaData.ReadTime)
 	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", metaData.Title)
@@ -63,12 +62,11 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID:  "a1v2b31n",
-		UserID:   "1",
 		PostData: models.JSONString{},
 		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal("", metaData.Title)
 	suite.Equal(&constants.DraftValidationFailedError, err)
@@ -79,14 +77,13 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Tagline:  &tagline,
 		Interest: []string{""},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal("", metaData.Title)
 	suite.Equal(&constants.DraftInterestParseError, err)
@@ -97,14 +94,13 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Tagline:  &tagline,
 		Interest: []string{""},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
 	suite.Equal(&constants.DraftInterestParseError, err)
@@ -119,14 +115,13 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
 	suite.Equal(&constants.InterestReadTimeDoesNotMeetErr, err)
@@ -142,14 +137,13 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Tagline:  &tagline,
 		Interest: []string{"sports", "economy", "poem"},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
 	suite.Equal(&constants.ReadTimeNotMeetError, err)
@@ -159,13 +153,12 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
 	draft := db.Draft{
 		DraftID: "a1v2b31n",
-		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Interest: []string{"sports", "economy", "poem"},
 	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
+	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.Nil(err)
 	suite.Equal("இந்தக் கேள்விதான் சென்னைவாசிகள் உட்பட அனைத்து தமிழக மக்களின் மனதிலும் எழுந்துள்ளது. ஒருநாளைக்கு சராச", metaData.Title)
 	suite.Equal(32, metaData.ReadTime)

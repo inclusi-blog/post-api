@@ -4,6 +4,7 @@ CREATE ROLE storyUserTest;
 GRANT ROLE storyUserTest TO story_test;
 GRANT ACCESS ON DATABASE golatest to storyUserTest;
 GRANT MATCH {*} ON GRAPH golatest NODES Post, Draft, Interest, Category, Person TO storyUserTest;
+GRANT MATCH {*} ON GRAPH golatest RELATIONSHIPS LIKED, PUBLISHED_BY, CREATED_BY, FALLS_UNDER, BELONGS_TO, COMMENTED TO storyUserTest;
 GRANT CREATE CONSTRAINT ON DATABASE golatest TO storyUserTest;
 GRANT CONSTRAINT MANAGEMENT ON DATABASE golatest TO storyUserTest;
 GRANT NAME MANAGEMENT ON DATABASE golatest TO storyUserTest;

@@ -11,6 +11,7 @@ import (
 	models "post-api/models"
 	db "post-api/models/db"
 	request "post-api/models/request"
+	response "post-api/models/response"
 	reflect "reflect"
 )
 
@@ -95,11 +96,11 @@ func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, userId, ctx interface
 }
 
 // GetAllDraft mocks base method
-func (m *MockDraftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error) {
+func (m *MockDraftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, *golaerror.Error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllDraft", allDraftReq, ctx)
 	ret0, _ := ret[0].([]db.AllDraft)
-	ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }
 
@@ -149,4 +150,19 @@ func (m *MockDraftService) DeleteInterest(ctx context.Context, saveRequest reque
 func (mr *MockDraftServiceMockRecorder) DeleteInterest(ctx, saveRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInterest", reflect.TypeOf((*MockDraftService)(nil).DeleteInterest), ctx, saveRequest)
+}
+
+// ValidateAndGetDraft mocks base method
+func (m *MockDraftService) ValidateAndGetDraft(ctx context.Context, draftId, userId string) (response.PreviewDraft, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateAndGetDraft", ctx, draftId, userId)
+	ret0, _ := ret[0].(response.PreviewDraft)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// ValidateAndGetDraft indicates an expected call of ValidateAndGetDraft
+func (mr *MockDraftServiceMockRecorder) ValidateAndGetDraft(ctx, draftId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAndGetDraft", reflect.TypeOf((*MockDraftService)(nil).ValidateAndGetDraft), ctx, draftId, userId)
 }

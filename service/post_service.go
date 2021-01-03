@@ -46,14 +46,13 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 
 	draft := db.Draft{
 		DraftID:      dbDraft.DraftID,
-		UserID:       dbDraft.UserID,
 		PostData:     dbDraft.PostData,
 		PreviewImage: &dbDraft.PreviewImage,
 		Tagline:      &dbDraft.Tagline,
 		Interest:     dbDraft.Interest,
 	}
 
-	metaData, validationErr := service.validator.ValidateAndGetReadTime(draft, ctx)
+	metaData, validationErr := service.validator.ValidateAndGetMetaData(draft, ctx)
 
 	if validationErr != nil {
 		logger.Errorf("Error occurred while validating draft of id %v .%v", draftUID, validationErr)
@@ -70,7 +69,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 
 	post := db.PublishPost{
 		PUID:         draftUID,
-		UserID:       draft.UserID,
+		UserID:       userId,
 		PostData:     draft.PostData,
 		ReadTime:     metaData.ReadTime,
 		Interest:     draft.Interest,
