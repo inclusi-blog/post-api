@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/models"
+	"regexp"
 	"strings"
 )
 
@@ -129,4 +130,18 @@ func GetTitleAndTaglineFromSlateJson(ctx context.Context, titleJson models.JSONS
 	}
 
 	return titleString, tagline, nil
+}
+
+func GenerateUrl(titleString string) string {
+	chars := []string{"]", "^", "\\\\", "[", ".", "(", ")","!","-","@", "#","%","&","*","_","+", "~","`","=","{","}","\\","/","|",",",">","<","?","$"}
+	r := strings.Join(chars, "")
+	re := regexp.MustCompile("[" + r + "]+")
+	titleString = re.ReplaceAllString(titleString, "")
+	lower := strings.ToLower(titleString)
+	trimmedSpace := spaceFieldJoin(lower)
+	return trimmedSpace
+}
+
+func spaceFieldJoin(str string) string {
+	return strings.Join(strings.Fields(str), "-")
 }

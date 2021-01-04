@@ -49,17 +49,17 @@ func TestPostControllerTestSuite(t *testing.T) {
 func (suite *PostControllerTest) TestPublishPost_WhenSuccess() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(nil).Times(1)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return("some-url", nil).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
-	suite.Equal(`{"status":"published"}`, string(suite.recorder.Body.Bytes()))
+	suite.Equal(`{"status":"published","url":"some-url"}`, string(suite.recorder.Body.Bytes()))
 }
 
 func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(nil).Times(0)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return("", nil).Times(0)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": ""}`))
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
@@ -72,7 +72,7 @@ func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return(&constants.InternalServerError).Times(1)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return("",&constants.InternalServerError).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
 	suite.postController.PublishPost(suite.context)
 	expectedErr := &constants.InternalServerError

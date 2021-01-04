@@ -11,6 +11,7 @@ type PublishPost struct {
 	Title        string            `json:"title"`
 	Tagline      string            `json:"tagline"`
 	PreviewImage string            `json:"preview_image"`
+	PostUrl      string            `json:"post_url"`
 }
 
 type LikedByRes struct {

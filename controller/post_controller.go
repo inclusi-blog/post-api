@@ -33,7 +33,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	id := publishPostRequest.DratID
 	logger.Infof("Successfully bind publishPostRequest body for draft id %v", id)
 
-	publishErr := controller.postService.PublishPost(ctx, id, "some-user")
+	postUrl, publishErr := controller.postService.PublishPost(ctx, id, "some-user")
 
 	if publishErr != nil {
 		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", id, publishErr)
@@ -44,6 +44,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	logger.Infof("Successfully published draft for draft id %v", id)
 	ctx.JSON(http.StatusOK, gin.H{
 		"status": "published",
+		"url": postUrl,
 	})
 }
 

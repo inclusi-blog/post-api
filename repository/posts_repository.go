@@ -25,7 +25,7 @@ type postRepository struct {
 }
 
 const (
-	PublishPost           = "MATCH (author:Person) WHERE author.userId = $userId MATCH (interest:Interest) WHERE interest.name IN $interests MERGE (post:Post{title: $title, puid: $puid, postData: $postData, tagline: $tagline, previewImage: $previewImage, readTime: $readTime})-[audit:PUBLISHED_BY{createdAt: timestamp()}]->(author) MERGE (post)-[:FALLS_UNDER]->(interest)"
+	PublishPost           = "MATCH (author:Person) WHERE author.userId = $userId MATCH (interest:Interest) WHERE interest.name IN $interests MERGE (post:Post{title: $title, puid: $puid, postData: $postData, tagline: $tagline, previewImage: $previewImage, readTime: $readTime, url: $url})-[audit:PUBLISHED_BY{createdAt: timestamp()}]->(author) MERGE (post)-[:FALLS_UNDER]->(interest)"
 	IsPersonLikedThePost  = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post{ puid: $puid}) return EXISTS((user)-[:LIKED]->(post)) as isLiked"
 	CommentPost           = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:COMMENTED{commentId: apoc.create.uuid(), comment: $comment, createdAt: timestamp()}]->(post)"
 	LikePost              = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:LIKED]->(post)"
@@ -47,6 +47,7 @@ func (repository postRepository) CreatePost(ctx context.Context, post db.Publish
 		"title":        post.Title,
 		"tagline":      post.Tagline,
 		"previewImage": post.PreviewImage,
+		"url":          post.PostUrl,
 	})
 
 	if err != nil {

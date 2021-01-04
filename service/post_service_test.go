@@ -88,8 +88,9 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		ReadTime: 22,
 	}, nil).Times(1)
 	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
+	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
@@ -125,22 +126,25 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		PreviewImage: "https://www.some-url.com",
 	}, nil).Times(1)
 	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
+	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsNoDraftFoundError() {
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New(constants.NoDraftFoundCode)).Times(1)
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(&constants.NoDraftFoundError, err)
+	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
@@ -173,9 +177,10 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 	}, nil).Times(1)
 	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, errors.New("something went wrong")).Times(1)
 
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
@@ -206,9 +211,10 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
 	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
 
-	err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.NotNil(err)
 	suite.Equal(&constants.DraftValidationFailedError, err)
+	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestLikePost_WhenSuccess() {

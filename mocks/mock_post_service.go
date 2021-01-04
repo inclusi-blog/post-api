@@ -36,11 +36,12 @@ func (m *MockPostService) EXPECT() *MockPostServiceMockRecorder {
 }
 
 // PublishPost mocks base method
-func (m *MockPostService) PublishPost(ctx context.Context, draftUID, userId string) *golaerror.Error {
+func (m *MockPostService) PublishPost(ctx context.Context, draftUID, userId string) (string, *golaerror.Error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishPost", ctx, draftUID, userId)
-	ret0, _ := ret[0].(*golaerror.Error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
 }
 
 // PublishPost indicates an expected call of PublishPost

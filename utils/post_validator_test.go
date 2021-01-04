@@ -86,7 +86,7 @@ func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
 	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal("", metaData.Title)
-	suite.Equal(&constants.DraftInterestParseError, err)
+	suite.Equal(&constants.MinimumInterestCountNotMatchErr, err)
 	suite.Zero(metaData.ReadTime)
 }
 
@@ -103,7 +103,7 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 	metaData, err := suite.postValidator.ValidateAndGetMetaData(draft, suite.goContext)
 	suite.NotNil(err)
 	suite.Empty(metaData.Title)
-	suite.Equal(&constants.DraftInterestParseError, err)
+	suite.Equal(&constants.MinimumInterestCountNotMatchErr, err)
 	suite.Zero(metaData.ReadTime)
 }
 

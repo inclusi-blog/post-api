@@ -42,7 +42,7 @@ func (draft Draft) IsValidInterest(ctx context.Context, config map[string]int, r
 }
 
 func (draft Draft) isValidInterestCount() bool {
-	return len(draft.Interest) >= 3 || len(draft.Interest) <= 5
+	return len(draft.Interest) >= 3 && len(draft.Interest) <= 5
 }
 
 type DraftDB struct {

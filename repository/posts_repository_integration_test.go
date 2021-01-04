@@ -89,6 +89,7 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStor
 		Title:        "this is some title",
 		Tagline:      "this is some tagline",
 		PreviewImage: "some-url",
+		PostUrl:      "this-is-some-url",
 	}
 
 	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
@@ -113,6 +114,7 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSamePostIsSavedD
 		Title:        "this is some title",
 		Tagline:      "this is some tagline",
 		PreviewImage: "some-url",
+		PostUrl:      "this-is-some-url",
 	}
 	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)

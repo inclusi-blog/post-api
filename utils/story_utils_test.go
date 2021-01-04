@@ -67,3 +67,15 @@ func TestGetNumberOfWords(t *testing.T) {
 	assert.Equal(t, 890, readTime)
 	assert.Nil(t, err)
 }
+
+func TestGenerateUrl(t *testing.T) {
+	sampleString := "this is my first post !@@#!@$ 321212 1212 121!@_!@!@!@ !@!@! @! @! @!@ $R@$%U &* &^(* )*( )*  ^#$ @ #?> <|}"
+	url := GenerateUrl(sampleString)
+	assert.Equal(t, "this-is-my-first-post-ru", url)
+}
+
+func TestGenerateUrlAnotherInvalidString(t *testing.T) {
+	sampleString := "~!@ ~ !@# this @#$ is my first #$% $% $%^ post %^&* %^& which ^&* will&*( &* be&*(( published first(*&^ )*%^"
+	url := GenerateUrl(sampleString)
+	assert.Equal(t, "this-is-my-first-post-which-will-be-published-first", url)
+}
