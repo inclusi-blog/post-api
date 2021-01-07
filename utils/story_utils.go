@@ -2,8 +2,11 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/models"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -133,7 +136,7 @@ func GetTitleAndTaglineFromSlateJson(ctx context.Context, titleJson models.JSONS
 }
 
 func GenerateUrl(titleString string) string {
-	chars := []string{"]", "^", "\\\\", "[", ".", "(", ")","!","-","@", "#","%","&","*","_","+", "~","`","=","{","}","\\","/","|",",",">","<","?","$"}
+	chars := []string{"]", "^", "\\\\", "[", ".", "(", ")", "!", "-", "@", "#", "%", "&", "*", "_", "+", "~", "`", "=", "{", "}", "\\", "/", "|", ",", ">", "<", "?", "$"}
 	r := strings.Join(chars, "")
 	re := regexp.MustCompile("[" + r + "]+")
 	titleString = re.ReplaceAllString(titleString, "")
@@ -144,4 +147,24 @@ func GenerateUrl(titleString string) string {
 
 func spaceFieldJoin(str string) string {
 	return strings.Join(strings.Fields(str), "-")
+}
+
+func BindDbValues(result neo4j.Result, destination interface{}) (interface{}, error) {
+	reflection := reflect.ValueOf(destination)
+	values := make(map[string]interface{})
+	for i := 0; i < reflection.Type().NumField(); i++ {
+		field := reflection.Type().Field(i)
+		tag := field.Tag
+		bindingKey := tag.Get("db")
+		jsonBinding := tag.Get("json")
+		if bindingKey == "" || jsonBinding == "" {
+			continue
+		}
+		value, isPresent := result.Record().Get(bindingKey)
+		if !isPresent {
+			return nil, errors.New("key not found in db result")
+		}
+		values[jsonBinding] = value
+	}
+	return values, nil
 }

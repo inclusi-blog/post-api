@@ -4,11 +4,16 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
-	"post-api/models/db"
-
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"post-api/constants"
+	"post-api/models"
+	"post-api/models/db"
+	"post-api/models/response"
+	"post-api/utils"
 )
 
 type PostsRepository interface {
@@ -18,6 +23,7 @@ type PostsRepository interface {
 	IsPostLikedByPerson(ctx context.Context, userId string, postId string) (bool, error)
 	CommentPost(ctx context.Context, userId string, comment string, postId string) error
 	GetLikesCountByPostID(ctx context.Context, postId string) (int64, error)
+	FetchPost(ctx context.Context, postId string, userId string) (response.Post, error)
 }
 
 type postRepository struct {
@@ -31,6 +37,7 @@ const (
 	LikePost              = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:LIKED]->(post)"
 	UnlikePost            = "MATCH (user:Person{ userId: $userId})-[like:LIKED]->(post: Post{ puid: $puid}) delete like"
 	GetLikeCountForPostID = "MATCH (readers:Person)-[likes:LIKED]->(post:Post{ puid: $puid}) RETURN count(likes) as likeCount"
+	FetchPost             = "MATCH (interests:Interest)<-[tag:FALLS_UNDER]-(post:Post)-[audit:PUBLISHED_BY]->(author:Person) WHERE post.puid = $postId MATCH (user:Person{userId: $userId}) RETURN author.userId AS authorID, COLLECT(interests.name) AS interests, post.postData AS data, post.previewImage AS previewImage, audit.createdAt AS publishedAt, size((:Person)-[:LIKED]->(post)) AS likeCount, size((:Person)-[:COMMENTED]->(post)) AS commentCount, EXISTS((user)-[:LIKED]->(post)) AS isViewerLiked, CASE WHEN $userId =~ author.userId THEN true ELSE false END AS isAuthorViewing"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
@@ -212,6 +219,60 @@ func (repository postRepository) GetLikesCountByPostID(ctx context.Context, post
 	}
 
 	return 0, errors.New("no row found")
+}
+
+func (repository postRepository) FetchPost(ctx context.Context, postId string, userId string) (response.Post, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "FetchPost")
+
+	logger.Infof("fetching post to view for user %v of post id %v", userId, postId)
+
+	result, err := repository.db.Run(FetchPost, map[string]interface{}{
+		"postId": postId,
+		"userId": userId,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching post to view for user %v of post id %v, Error %v", userId, postId, err)
+		return response.Post{}, err
+	}
+
+	_, err = result.Summary()
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching summary of post fetch for user id %v of post id %v ,Error %v", userId, postId, err)
+		return response.Post{}, err
+	}
+	if result.Next() {
+		var post response.DBPost
+		bindDbValues, err := utils.BindDbValues(result, post)
+		if err != nil {
+			logger.Errorf("binding error %v", err)
+			return response.Post{}, err
+		}
+		jsonString, _ := json.Marshal(bindDbValues)
+		err = json.Unmarshal(jsonString, &post)
+		return mapDBPostToPost(post), nil
+	}
+
+	return response.Post{}, errors.New(constants.NoPostFound)
+}
+
+func mapDBPostToPost(post response.DBPost) response.Post {
+	return response.Post{
+		PostID: post.PostID,
+		PostData: models.JSONString{
+			JSONText: types.JSONText(post.PostData),
+		},
+		LikeCount:              post.LikeCount,
+		CommentCount:           post.CommentCount,
+		Interests:              post.Interests,
+		AuthorID:               post.AuthorID,
+		PreviewImage:           post.PreviewImage,
+		PublishedAt:            post.PublishedAt,
+		IsViewerLiked:          post.IsViewerLiked,
+		IsViewIsAuthor:         post.IsViewIsAuthor,
+		IsViewerFollowedAuthor: post.IsViewerFollowedAuthor,
+	}
 }
 
 func NewPostsRepository(db neo4j.Session) PostsRepository {

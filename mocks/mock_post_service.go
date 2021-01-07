@@ -93,3 +93,18 @@ func (mr *MockPostServiceMockRecorder) CommentPost(ctx, userId, postId, comment 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommentPost", reflect.TypeOf((*MockPostService)(nil).CommentPost), ctx, userId, postId, comment)
 }
+
+// GetPost mocks base method
+func (m *MockPostService) GetPost(ctx context.Context, postId, userId string) (response.Post, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPost", ctx, postId, userId)
+	ret0, _ := ret[0].(response.Post)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// GetPost indicates an expected call of GetPost
+func (mr *MockPostServiceMockRecorder) GetPost(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPost", reflect.TypeOf((*MockPostService)(nil).GetPost), ctx, postId, userId)
+}

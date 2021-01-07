@@ -21,6 +21,7 @@ type PostService interface {
 	LikePost(userID string, postID string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
 	UnlikePost(userId string, postId string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
 	CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error
+	GetPost(ctx context.Context, postId, userId string) (response.Post, *golaerror.Error)
 }
 
 type postService struct {
@@ -181,6 +182,26 @@ func (service postService) CommentPost(ctx context.Context, userId, postId, comm
 
 	logger.Infof("Successfully commented on post %v by user %v", postId, userId)
 	return nil
+}
+
+func (service postService) GetPost(ctx context.Context, postId, userId string) (response.Post, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "GetPost")
+	logger.Infof("Fetching post for post id %v", postId)
+
+	post, err := service.repository.FetchPost(ctx, postId, userId)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching post for given post id %v, Error %v", postId, err)
+		if err.Error() == constants.NoPostFound {
+			logger.Errorf("Error No post found for given post id %v", postId)
+			return response.Post{}, &constants.PostNotFoundErr
+		}
+		return response.Post{}, constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully fetching post from post repository for given post id %v", postId)
+
+	return post, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, session neo4j.Session) PostService {

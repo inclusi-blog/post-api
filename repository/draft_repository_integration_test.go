@@ -261,6 +261,7 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenThereIsADraftAvail
 	suite.Equal(expectedDraft.Interest, draftDB.Interest)
 	suite.Equal(expectedDraft.UserID, draftDB.UserID)
 	suite.Equal(expectedDraft.IsPublished, draftDB.IsPublished)
+	suite.Equal(expectedDraft.PostData, draftDB.PostData)
 	suite.NotEmpty(draftDB.CreatedAt)
 }
 

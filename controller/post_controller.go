@@ -44,7 +44,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	logger.Infof("Successfully published draft for draft id %v", id)
 	ctx.JSON(http.StatusOK, gin.H{
 		"status": "published",
-		"url": postUrl,
+		"url":    postUrl,
 	})
 }
 
@@ -55,7 +55,7 @@ func (controller PostController) Like(ctx *gin.Context) {
 
 	log.Infof("Entered controller to update likes request for user %v", "12")
 
-	var postLikeRequest request.PostLikeRequest
+	var postLikeRequest request.PostURIRequest
 
 	if err := ctx.ShouldBindUri(&postLikeRequest); err != nil {
 		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
@@ -83,7 +83,7 @@ func (controller PostController) Unlike(ctx *gin.Context) {
 
 	log.Infof("Entered controller to update likes request for user %v", "12")
 
-	var postLikeRequest request.PostLikeRequest
+	var postLikeRequest request.PostURIRequest
 
 	if err := ctx.ShouldBindUri(&postLikeRequest); err != nil {
 		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
@@ -130,6 +130,31 @@ func (controller PostController) Comment(ctx *gin.Context) {
 
 	logger.Infof("Successfully commented on post %v", commentRequest.PostUID)
 	ctx.Status(http.StatusOK)
+}
+
+func (controller PostController) GetPost(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetPost")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	var postRequest request.PostURIRequest
+	if err := ctx.ShouldBindUri(&postRequest); err != nil {
+		logger.Errorf("Error occurred while binding get post request body %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	id := postRequest.PostUID
+	logger.Infof("Successfully bind get post request body for post id %v", id)
+	post, err := controller.postService.GetPost(ctx, id, "some-user")
+
+	if err != nil {
+		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", id, err)
+		constants.RespondWithGolaError(ctx, err)
+		return
+	}
+
+	logger.Infof("Successfully fetching post for given post id %v", id)
+	ctx.JSON(http.StatusOK, post)
 }
 
 func NewPostController(postService service.PostService) PostController {

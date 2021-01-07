@@ -9,6 +9,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	neo4j "github.com/neo4j/neo4j-go-driver/neo4j"
 	db "post-api/models/db"
+	response "post-api/models/response"
 	reflect "reflect"
 )
 
@@ -119,4 +120,19 @@ func (m *MockPostsRepository) GetLikesCountByPostID(ctx context.Context, postId 
 func (mr *MockPostsRepositoryMockRecorder) GetLikesCountByPostID(ctx, postId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLikesCountByPostID", reflect.TypeOf((*MockPostsRepository)(nil).GetLikesCountByPostID), ctx, postId)
+}
+
+// FetchPost mocks base method
+func (m *MockPostsRepository) FetchPost(ctx context.Context, postId, userId string) (response.Post, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchPost", ctx, postId, userId)
+	ret0, _ := ret[0].(response.Post)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchPost indicates an expected call of FetchPost
+func (mr *MockPostsRepositoryMockRecorder) FetchPost(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPost", reflect.TypeOf((*MockPostsRepository)(nil).FetchPost), ctx, postId, userId)
 }

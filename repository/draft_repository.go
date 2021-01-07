@@ -13,6 +13,7 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
+	"post-api/utils"
 )
 
 type DraftRepository interface {
@@ -36,7 +37,7 @@ const (
 	SaveTagline      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where author.userId = $userId and draft.draftId = $draftId set draft.tagline = $tagline"
 	SaveInterests    = "MATCH (draft:Draft{ draftId: $draftId})-[audit:CREATED_BY]->(author:Person{userId: $userId}) MATCH (interest:Interest { name: $interestName}) MERGE (draft)-[:FALLS_UNDER]->(interest) SET audit.updatedAt = timestamp()"
 	DeleteInterest   = "MATCH (author:Person{userId: $userId})<-[:CREATED_BY]-(draft:Draft{draftId: $draftId})-[interest:FALLS_UNDER]->(tag:Interest{name: $interestName}) DELETE interest"
-	FetchDraft       = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId OPTIONAL MATCH (tags:Interest)<-[:FALLS_UNDER]-(draft) return draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData, CASE WHEN exists(draft.isPublished) THEN draft.isPublished ELSE false END AS isPublished, audit.createdAt as createdAt"
+	FetchDraft       = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId OPTIONAL MATCH (tags:Interest)<-[:FALLS_UNDER]-(draft) return draft.draftId as draftId, author.userId as userId, draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData, CASE WHEN exists(draft.isPublished) THEN draft.isPublished ELSE false END AS isPublished, audit.createdAt as createdAt"
 	SavePreviewImage = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId set draft.previewImage = $previewImage, audit.updatedAt = timestamp()"
 	DeleteDraft      = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) where draft.draftId = $draftId and author.userId = $userId detach delete audit, draft"
 	FetchAllDraft    = "MATCH (draft:Draft)-[audit:CREATED_BY]->(author:Person) OPTIONAL match (draft)-[:FALLS_UNDER]->(tags:Interest) where author.userId = $userId return draft.draftId as draftId, author.userId as userId, draft.tagline as tagline, draft.previewImage as previewImage, collect(tags.name) as interests, draft.data as postData, audit.createdAt as createdAt order by createdAt desc skip $offset limit $limit"
@@ -145,8 +146,6 @@ func (repository draftRepository) GetDraft(ctx context.Context, draftUID string,
 
 	logger.Infof("Fetching draft from draft repository for the given draft id %v", draftUID)
 
-	var draft db.DraftDB
-
 	result, err := repository.db.Run(FetchDraft, map[string]interface{}{
 		"draftId": draftUID,
 		"userId":  userId,
@@ -163,42 +162,31 @@ func (repository draftRepository) GetDraft(ctx context.Context, draftUID string,
 		logger.Errorf("Error occurred while fetching summary draft from draft repository %v", err)
 		return db.DraftDB{}, err
 	}
-	if result.Next() {
-		tagline := result.Record().GetByIndex(0)
-		if tagline != nil {
-			draft.Tagline = tagline.(string)
-		}
-		previewImage := result.Record().GetByIndex(1)
-		if previewImage != nil {
-			draft.PreviewImage = previewImage.(string)
-		}
-		interests := result.Record().GetByIndex(2)
-		if interests != nil {
-			for _, interest := range interests.([]interface{}) {
-				draft.Interest = append(draft.Interest, interest.(string))
-			}
-		}
-		postData := result.Record().GetByIndex(3)
-		if postData != nil {
-			postString := postData.(string)
-			draft.PostData = models.JSONString{
-				JSONText: types.JSONText(postString),
-			}
-		}
-		isDraftPublished := result.Record().GetByIndex(4)
-		if postData != nil {
-			isPublished := isDraftPublished.(bool)
-			draft.IsPublished = isPublished
-		}
-		createdDate := result.Record().GetByIndex(5)
-		if createdDate != nil {
-			createdAt := createdDate.(int64)
-			draft.CreatedAt = createdAt
-		}
-		draft.DraftID = draftUID
-		draft.UserID = userId
 
-		return draft, nil
+	if result.Next() {
+		var draft db.DraftForm
+		bindDbValues, err := utils.BindDbValues(result, draft)
+		if err != nil {
+			logger.Errorf("binding error %v", err)
+			return db.DraftDB{}, err
+		}
+
+		jsonString, _ := json.Marshal(bindDbValues)
+		err = json.Unmarshal(jsonString, &draft)
+		logger.Infof("this is response %v", draft)
+		draftDB := db.DraftDB{
+			DraftID: draft.DraftID,
+			UserID:  draft.UserID,
+			PostData: models.JSONString{
+				JSONText: types.JSONText(draft.PostData),
+			},
+			PreviewImage: draft.PreviewImage,
+			Tagline:      draft.Tagline,
+			Interest:     draft.Interest,
+			IsPublished:  draft.IsPublished,
+			CreatedAt:    draft.CreatedAt,
+		}
+		return draftDB, nil
 	}
 
 	logger.Infof("Successfully fetching draft from draft repository for given draft id %v", draftUID)

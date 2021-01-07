@@ -20,6 +20,7 @@ const (
 	InterestDoesNotMeetReadTimeCode  string = "ERR_DRAFT_INTEREST_NOT_MEET_READ_TIME"
 	PostNotFoundCode                 string = "ERR_POST_NOT_FOUND"
 	MinimumInterestCountNotMatchCode string = "ERR_MINIMUM_INTERESTS_COUNT_NOT_MATCH"
+	NoPostFound                      string = "ERR_NO_POST_FOUND"
 )
 
 var (

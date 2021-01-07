@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"post-api/constants"
 	"post-api/mocks"
+	"post-api/models"
 	"post-api/models/response"
 	"post-api/service/test_helper"
 	"post-api/validators"
@@ -72,7 +73,7 @@ func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return("",&constants.InternalServerError).Times(1)
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, "some-user").Return("", &constants.InternalServerError).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
 	suite.postController.PublishPost(suite.context)
 	expectedErr := &constants.InternalServerError
@@ -282,4 +283,110 @@ func (suite *PostControllerTest) TestComment_WhenPostServiceCommentFails() {
 	suite.Nil(err)
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
 	suite.Equal(string(marshal), suite.recorder.Body.String())
+}
+
+func (suite *PostControllerTest) TestGetPost_WhenSuccess() {
+	postID := "1q2w3e4r5t6y"
+
+	post := response.Post{
+		PostID:                 "1q2w3e4r5t6y",
+		PostData:               models.JSONString{},
+		LikeCount:              1,
+		CommentCount:           1,
+		Interests:              []string{"Art", "Books", "Grammar"},
+		AuthorID:               "some-user",
+		PreviewImage:           "some-url",
+		PublishedAt:            1234567890,
+		IsViewerLiked:          true,
+		IsViewIsAuthor:         false,
+		IsViewerFollowedAuthor: false,
+	}
+	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(post, nil).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1q2w3e4r5t6y",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y", nil)
+	suite.postController.GetPost(suite.context)
+	jsonBytes, err := json.Marshal(post)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestGetPost_WhenBadRequest() {
+	postID := "1"
+
+	post := response.Post{
+		PostID:                 "1q2w3e4r5t6y",
+		PostData:               models.JSONString{},
+		LikeCount:              1,
+		CommentCount:           1,
+		Interests:              []string{"Art", "Books", "Grammar"},
+		AuthorID:               "some-user",
+		PreviewImage:           "some-url",
+		PublishedAt:            1234567890,
+		IsViewerLiked:          true,
+		IsViewIsAuthor:         false,
+		IsViewerFollowedAuthor: false,
+	}
+	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(post, nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y", nil)
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1",
+		},
+	}
+	suite.context.Params = params
+	suite.postController.GetPost(suite.context)
+	jsonBytes, err := json.Marshal(constants.PayloadValidationError)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestGetPost_WhenGetPostServiceFailsWithPostNotFoundErr() {
+	postID := "q2w3e4r5tqaz"
+
+	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(response.Post{}, &constants.PostNotFoundErr).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "q2w3e4r5tqaz",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y", nil)
+	suite.postController.GetPost(suite.context)
+	jsonBytes, err := json.Marshal(&constants.PostNotFoundErr)
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+}
+
+func (suite *PostControllerTest) TestGetPost_WhenGetPostServiceFailsWithCommonError() {
+	postID := "q2w3e4r5tqaz"
+
+	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(response.Post{}, constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "q2w3e4r5tqaz",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y", nil)
+	suite.postController.GetPost(suite.context)
+	jsonBytes, err := json.Marshal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong))
+	suite.Nil(err)
+	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
 }

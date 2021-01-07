@@ -52,8 +52,19 @@ type DraftDB struct {
 	PreviewImage string            `json:"preview_image" db:"previewImage"`
 	Tagline      string            `json:"tagline" db:"tagline"`
 	Interest     []string          `json:"interest" db:"interests"`
-	IsPublished  bool              `json:"is_published"`
-	CreatedAt    int64             `json:"created_at"`
+	IsPublished  bool              `json:"is_published" db:"isPublished"`
+	CreatedAt    int64             `json:"created_at" db:"createdAt"`
+}
+
+type DraftForm struct {
+	DraftID      string   `json:"draft_id" db:"draftId"`
+	UserID       string   `json:"user_id" db:"userId"`
+	PostData     string   `json:"post_data" db:"postData"`
+	PreviewImage string   `json:"preview_image" db:"previewImage"`
+	Tagline      string   `json:"tagline" db:"tagline"`
+	Interest     []string `json:"interest" db:"interests"`
+	IsPublished  bool     `json:"is_published" db:"isPublished"`
+	CreatedAt    int64    `json:"created_at" db:"createdAt"`
 }
 
 type AllDraft struct {

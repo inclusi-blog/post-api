@@ -308,3 +308,39 @@ func (suite *PostServiceTest) TestComment_WhenRepositoryCommentReturnsNoError() 
 	err := suite.postService.CommentPost(suite.goContext, "some-user", "1q2w3e4r5t6y", "this is some comment")
 	suite.Nil(err)
 }
+
+func (suite *PostServiceTest) TestGetPost_WhenDbReturnsPost() {
+	post := response.Post{
+		PostID:                 "1q2w3e4r5t6y",
+		PostData:               models.JSONString{},
+		LikeCount:              1,
+		CommentCount:           1,
+		Interests:              []string{"Art", "Books", "Grammar"},
+		AuthorID:               "some-user",
+		PreviewImage:           "some-url",
+		PublishedAt:            1234567890,
+		IsViewerLiked:          true,
+		IsViewIsAuthor:         false,
+		IsViewerFollowedAuthor: false,
+	}
+	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(post, nil).Times(1)
+	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(err)
+	suite.Equal(post, actualPost)
+}
+
+func (suite *PostServiceTest) TestGetPost_WhenDbReturnsNoPostFoundError() {
+	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(constants.NoPostFound)).Times(1)
+	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(&constants.PostNotFoundErr, err)
+	suite.Empty(actualPost)
+}
+
+func (suite *PostServiceTest) TestGetPost_WhenDbReturnCommonError() {
+	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+	suite.Empty(actualPost)
+}

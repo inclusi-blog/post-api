@@ -75,5 +75,6 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		postGroup.GET("/:post_id/like", postController.Like)
 		postGroup.GET("/:post_id/unlike", postController.Unlike)
 		postGroup.POST("/comment", postController.Comment)
+		postGroup.GET("/:post_id", postController.GetPost)
 	}
 }
