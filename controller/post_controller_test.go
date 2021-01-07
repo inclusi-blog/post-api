@@ -298,7 +298,7 @@ func (suite *PostControllerTest) TestGetPost_WhenSuccess() {
 		PreviewImage:           "some-url",
 		PublishedAt:            1234567890,
 		IsViewerLiked:          true,
-		IsViewIsAuthor:         false,
+		IsViewerIsAuthor:       false,
 		IsViewerFollowedAuthor: false,
 	}
 	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(post, nil).Times(1)
@@ -331,7 +331,7 @@ func (suite *PostControllerTest) TestGetPost_WhenBadRequest() {
 		PreviewImage:           "some-url",
 		PublishedAt:            1234567890,
 		IsViewerLiked:          true,
-		IsViewIsAuthor:         false,
+		IsViewerIsAuthor:       false,
 		IsViewerFollowedAuthor: false,
 	}
 	suite.mockPostService.EXPECT().GetPost(suite.context, postID, "some-user").Return(post, nil).Times(0)

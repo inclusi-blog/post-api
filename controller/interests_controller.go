@@ -14,6 +14,17 @@ type InterestsController struct {
 	service service.InterestsService
 }
 
+// GetInterests godoc
+// @Tags interest
+// @Summary GetInterests
+// @Description get all interests or search a interest with keyword
+// @Accept json
+// @Param request body request.SearchInterests true "Request Body"
+// @Success 200 {object} []db.Interest
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/comment [post]
 func (controller InterestsController) GetInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "interestsController").WithField("method", "GetInterests")
 

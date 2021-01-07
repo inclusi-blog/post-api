@@ -48,7 +48,7 @@ func (validator postValidator) ValidateAndGetMetaData(draft db.Draft, ctx contex
 	CountImageReadTime(imageCount, &readTime)
 	err := draft.IsValidInterest(ctx, contentReadTime, readTime, minimumPostReadTime)
 	if err != nil {
-		logger.Errorf("error occured while validating interest for draft %v, Error %v", draftID, err)
+		logger.Errorf("error occurred while validating interest for draft %v, Error %v", draftID, err)
 		return models.MetaData{}, err
 	}
 

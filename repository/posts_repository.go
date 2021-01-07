@@ -37,7 +37,7 @@ const (
 	LikePost              = "MATCH (user:Person{ userId: $userId}) MATCH (post:Post) WHERE post.puid = $puid MERGE (user)-[:LIKED]->(post)"
 	UnlikePost            = "MATCH (user:Person{ userId: $userId})-[like:LIKED]->(post: Post{ puid: $puid}) delete like"
 	GetLikeCountForPostID = "MATCH (readers:Person)-[likes:LIKED]->(post:Post{ puid: $puid}) RETURN count(likes) as likeCount"
-	FetchPost             = "MATCH (interests:Interest)<-[tag:FALLS_UNDER]-(post:Post)-[audit:PUBLISHED_BY]->(author:Person) WHERE post.puid = $postId MATCH (user:Person{userId: $userId}) RETURN author.userId AS authorID, COLLECT(interests.name) AS interests, post.postData AS data, post.previewImage AS previewImage, audit.createdAt AS publishedAt, size((:Person)-[:LIKED]->(post)) AS likeCount, size((:Person)-[:COMMENTED]->(post)) AS commentCount, EXISTS((user)-[:LIKED]->(post)) AS isViewerLiked, CASE WHEN $userId =~ author.userId THEN true ELSE false END AS isAuthorViewing"
+	FetchPost             = "MATCH (interests:Interest)<-[tag:FALLS_UNDER]-(post:Post)-[audit:PUBLISHED_BY]->(author:Person) WHERE post.puid = $postId MATCH (user:Person{userId: $userId}) RETURN author.userId AS authorID, author.displayName AS authorName, post.puid as postId, COLLECT(interests.name) AS interests, post.postData AS data, post.previewImage AS previewImage, audit.createdAt AS publishedAt, size((:Person)-[:LIKED]->(post)) AS likeCount, size((:Person)-[:COMMENTED]->(post)) AS commentCount, EXISTS((user)-[:LIKED]->(post)) AS isViewerLiked, CASE WHEN $userId =~ author.userId THEN true ELSE false END AS isAuthorViewing"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
@@ -267,10 +267,11 @@ func mapDBPostToPost(post response.DBPost) response.Post {
 		CommentCount:           post.CommentCount,
 		Interests:              post.Interests,
 		AuthorID:               post.AuthorID,
+		AuthorName:             post.AuthorName,
 		PreviewImage:           post.PreviewImage,
 		PublishedAt:            post.PublishedAt,
 		IsViewerLiked:          post.IsViewerLiked,
-		IsViewIsAuthor:         post.IsViewIsAuthor,
+		IsViewerIsAuthor:       post.IsViewerIsAuthor,
 		IsViewerFollowedAuthor: post.IsViewerFollowedAuthor,
 	}
 }

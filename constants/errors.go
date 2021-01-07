@@ -43,6 +43,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InternalServerErrorCode:          http.StatusInternalServerError,
 	PostServiceFailureCode:           http.StatusInternalServerError,
 	NoInterestsFoundCode:             http.StatusNotFound,
+	DraftValidationFailedCode:        http.StatusNotAcceptable,
 	NoDraftFoundCode:                 http.StatusNotFound,
 	ConvertTitleToStringCode:         http.StatusBadRequest,
 	ReadTimeNotMeetCode:              http.StatusBadRequest,

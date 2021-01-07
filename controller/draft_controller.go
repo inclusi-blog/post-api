@@ -1,15 +1,14 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/gola-glitch/gola-utils/logging"
 	"net/http"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/request"
 	"post-api/service"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/gola-glitch/gola-utils/logging"
 )
 
 type DraftController struct {
@@ -57,6 +56,16 @@ func (controller DraftController) SaveDraft(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// SaveTagline godoc
+// @Tags draft
+// @Summary SaveTagline
+// @Description save or update tagline for draft
+// @Accept json
+// @Param request body request.TaglineSaveRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/tagline [post]
 func (controller DraftController) SaveTagline(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -88,6 +97,16 @@ func (controller DraftController) SaveTagline(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// SaveInterests godoc
+// @Tags draft
+// @Summary SaveInterests
+// @Description save or update interest for draft
+// @Accept json
+// @Param request body request.InterestsSaveRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/upsert-interests [post]
 func (controller DraftController) SaveInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -119,6 +138,16 @@ func (controller DraftController) SaveInterests(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// DeleteInterest godoc
+// @Tags draft
+// @Summary DeleteInterest
+// @Description delete interest for draft
+// @Accept json
+// @Param request body request.InterestsSaveRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/delete-interest [post]
 func (controller DraftController) DeleteInterest(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -150,6 +179,17 @@ func (controller DraftController) DeleteInterest(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// GetDraft godoc
+// @Tags draft
+// @Summary GetDraft
+// @Description get draft for given draft id
+// @Accept json
+// @Param request body request.DraftURIRequest true "Request Body"
+// @Success 200 {object} db.DraftDB
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/get-draft/:draft_id [get]
 func (controller DraftController) GetDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetDraft")
 	logger.Infof("Entered controller to get draft request for user %v", "12")
@@ -174,6 +214,16 @@ func (controller DraftController) GetDraft(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, draftData)
 }
 
+// SavePreviewImage godoc
+// @Tags draft
+// @Summary SavePreviewImage
+// @Description saves preview image for draft
+// @Accept json
+// @Param request body request.PreviewImageSaveRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/upsert-preview-image [post]
 func (controller DraftController) SavePreviewImage(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -205,6 +255,17 @@ func (controller DraftController) SavePreviewImage(ctx *gin.Context) {
 	})
 }
 
+// GetAllDraft godoc
+// @Tags draft
+// @Summary GetAllDraft
+// @Description get all draft for given draft id
+// @Accept json
+// @Param request body models.GetAllDraftRequest true "Request Body"
+// @Success 200 {object} []db.AllDraft
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/get-all-draft [post]
 func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -235,6 +296,16 @@ func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, allDraftData)
 }
 
+// DeleteDraft godoc
+// @Tags draft
+// @Summary DeleteDraft
+// @Description delete draft for a user
+// @Accept json
+// @Param request body request.DraftURIRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/delete/:draft_id [post]
 func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "DeleteDraft")
 
@@ -263,6 +334,17 @@ func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 	return
 }
 
+// GetPreviewDraft godoc
+// @Tags draft
+// @Summary GetPreviewDraft
+// @Description get preview draft for a given draft id
+// @Accept json
+// @Param request body request.DraftURIRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 406 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/preview-draft/:draft_id [get]
 func (controller DraftController) GetPreviewDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetPreviewDraft")
 	logger.Info("Entered preview draft controller")

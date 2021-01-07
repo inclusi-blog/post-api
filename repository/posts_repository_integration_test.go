@@ -486,7 +486,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPost() {
 		PreviewImage:           "some-url",
 		PublishedAt:            0,
 		IsViewerLiked:          false,
-		IsViewIsAuthor:         true,
+		IsViewerIsAuthor:       true,
 		IsViewerFollowedAuthor: false,
 	}
 
@@ -503,7 +503,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPost() {
 	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
 	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
 	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewIsAuthor, fetchPost.IsViewIsAuthor)
+	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
 	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
 	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
 	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
@@ -539,7 +539,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSo
 		PreviewImage:           "some-url",
 		PublishedAt:            0,
 		IsViewerLiked:          false,
-		IsViewIsAuthor:         true,
+		IsViewerIsAuthor:       true,
 		IsViewerFollowedAuthor: false,
 	}
 
@@ -566,7 +566,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSo
 	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
 	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
 	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewIsAuthor, fetchPost.IsViewIsAuthor)
+	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
 	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
 	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
 	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
@@ -602,7 +602,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSo
 		PreviewImage:           "some-url",
 		PublishedAt:            0,
 		IsViewerLiked:          false,
-		IsViewIsAuthor:         true,
+		IsViewerIsAuthor:       true,
 		IsViewerFollowedAuthor: false,
 	}
 
@@ -633,7 +633,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSo
 	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
 	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
 	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewIsAuthor, fetchPost.IsViewIsAuthor)
+	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
 	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
 	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
 	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
@@ -669,7 +669,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndDi
 		PreviewImage:           "some-url",
 		PublishedAt:            0,
 		IsViewerLiked:          false,
-		IsViewIsAuthor:         false,
+		IsViewerIsAuthor:       false,
 		IsViewerFollowedAuthor: false,
 	}
 
@@ -700,7 +700,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndDi
 	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
 	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
 	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewIsAuthor, fetchPost.IsViewIsAuthor)
+	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
 	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
 	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
 	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
@@ -736,7 +736,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostViewe
 		PreviewImage:           "some-url",
 		PublishedAt:            0,
 		IsViewerLiked:          true,
-		IsViewIsAuthor:         false,
+		IsViewerIsAuthor:       false,
 		IsViewerFollowedAuthor: false,
 	}
 
@@ -767,7 +767,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostViewe
 	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
 	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
 	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewIsAuthor, fetchPost.IsViewIsAuthor)
+	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
 	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
 	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
 	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
@@ -813,7 +813,7 @@ func (suite *PostsRepositoryIntegrationTest) insertInterestEntries() {
 }
 
 func (suite *PostsRepositoryIntegrationTest) createSampleUser(userId string) {
-	_, err := suite.adminDb.Run("CREATE (person:Person{ userId: $userId})", map[string]interface{}{
+	_, err := suite.adminDb.Run("CREATE (person:Person{ userId: $userId, displayName: $userId})", map[string]interface{}{
 		"userId": userId,
 	})
 	suite.Nil(err)

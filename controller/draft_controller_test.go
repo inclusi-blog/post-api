@@ -3,8 +3,12 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"post-api/constants"
@@ -16,11 +20,6 @@ import (
 	"post-api/service/test_helper"
 	"post-api/validators"
 	"testing"
-
-	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type DraftControllerTest struct {

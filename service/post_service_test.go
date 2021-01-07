@@ -320,7 +320,7 @@ func (suite *PostServiceTest) TestGetPost_WhenDbReturnsPost() {
 		PreviewImage:           "some-url",
 		PublishedAt:            1234567890,
 		IsViewerLiked:          true,
-		IsViewIsAuthor:         false,
+		IsViewerIsAuthor:       false,
 		IsViewerFollowedAuthor: false,
 	}
 	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(post, nil).Times(1)

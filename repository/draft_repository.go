@@ -173,7 +173,6 @@ func (repository draftRepository) GetDraft(ctx context.Context, draftUID string,
 
 		jsonString, _ := json.Marshal(bindDbValues)
 		err = json.Unmarshal(jsonString, &draft)
-		logger.Infof("this is response %v", draft)
 		draftDB := db.DraftDB{
 			DraftID: draft.DraftID,
 			UserID:  draft.UserID,

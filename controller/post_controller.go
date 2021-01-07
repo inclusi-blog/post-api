@@ -15,14 +15,23 @@ type PostController struct {
 	postService service.PostService
 }
 
+// PublishPost godoc
+// @Tags post
+// @Summary PublishPost
+// @Description publish a draft to post
+// @Accept json
+// @Param request body request.PublishRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 406 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/publish [post]
 func (controller PostController) PublishPost(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "PublishPost")
 	logger.Infof("Entering post controller to publish post")
-	type publishRequest struct {
-		DratID string `json:"draft_id" binding:"required"`
-	}
 
-	var publishPostRequest publishRequest
+	var publishPostRequest request.PublishRequest
 
 	if err := ctx.ShouldBindBodyWith(&publishPostRequest, binding.JSON); err != nil {
 		logger.Errorf("Error occurred while binding publishPostRequest body %v", err)
@@ -48,6 +57,16 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	})
 }
 
+// Like godoc
+// @Tags post
+// @Summary Like
+// @Description like a post
+// @Accept json
+// @Param request body request.PostURIRequest true "Request Body"
+// @Success 200 {object} response.LikedByCount
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/:post_id/like [get]
 func (controller PostController) Like(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -76,6 +95,16 @@ func (controller PostController) Like(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+// Unlike godoc
+// @Tags post
+// @Summary Unlike
+// @Description unlike a post
+// @Accept json
+// @Param request body request.PostURIRequest true "Request Body"
+// @Success 200 {object} response.LikedByCount
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/:post_id/unlike [get]
 func (controller PostController) Unlike(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 
@@ -104,6 +133,16 @@ func (controller PostController) Unlike(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+// Comment godoc
+// @Tags post
+// @Summary Comment
+// @Description comment on a post
+// @Accept json
+// @Param request body request.CommentPost true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/comment [post]
 func (controller PostController) Comment(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "Comment")
 	logger.Infof("Entering controller to comment on post")
@@ -132,6 +171,17 @@ func (controller PostController) Comment(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// GetPost godoc
+// @Tags post
+// @Summary GetPost
+// @Description get a post
+// @Accept json
+// @Param request body request.PostURIRequest true "Request Body"
+// @Success 200 {object} response.Post
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/:post_id [get]
 func (controller PostController) GetPost(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetPost")
 	logger.Info("Started get post to fetch post for the given post id")
