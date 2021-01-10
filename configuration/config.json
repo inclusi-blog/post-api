@@ -15,5 +15,8 @@
     "https://app.gola.xyz",
     "http://localhost:3000",
     "https://api.gola.xyz"
-  ]
+  ],
+  "crypto_service_url": "http://localhost:8082",
+  "oauth_url": "http://localhost:4445",
+  "token_validation_ignore_urls": []
 }
