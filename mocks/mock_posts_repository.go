@@ -136,3 +136,17 @@ func (mr *MockPostsRepositoryMockRecorder) FetchPost(ctx, postId, userId interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPost", reflect.TypeOf((*MockPostsRepository)(nil).FetchPost), ctx, postId, userId)
 }
+
+// MarkPostAsReadLater mocks base method
+func (m *MockPostsRepository) MarkPostAsReadLater(ctx context.Context, postId, userId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkPostAsReadLater", ctx, postId, userId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkPostAsReadLater indicates an expected call of MarkPostAsReadLater
+func (mr *MockPostsRepositoryMockRecorder) MarkPostAsReadLater(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPostAsReadLater", reflect.TypeOf((*MockPostsRepository)(nil).MarkPostAsReadLater), ctx, postId, userId)
+}
