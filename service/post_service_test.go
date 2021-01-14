@@ -344,3 +344,23 @@ func (suite *PostServiceTest) TestGetPost_WhenDbReturnCommonError() {
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
 	suite.Empty(actualPost)
 }
+
+func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsSuccess() {
+	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(nil).Times(1)
+	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(err)
+}
+
+func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsCommonError() {
+	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
+}
+
+func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsPostNotFoundError() {
+	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.NoPostFound)).Times(1)
+	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(&constants.PostNotFoundErr, err)
+}

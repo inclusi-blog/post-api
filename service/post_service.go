@@ -22,6 +22,7 @@ type PostService interface {
 	UnlikePost(userId string, postId string, ctx context.Context) (response.LikedByCount, *golaerror.Error)
 	CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error
 	GetPost(ctx context.Context, postId, userId string) (response.Post, *golaerror.Error)
+	MarkReadLater(ctx context.Context, postId, userId string) *golaerror.Error
 }
 
 type postService struct {
@@ -202,6 +203,24 @@ func (service postService) GetPost(ctx context.Context, postId, userId string) (
 	logger.Infof("Successfully fetching post from post repository for given post id %v", postId)
 
 	return post, nil
+}
+
+func (service postService) MarkReadLater(ctx context.Context, postId, userId string) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "MarkReadLater")
+	logger.Infof("Calling repository to update the read later status for post %v", postId)
+
+	err := service.repository.MarkPostAsReadLater(ctx, postId, userId)
+	if err != nil {
+		logger.Errorf("Error occurred while updating read later status for post %v, Error %v", postId, err)
+		if err.Error() == constants.NoPostFound {
+			logger.Errorf("Error post not found for requested post id %v, Error %v", postId, err)
+			return &constants.PostNotFoundErr
+		}
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully added post to read later for post id %v", postId)
+	return nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, session neo4j.Session) PostService {

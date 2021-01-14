@@ -108,3 +108,17 @@ func (mr *MockPostServiceMockRecorder) GetPost(ctx, postId, userId interface{}) 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPost", reflect.TypeOf((*MockPostService)(nil).GetPost), ctx, postId, userId)
 }
+
+// MarkReadLater mocks base method
+func (m *MockPostService) MarkReadLater(ctx context.Context, postId, userId string) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkReadLater", ctx, postId, userId)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// MarkReadLater indicates an expected call of MarkReadLater
+func (mr *MockPostServiceMockRecorder) MarkReadLater(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkReadLater", reflect.TypeOf((*MockPostService)(nil).MarkReadLater), ctx, postId, userId)
+}
