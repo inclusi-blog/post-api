@@ -539,25 +539,18 @@ paths:
       summary: Unlike
       tags:
       - post
-  /api/post/v1/post/comment:
-    post:
-      consumes:
-      - application/json
-      description: get all interests or search a interest with keyword
+  /api/post/v1/post/{post_id}/read-later:
+    get:
+      description: mark a post to read later fo user
       parameters:
-      - description: Request Body
-        in: body
-        name: request
+      - description: Post ID
+        in: path
+        name: post_id
         required: true
-        schema:
-          $ref: '#/definitions/request.SearchInterests'
+        type: string
       responses:
         "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/db.Interest'
-            type: array
+          description: ""
         "400":
           description: Bad Request
           schema:
@@ -570,9 +563,35 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/golaerror.Error'
-      summary: GetInterests
+      summary: MarkReadLater
       tags:
-      - interest
+      - post
+  /api/post/v1/post/comment:
+    post:
+      consumes:
+      - application/json
+      description: comment on a post
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CommentPost'
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+      summary: Comment
+      tags:
+      - post
   /api/post/v1/post/publish:
     post:
       consumes:

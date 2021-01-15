@@ -207,6 +207,43 @@ func (controller PostController) GetPost(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, post)
 }
 
+// MarkReadLater godoc
+// @Tags post
+// @Summary MarkReadLater
+// @Description mark a post to read later fo user
+// @Param post_id path string true "Post ID"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/{post_id}/read-later [get]
+func (controller PostController) MarkReadLater(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "MarkReadLater")
+	logger.Info("Entering controller of mark read later")
+	var postLikeRequest request.PostURIRequest
+
+	if err := ctx.ShouldBindUri(&postLikeRequest); err != nil {
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Request body bind successful with read later request for user %v", "some-user")
+
+	postUID := postLikeRequest.PostUID
+	markReadLaterErr := controller.postService.MarkReadLater(ctx, postUID, "some-user")
+
+	if markReadLaterErr != nil {
+		logger.Errorf("Error occurred in service while marked post as read for post id %v and user %v, Error %v", postUID, "some-user", markReadLaterErr)
+		constants.RespondWithGolaError(ctx, markReadLaterErr)
+		return
+	}
+
+	logger.Infof("Successfully marked post as read later for post id %v for user %v", postUID, "some-user")
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+	})
+}
+
 func NewPostController(postService service.PostService) PostController {
 	return PostController{postService: postService}
 }

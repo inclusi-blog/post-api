@@ -542,14 +542,14 @@ var doc = `{
         },
         "/api/post/v1/post/comment": {
             "post": {
-                "description": "get all interests or search a interest with keyword",
+                "description": "comment on a post",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "interest"
+                    "post"
                 ],
-                "summary": "GetInterests",
+                "summary": "Comment",
                 "parameters": [
                     {
                         "description": "Request Body",
@@ -557,28 +557,16 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.SearchInterests"
+                            "$ref": "#/definitions/request.CommentPost"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/db.Interest"
-                            }
-                        }
+                        "description": ""
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/golaerror.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/golaerror.Error"
                         }
@@ -631,6 +619,47 @@ var doc = `{
                     },
                     "406": {
                         "description": "Not Acceptable",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/post/v1/post/{post_id}/read-later": {
+            "get": {
+                "description": "mark a post to read later fo user",
+                "tags": [
+                    "post"
+                ],
+                "summary": "MarkReadLater",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/golaerror.Error"
                         }
