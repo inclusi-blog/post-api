@@ -244,6 +244,43 @@ func (controller PostController) MarkReadLater(ctx *gin.Context) {
 	})
 }
 
+// RemoveReadLater godoc
+// @Tags post
+// @Summary RemoveReadLater
+// @Description remove a post from read later
+// @Param post_id path string true "Post ID"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 406 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/{post_id}/remove-read-later [get]
+func (controller PostController) RemoveReadLater(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "RemoveReadLater")
+	logger.Info("Entering controller of mark read later")
+	var postLikeRequest request.PostURIRequest
+
+	if err := ctx.ShouldBindUri(&postLikeRequest); err != nil {
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Request body bind successful with remove read later request for user %v", "some-user")
+
+	postUID := postLikeRequest.PostUID
+	markReadLaterErr := controller.postService.RemoveReadLater(ctx, postUID, "some-user")
+
+	if markReadLaterErr != nil {
+		logger.Errorf("Error occurred in service while marked post as read for post id %v and user %v, Error %v", postUID, "some-user", markReadLaterErr)
+		constants.RespondWithGolaError(ctx, markReadLaterErr)
+		return
+	}
+
+	logger.Infof("Successfully removed post from read later for post id %v for user %v", postUID, "some-user")
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+	})
+}
+
 func NewPostController(postService service.PostService) PostController {
 	return PostController{postService: postService}
 }

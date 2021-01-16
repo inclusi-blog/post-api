@@ -522,14 +522,14 @@
         },
         "/api/post/v1/post/comment": {
             "post": {
-                "description": "comment on a post",
+                "description": "get all interests or search a interest with keyword",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "post"
+                    "interest"
                 ],
-                "summary": "Comment",
+                "summary": "GetInterests",
                 "parameters": [
                     {
                         "description": "Request Body",
@@ -537,16 +537,28 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.CommentPost"
+                            "$ref": "#/definitions/request.SearchInterests"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.Interest"
+                            }
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/golaerror.Error"
                         }
@@ -640,6 +652,47 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/post/v1/post/{post_id}/remove-read-later": {
+            "get": {
+                "description": "remove a post from read later",
+                "tags": [
+                    "post"
+                ],
+                "summary": "RemoveReadLater",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "406": {
+                        "description": "Not Acceptable",
                         "schema": {
                             "$ref": "#/definitions/golaerror.Error"
                         }

@@ -460,3 +460,73 @@ func (suite *PostControllerTest) TestMarkReadLater_WhenServiceReturnsPostNotFoun
 	suite.Equal(http.StatusNotFound, suite.recorder.Code)
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
+
+func (suite *PostControllerTest) TestRemoveReadLater_WhenSuccess() {
+	postId := "1q2w3e4r5t6y"
+
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1q2w3e4r5t6y",
+		},
+	}
+	suite.context.Params = params
+	suite.mockPostService.EXPECT().RemoveReadLater(suite.context, postId, "some-user").Return(nil).Times(1)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y/read-later", nil)
+	suite.postController.RemoveReadLater(suite.context)
+	suite.Equal(http.StatusOK, suite.recorder.Code)
+	suite.Equal(`{"status":"success"}`, string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *PostControllerTest) TestRemoveReadLater_WhenBadRequest() {
+	draftId := "1q2w3e4r5t6y"
+
+	suite.mockPostService.EXPECT().RemoveReadLater(suite.context, draftId, "some-user").Return(nil).Times(0)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/1q2w3e4r5t6y/read-later", nil)
+	suite.postController.RemoveReadLater(suite.context)
+	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
+	expectedErr := &constants.PayloadValidationError
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *PostControllerTest) TestRemoveReadLater_WhenServiceFails() {
+	draftId := "1q2w3e4r5t6y"
+
+	suite.mockPostService.EXPECT().RemoveReadLater(suite.context, draftId, "some-user").Return(&constants.InternalServerError).Times(1)
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1q2w3e4r5t6y",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/1q2w3e4r5t6y/read-later", nil)
+	suite.postController.RemoveReadLater(suite.context)
+	expectedErr := &constants.InternalServerError
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *PostControllerTest) TestRemoveReadLater_WhenServiceReturnsPostNotFound() {
+	draftId := "1q2w3e4r5t6y"
+
+	suite.mockPostService.EXPECT().RemoveReadLater(suite.context, draftId, "some-user").Return(&constants.PostNotInReadLaterErr).Times(1)
+	params := gin.Params{
+		gin.Param{
+			Key:   "post_id",
+			Value: "1q2w3e4r5t6y",
+		},
+	}
+	suite.context.Params = params
+	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/1q2w3e4r5t6y/read-later", nil)
+	suite.postController.RemoveReadLater(suite.context)
+	expectedErr := &constants.PostNotInReadLaterErr
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(http.StatusNotAcceptable, suite.recorder.Code)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
