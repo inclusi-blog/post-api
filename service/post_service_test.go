@@ -330,7 +330,7 @@ func (suite *PostServiceTest) TestGetPost_WhenDbReturnsPost() {
 }
 
 func (suite *PostServiceTest) TestGetPost_WhenDbReturnsNoPostFoundError() {
-	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(constants.NoPostFound)).Times(1)
+	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(constants.NoPostFoundCode)).Times(1)
 	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
 	suite.NotNil(err)
 	suite.Equal(&constants.PostNotFoundErr, err)
@@ -359,7 +359,7 @@ func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsCommonError
 }
 
 func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsPostNotFoundError() {
-	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.NoPostFound)).Times(1)
+	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.NoPostFoundCode)).Times(1)
 	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
 	suite.NotNil(err)
 	suite.Equal(&constants.PostNotFoundErr, err)

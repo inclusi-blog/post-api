@@ -25,6 +25,7 @@ type PostsRepository interface {
 	GetLikesCountByPostID(ctx context.Context, postId string) (int64, error)
 	FetchPost(ctx context.Context, postId string, userId string) (response.Post, error)
 	MarkPostAsReadLater(ctx context.Context, postId, userId string) error
+	RemoveReadLater(ctx context.Context, postId, userId string) error
 }
 
 type postRepository struct {
@@ -40,6 +41,7 @@ const (
 	GetLikeCountForPostID = "MATCH (readers:Person)-[likes:LIKED]->(post:Post{ puid: $puid}) RETURN count(likes) as likeCount"
 	FetchPost             = "MATCH (interests:Interest)<-[tag:FALLS_UNDER]-(post:Post)-[audit:PUBLISHED_BY]->(author:Person) WHERE post.puid = $postId MATCH (user:Person{userId: $userId}) RETURN author.userId AS authorID, author.displayName AS authorName, post.puid as postId, COLLECT(interests.name) AS interests, post.postData AS data, post.previewImage AS previewImage, audit.createdAt AS publishedAt, size((:Person)-[:LIKED]->(post)) AS likeCount, size((:Person)-[:COMMENTED]->(post)) AS commentCount, EXISTS((user)-[:LIKED]->(post)) AS isViewerLiked, CASE WHEN $userId =~ author.userId THEN true ELSE false END AS isAuthorViewing"
 	MarkReadLater         = "MATCH (post:Post) WHERE post.puid = $puid MATCH (user:Person{userId: $userId}) MERGE (user)-[readLater:READ_LATER{createdAt: timestamp()}]->(post) RETURN post.puid as puid"
+	UnmarkReadLater       = "MATCH (user:Person{userId: $userId})-[readLater:READ_LATER]->(post:Post{puid: $puid}) DELETE readLater"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
@@ -256,7 +258,7 @@ func (repository postRepository) FetchPost(ctx context.Context, postId string, u
 		return mapDBPostToPost(post), nil
 	}
 
-	return response.Post{}, errors.New(constants.NoPostFound)
+	return response.Post{}, errors.New(constants.NoPostFoundCode)
 }
 
 func (repository postRepository) MarkPostAsReadLater(ctx context.Context, postId, userId string) error {
@@ -288,7 +290,41 @@ func (repository postRepository) MarkPostAsReadLater(ctx context.Context, postId
 
 	logger.Errorf("No post found for the post id %v", postId)
 
-	return errors.New(constants.NoPostFound)
+	return errors.New(constants.NoPostFoundCode)
+}
+
+func (repository postRepository) RemoveReadLater(ctx context.Context, postId, userId string) error {
+	logger := logging.GetLogger(ctx).WithField("key", "PostRepository").WithField("method", "RemoveReadLater")
+	logger.Infof("Removing post %v from read later", postId)
+
+	result, err := repository.db.Run(UnmarkReadLater, map[string]interface{}{
+		"userId": userId,
+		"puid":   postId,
+	})
+
+	if err != nil {
+		logger.Errorf("Error occurred while removing post from read later for user %v, Error %v", userId, err)
+		return err
+	}
+
+	summary, err := result.Summary()
+
+	logger.Info("Fetching summary for the read later update")
+	if err != nil {
+		logger.Errorf("Unable to retrieve summary for read later request for post id %v and user %v, Error %v", postId, userId, err)
+		return err
+	}
+
+	counters := summary.Counters()
+	deleted := counters.RelationshipsDeleted()
+
+	if deleted == 1 {
+		logger.Infof("post present for post id %v and successfully deleted the relationship read later", postId)
+		return nil
+	}
+
+	logger.Errorf("No relationship found for the post id %v", postId)
+	return errors.New(constants.PostNotInReadLaterCode)
 }
 
 func mapDBPostToPost(post response.DBPost) response.Post {

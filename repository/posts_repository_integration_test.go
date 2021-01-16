@@ -779,7 +779,7 @@ func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostViewe
 func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsNoPost() {
 	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "second-user")
 	suite.NotNil(err)
-	suite.Equal(errors.New(constants.NoPostFound), err)
+	suite.Equal(errors.New(constants.NoPostFoundCode), err)
 	suite.Empty(fetchPost)
 }
 
@@ -816,7 +816,76 @@ func (suite *PostsRepositoryIntegrationTest) TestMarkPostAsReadLater_WhenThereIs
 	suite.createSampleUser("second-user")
 	err := suite.postsRepository.MarkPostAsReadLater(suite.goContext, "1q323e4r4r43", "second-user")
 	suite.NotNil(err)
-	suite.Equal(errors.New(constants.NoPostFound), err)
+	suite.Equal(errors.New(constants.NoPostFoundCode), err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsAPost() {
+	suite.createSampleUser("second-user")
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:     73,
+		Interest:     []string{"Art", "Books", "Grammar"},
+		Title:        "this is some title",
+		Tagline:      "this is some tagline",
+		PreviewImage: "some-url",
+		PostUrl:      "this-is-some-url",
+	}
+
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		suite.Nil(err)
+		return nil, nil
+	})
+
+	suite.Nil(result)
+	suite.Nil(err)
+
+	err = suite.postsRepository.MarkPostAsReadLater(suite.goContext, "1q323e4r4r43", "second-user")
+	suite.Nil(err)
+
+	err = suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
+	suite.Nil(err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsNoPost() {
+	suite.createSampleUser("second-user")
+	err := suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
+	suite.NotNil(err)
+	suite.Equal(errors.New(constants.PostNotInReadLaterCode), err)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsAPostButNoReadLaterRelationship() {
+	suite.createSampleUser("second-user")
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "some-user",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:     73,
+		Interest:     []string{"Art", "Books", "Grammar"},
+		Title:        "this is some title",
+		Tagline:      "this is some tagline",
+		PreviewImage: "some-url",
+		PostUrl:      "this-is-some-url",
+	}
+
+	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
+		suite.Nil(err)
+		return nil, nil
+	})
+
+	suite.Nil(result)
+	suite.Nil(err)
+
+	err = suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
+	suite.NotNil(err)
+	suite.Equal(errors.New(constants.PostNotInReadLaterCode), err)
 }
 
 func (suite *PostsRepositoryIntegrationTest) insertInterestEntries() {

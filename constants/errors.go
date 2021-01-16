@@ -20,7 +20,8 @@ const (
 	InterestDoesNotMeetReadTimeCode  string = "ERR_DRAFT_INTEREST_NOT_MEET_READ_TIME"
 	PostNotFoundCode                 string = "ERR_POST_NOT_FOUND"
 	MinimumInterestCountNotMatchCode string = "ERR_MINIMUM_INTERESTS_COUNT_NOT_MATCH"
-	NoPostFound                      string = "ERR_NO_POST_FOUND"
+	NoPostFoundCode                  string = "ERR_NO_POST_FOUND"
+	PostNotInReadLaterCode           string = "ERR_POST_NOT_IN_READ_LATER"
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 	InterestReadTimeDoesNotMeetErr  = golaerror.Error{ErrorCode: InterestDoesNotMeetReadTimeCode, ErrorMessage: "selected interest doesn't meet required read time", AdditionalData: "Increase the content for the draft"}
 	PostNotFoundErr                 = golaerror.Error{ErrorCode: PostNotFoundCode, ErrorMessage: "no post found for the given post uid"}
 	MinimumInterestCountNotMatchErr = golaerror.Error{ErrorCode: MinimumInterestCountNotMatchCode, ErrorMessage: "interest tags requirement not met", AdditionalData: "Please select 3-5 interest tags"}
+	PostNotInReadLaterErr           = golaerror.Error{ErrorCode: PostNotInReadLaterCode, ErrorMessage: "post currently not in read later"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
@@ -51,6 +53,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InterestDoesNotMeetReadTimeCode:  http.StatusNotAcceptable,
 	PostNotFoundCode:                 http.StatusNotFound,
 	MinimumInterestCountNotMatchCode: http.StatusNotAcceptable,
+	PostNotInReadLaterCode:           http.StatusNotAcceptable,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

@@ -193,7 +193,7 @@ func (service postService) GetPost(ctx context.Context, postId, userId string) (
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching post for given post id %v, Error %v", postId, err)
-		if err.Error() == constants.NoPostFound {
+		if err.Error() == constants.NoPostFoundCode {
 			logger.Errorf("Error No post found for given post id %v", postId)
 			return response.Post{}, &constants.PostNotFoundErr
 		}
@@ -212,7 +212,7 @@ func (service postService) MarkReadLater(ctx context.Context, postId, userId str
 	err := service.repository.MarkPostAsReadLater(ctx, postId, userId)
 	if err != nil {
 		logger.Errorf("Error occurred while updating read later status for post %v, Error %v", postId, err)
-		if err.Error() == constants.NoPostFound {
+		if err.Error() == constants.NoPostFoundCode {
 			logger.Errorf("Error post not found for requested post id %v, Error %v", postId, err)
 			return &constants.PostNotFoundErr
 		}

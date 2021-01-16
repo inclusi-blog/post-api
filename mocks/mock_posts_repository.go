@@ -150,3 +150,17 @@ func (mr *MockPostsRepositoryMockRecorder) MarkPostAsReadLater(ctx, postId, user
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPostAsReadLater", reflect.TypeOf((*MockPostsRepository)(nil).MarkPostAsReadLater), ctx, postId, userId)
 }
+
+// RemoveReadLater mocks base method
+func (m *MockPostsRepository) RemoveReadLater(ctx context.Context, postId, userId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveReadLater", ctx, postId, userId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveReadLater indicates an expected call of RemoveReadLater
+func (mr *MockPostsRepositoryMockRecorder) RemoveReadLater(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveReadLater", reflect.TypeOf((*MockPostsRepository)(nil).RemoveReadLater), ctx, postId, userId)
+}
