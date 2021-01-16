@@ -364,3 +364,23 @@ func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsPostNotFoun
 	suite.NotNil(err)
 	suite.Equal(&constants.PostNotFoundErr, err)
 }
+
+func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsSuccess() {
+	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(nil).Times(1)
+	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.Nil(err)
+}
+
+func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsCommonError() {
+	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(&constants.PostServiceFailureError, err)
+}
+
+func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsPostNotFoundError() {
+	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.PostNotInReadLaterCode)).Times(1)
+	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
+	suite.NotNil(err)
+	suite.Equal(&constants.PostNotInReadLaterErr, err)
+}

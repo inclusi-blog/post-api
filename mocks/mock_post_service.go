@@ -122,3 +122,17 @@ func (mr *MockPostServiceMockRecorder) MarkReadLater(ctx, postId, userId interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkReadLater", reflect.TypeOf((*MockPostService)(nil).MarkReadLater), ctx, postId, userId)
 }
+
+// RemoveReadLater mocks base method
+func (m *MockPostService) RemoveReadLater(ctx context.Context, postId, userId string) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveReadLater", ctx, postId, userId)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// RemoveReadLater indicates an expected call of RemoveReadLater
+func (mr *MockPostServiceMockRecorder) RemoveReadLater(ctx, postId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveReadLater", reflect.TypeOf((*MockPostService)(nil).RemoveReadLater), ctx, postId, userId)
+}

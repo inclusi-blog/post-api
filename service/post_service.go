@@ -23,6 +23,7 @@ type PostService interface {
 	CommentPost(ctx context.Context, userId, postId, comment string) *golaerror.Error
 	GetPost(ctx context.Context, postId, userId string) (response.Post, *golaerror.Error)
 	MarkReadLater(ctx context.Context, postId, userId string) *golaerror.Error
+	RemoveReadLater(ctx context.Context, postId, userId string) *golaerror.Error
 }
 
 type postService struct {
@@ -220,6 +221,25 @@ func (service postService) MarkReadLater(ctx context.Context, postId, userId str
 	}
 
 	logger.Infof("Successfully added post to read later for post id %v", postId)
+	return nil
+}
+
+func (service postService) RemoveReadLater(ctx context.Context, postId, userId string) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "RemoveReadLater")
+	logger.Infof("Calling repository to remove post %v from read later", postId)
+
+	err := service.repository.RemoveReadLater(ctx, postId, userId)
+	if err != nil {
+		logger.Errorf("Error occurred while removing post %v from read later for user %v, Error %v", postId, userId, err)
+		if err.Error() == constants.PostNotInReadLaterCode {
+			logger.Errorf("either post %v not found or post not found in read later for user %v", postId, userId)
+			return &constants.PostNotInReadLaterErr
+		}
+		logger.Error("Error Generic error occurred on repository")
+		return &constants.PostServiceFailureError
+	}
+	logger.Infof("Successfully removed post %v from read later for user %v", postId, userId)
+
 	return nil
 }
 
