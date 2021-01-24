@@ -1,75 +1,37 @@
-package service
+package mapper
 
 import (
 	"context"
-	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	"post-api/constants"
-	"post-api/mocks"
 	"post-api/models/db"
 	"post-api/models/response"
-	"post-api/service/test_helper"
 	"testing"
 )
 
-type InterestsServiceTest struct {
+type InterestsMapperTest struct {
 	suite.Suite
-	mockController          *gomock.Controller
-	goContext               context.Context
-	mockInterestsRepository *mocks.MockInterestsRepository
-	mockInterestsMapper     *mocks.MockInterestsMapper
-	interestsService        InterestsService
+	mockController  *gomock.Controller
+	goContext       context.Context
+	interestsMapper InterestsMapper
 }
 
-func TestInterestsServiceTestSuite(t *testing.T) {
-	suite.Run(t, new(InterestsServiceTest))
+func TestInterestsMapperTestSuite(t *testing.T) {
+	suite.Run(t, new(InterestsMapperTest))
 }
 
-func (suite *InterestsServiceTest) SetupTest() {
+func (suite *InterestsMapperTest) SetupTest() {
 	suite.mockController = gomock.NewController(suite.T())
 	suite.goContext = context.WithValue(context.Background(), "someKey", "someValue")
-	suite.mockInterestsRepository = mocks.NewMockInterestsRepository(suite.mockController)
-	suite.mockInterestsMapper = mocks.NewMockInterestsMapper(suite.mockController)
-	suite.interestsService = NewInterestsService(suite.mockInterestsRepository, suite.mockInterestsMapper)
+	suite.interestsMapper = NewInterestsMapper()
 }
 
-func (suite *InterestsServiceTest) TearDownTest() {
+func (suite *InterestsMapperTest) TearDownTest() {
 	suite.mockController.Finish()
 }
 
-func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() {
-	expectedData := []db.Interest{
-		{
-			Name: "some-interests",
-		},
-	}
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(expectedData, nil).Times(1)
-
-	actualInterests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
-
-	suite.Nil(err)
-	suite.Equal(expectedData, actualInterests)
-}
-
-func (suite *InterestsServiceTest) TestGetInterests_WhenDbReturnsError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
-	suite.NotNil(err)
-	suite.Equal(&constants.PostServiceFailureError, err)
-	suite.Len(interests, 0)
-}
-
-func (suite *InterestsServiceTest) TestGetInterests_WhenNoDataReturnedWithError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, errors.New(constants.NoInterestsFoundCode)).Times(1)
-	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
-	suite.NotNil(err)
-	suite.Equal(&constants.NoInterestsFoundError, err)
-	suite.Len(interests, 0)
-}
-
-func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenRepositoryReturnsData() {
-	dbReturnedCategoriesAndInterest := []db.CategoryAndInterest{
+func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent() {
+	categoryAndInterests := []db.CategoryAndInterest{
 		{
 			Category: "Art",
 			Interests: []db.InterestWithIcon{
@@ -134,7 +96,6 @@ func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenRepo
 			},
 		},
 	}
-
 	expectedData := []response.CategoryAndInterest{
 		{
 			Category: "Art",
@@ -212,42 +173,15 @@ func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenRepo
 			},
 		},
 	}
-	suite.mockInterestsRepository.EXPECT().FetchCategoriesAndInterests(suite.goContext).Return(dbReturnedCategoriesAndInterest, nil).Times(1)
-	suite.mockInterestsMapper.EXPECT().MapUserFollowedInterest(suite.goContext, dbReturnedCategoriesAndInterest).Return(expectedData).Times(1)
-	actualInterests, err := suite.interestsService.GetExploreCategoriesAndInterests(suite.goContext)
-
-	suite.Nil(err)
-	suite.Equal(expectedData, actualInterests)
+	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests)
+	suite.Len(categoriesAndInterests, 3)
+	suite.EqualValues(expectedData, categoriesAndInterests)
 }
 
-func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenDbReturnsError() {
-	suite.mockInterestsRepository.EXPECT().FetchCategoriesAndInterests(suite.goContext).Return(nil, errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	interests, err := suite.interestsService.GetExploreCategoriesAndInterests(suite.goContext)
-	suite.NotNil(err)
-	suite.Equal(&constants.PostServiceFailureError, err)
-	suite.Nil(interests)
-}
-
-func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenNoDataReturnedWithError() {
-	suite.mockInterestsRepository.EXPECT().FetchCategoriesAndInterests(suite.goContext).Return(nil, errors.New(constants.NoInterestsAndCategoriesCode)).Times(1)
-	interests, err := suite.interestsService.GetExploreCategoriesAndInterests(suite.goContext)
-	suite.NotNil(err)
-	suite.Equal(&constants.NoInterestsAndCategoriesErr, err)
-	suite.Nil(interests)
-}
-
-func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenNoDataReturnedWithNoError() {
-	suite.mockInterestsRepository.EXPECT().FetchCategoriesAndInterests(suite.goContext).Return([]db.CategoryAndInterest{}, nil).Times(1)
-	interests, err := suite.interestsService.GetExploreCategoriesAndInterests(suite.goContext)
-	suite.NotNil(err)
-	suite.Equal(&constants.NoInterestsAndCategoriesErr, err)
-	suite.Nil(interests)
-}
-
-func (suite *InterestsServiceTest) TestGetExploreCategoriesAndInterests_WhenNilReturnedWithNoErrorFromB() {
-	suite.mockInterestsRepository.EXPECT().FetchCategoriesAndInterests(suite.goContext).Return(nil, nil).Times(1)
-	interests, err := suite.interestsService.GetExploreCategoriesAndInterests(suite.goContext)
-	suite.NotNil(err)
-	suite.Equal(&constants.NoInterestsAndCategoriesErr, err)
-	suite.Nil(interests)
+func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenEmptyDataSentShouldReturnEmptyData() {
+	var categoryAndInterests []db.CategoryAndInterest
+	var expectedData []response.CategoryAndInterest
+	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests)
+	suite.Len(categoriesAndInterests, 0)
+	suite.EqualValues(expectedData, categoriesAndInterests)
 }

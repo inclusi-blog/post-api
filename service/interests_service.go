@@ -6,16 +6,20 @@ import (
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/constants"
+	"post-api/mapper"
 	"post-api/models/db"
+	"post-api/models/response"
 	"post-api/repository"
 )
 
 type InterestsService interface {
 	GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, *golaerror.Error)
+	GetExploreCategoriesAndInterests(ctx context.Context) ([]response.CategoryAndInterest, *golaerror.Error)
 }
 
 type interestsService struct {
 	repository repository.InterestsRepository
+	mapper     mapper.InterestsMapper
 }
 
 func (service interestsService) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, *golaerror.Error) {
@@ -36,6 +40,35 @@ func (service interestsService) GetInterests(ctx context.Context, searchKeyword 
 	return interests, nil
 }
 
-func NewInterestsService(interestsRepository repository.InterestsRepository) InterestsService {
-	return interestsService{repository: interestsRepository}
+func (service interestsService) GetExploreCategoriesAndInterests(ctx context.Context) ([]response.CategoryAndInterest, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "InterestsService").WithField("method", "GetExploreCategoriesAndInterests")
+	logger.Info("Calling repository to fetch explore categories and interest")
+
+	categoriesAndInterests, err := service.repository.FetchCategoriesAndInterests(ctx)
+	if err != nil {
+		if err.Error() == constants.NoInterestsAndCategoriesCode {
+			logger.Errorf("No interests and categories found, Error %v", err)
+			return nil, &constants.NoInterestsAndCategoriesErr
+		}
+		logger.Errorf("Error occurred while fetching explore categories and interests, Error %v", err)
+		return nil, &constants.PostServiceFailureError
+	}
+
+	if categoriesAndInterests == nil || len(categoriesAndInterests) == 0 {
+		logger.Error("No interests and categories found")
+		return nil, &constants.NoInterestsAndCategoriesErr
+	}
+
+	logger.Info("successfully fetched categories and interests")
+
+	categoriesAndInterestsWithUserFollowStatus := service.mapper.MapUserFollowedInterest(ctx, categoriesAndInterests)
+
+	return categoriesAndInterestsWithUserFollowStatus, nil
+}
+
+func NewInterestsService(interestsRepository repository.InterestsRepository, interestsMapper mapper.InterestsMapper) InterestsService {
+	return interestsService{
+		repository: interestsRepository,
+		mapper:     interestsMapper,
+	}
 }

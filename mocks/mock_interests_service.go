@@ -9,6 +9,7 @@ import (
 	golaerror "github.com/gola-glitch/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	db "post-api/models/db"
+	response "post-api/models/response"
 	reflect "reflect"
 )
 
@@ -48,4 +49,19 @@ func (m *MockInterestsService) GetInterests(ctx context.Context, searchKeyword s
 func (mr *MockInterestsServiceMockRecorder) GetInterests(ctx, searchKeyword, selectedTags interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsService)(nil).GetInterests), ctx, searchKeyword, selectedTags)
+}
+
+// GetExploreCategoriesAndInterests mocks base method
+func (m *MockInterestsService) GetExploreCategoriesAndInterests(ctx context.Context) ([]response.CategoryAndInterest, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExploreCategoriesAndInterests", ctx)
+	ret0, _ := ret[0].([]response.CategoryAndInterest)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// GetExploreCategoriesAndInterests indicates an expected call of GetExploreCategoriesAndInterests
+func (mr *MockInterestsServiceMockRecorder) GetExploreCategoriesAndInterests(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExploreCategoriesAndInterests", reflect.TypeOf((*MockInterestsService)(nil).GetExploreCategoriesAndInterests), ctx)
 }

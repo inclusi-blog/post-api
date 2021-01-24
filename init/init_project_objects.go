@@ -4,6 +4,7 @@ import (
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"post-api/configuration"
 	"post-api/controller"
+	"post-api/mapper"
 	"post-api/repository"
 	"post-api/service"
 	"post-api/utils"
@@ -16,9 +17,10 @@ var (
 )
 
 func Objects(db neo4j.Session, configData *configuration.ConfigData) {
+	interestsMapper := mapper.NewInterestsMapper()
 	draftRepository := repository.NewDraftRepository(db)
 	interestsRepository := repository.NewInterestRepository(db)
-	interestsService := service.NewInterestsService(interestsRepository)
+	interestsService := service.NewInterestsService(interestsRepository, interestsMapper)
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
