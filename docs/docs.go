@@ -405,6 +405,47 @@ var doc = `{
                 }
             }
         },
+        "/api/post/v1/interest/topics-and-interests": {
+            "get": {
+                "description": "get all categories and interests",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "interest"
+                ],
+                "summary": "GetExploreInterests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.CategoryAndInterest"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/post/v1/post/:post_id": {
             "get": {
                 "description": "get a post",
@@ -541,6 +582,46 @@ var doc = `{
             }
         },
         "/api/post/v1/post/comment": {
+            "post": {
+                "description": "comment on a post",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "post"
+                ],
+                "summary": "Comment",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CommentPost"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/golaerror.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/post/v1/post/interest/get-interests": {
             "post": {
                 "description": "get all interests or search a interest with keyword",
                 "consumes": [
@@ -977,6 +1058,34 @@ var doc = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.CategoryAndInterest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "interests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.InterestWithIcon"
+                    }
+                }
+            }
+        },
+        "response.InterestWithIcon": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "isFollowedByUser": {
+                    "type": "boolean"
+                },
+                "name": {
                     "type": "string"
                 }
             }

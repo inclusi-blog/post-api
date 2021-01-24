@@ -94,7 +94,11 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		draftGroup.GET("/preview-draft/:draft_id", draftController.GetPreviewDraft)
 	}
 
-	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)
+	interestsGroup := defaultRouterGroup.Group("/interest")
+	{
+		interestsGroup.GET("/topics-and-interests", interestsController.GetExploreInterests)
+		interestsGroup.POST("/get-interests", interestsController.GetInterests)
+	}
 
 	postGroup := defaultRouterGroup.Group("/post")
 	{

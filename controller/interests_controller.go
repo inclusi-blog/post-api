@@ -24,7 +24,7 @@ type InterestsController struct {
 // @Failure 400 {object} golaerror.Error
 // @Failure 404 {object} golaerror.Error
 // @Failure 500 {object} golaerror.Error
-// @Router /api/post/v1/post/comment [post]
+// @Router /api/post/v1/post/interest/get-interests [post]
 func (controller InterestsController) GetInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "interestsController").WithField("method", "GetInterests")
 
@@ -53,6 +53,34 @@ func (controller InterestsController) GetInterests(ctx *gin.Context) {
 	logger.Info("Successfully got interests")
 
 	ctx.JSON(http.StatusOK, interests)
+}
+
+// GetExploreInterests godoc
+// @Tags interest
+// @Summary GetExploreInterests
+// @Description get all categories and interests
+// @Accept json
+// @Success 200 {object} []response.CategoryAndInterest
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/interest/topics-and-interests [get]
+func (controller InterestsController) GetExploreInterests(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "InterestsController").WithField("method", "GetExploreInterests")
+
+	logger.Info("Entered Interests controller to get categories and interests")
+
+	categoriesAndInterests, err := controller.service.GetExploreCategoriesAndInterests(ctx)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching over all categories and interests from interests service %v", err)
+		constants.RespondWithGolaError(ctx, err)
+		return
+	}
+
+	logger.Info("Successfully got categories and interests")
+
+	ctx.JSON(http.StatusOK, categoriesAndInterests)
 }
 
 func NewInterestsController(interestsService service.InterestsService) InterestsController {

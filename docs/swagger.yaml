@@ -166,6 +166,24 @@ definitions:
     - tagline
     - user_id
     type: object
+  response.CategoryAndInterest:
+    properties:
+      category:
+        type: string
+      interests:
+        items:
+          $ref: '#/definitions/response.InterestWithIcon'
+        type: array
+    type: object
+  response.InterestWithIcon:
+    properties:
+      image:
+        type: string
+      isFollowedByUser:
+        type: boolean
+      name:
+        type: string
+    type: object
   response.LikedByCount:
     properties:
       like_count:
@@ -451,6 +469,33 @@ paths:
       summary: SaveDraft
       tags:
       - draft
+  /api/post/v1/interest/topics-and-interests:
+    get:
+      consumes:
+      - application/json
+      description: get all categories and interests
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/response.CategoryAndInterest'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+      summary: GetExploreInterests
+      tags:
+      - interest
   /api/post/v1/post/:post_id:
     get:
       consumes:
@@ -594,6 +639,32 @@ paths:
       tags:
       - post
   /api/post/v1/post/comment:
+    post:
+      consumes:
+      - application/json
+      description: comment on a post
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CommentPost'
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/golaerror.Error'
+      summary: Comment
+      tags:
+      - post
+  /api/post/v1/post/interest/get-interests:
     post:
       consumes:
       - application/json
