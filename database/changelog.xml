@@ -23,112 +23,118 @@
         <query>CREATE (interest:Category:Interest{name: "Art"})</query>
         <query>CREATE (interest:Category:Interest{name: "Entertainment"})</query>
         <query>CREATE (interest:Category:Interest{name: "Culture"})</query>
-        <query>CREATE (interest:Category:Interest{name: "Health"})</query>
+        <query>CREATE (interest:Category:Interest{name: "Health", image: "https://pageoneasia.com/controller/images/asia/hjkhjk.jpg"})</query>
         <query>CREATE (interest:Category:Interest{name: "Industry"})</query>
         <query>CREATE (interest:Category:Interest{name: "Personal development"})</query>
         <query>CREATE (interest:Category:Interest{name: "Politics"})</query>
         <query>CREATE (interest:Category:Interest{name: "Software"})</query>
         <query>CREATE (interest:Category:Interest{name: "Science"})</query>
-        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Poem"})-[:BELONGS_TO]->(art)</query>
+        <query>CREATE (interest:Category:Interest{name: "Sports"})</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Poem", image: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Subramanya_Bharathi_1960_stamp_of_India.jpg"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Short stories"})-[:BELONGS_TO]->(art)</query>
-        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Books"})-[:BELONGS_TO]->(art)</query>
-        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Literature"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Books", image: "https://upload.wikimedia.org/wikipedia/commons/a/a0/Book_fair-Tamil_Nadu-35th-Chennai-january-2012-part_30.JPG"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Literature", image: "https://upload.wikimedia.org/wikipedia/commons/6/69/Ancient_Tamil_Script.jpg"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Grammar"})-[:BELONGS_TO]->(art)</query>
-        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Comics"})-[:BELONGS_TO]->(art)</query>
-        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Music"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Comics", image: "https://upload.wikimedia.org/wikipedia/ta/9/9d/Sirithiran_cartoon_2.JPG"})-[:BELONGS_TO]->(art)</query>
+        <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Music", image: "https://upload.wikimedia.org/wikipedia/commons/4/4e/P._Susheela_with_AR_Rahman.jpg"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Design"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Creativity"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Dance"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Drawing"})-[:BELONGS_TO]->(art)</query>
         <query>MATCH (art:Category{name: "Art"}) CREATE (interest:Interest{name: "Animation"})-[:BELONGS_TO]->(art)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Movies"})-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Series"})-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Anime"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Movies", image: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Rajinikanth_and_Vijay_at_the_Nadigar_Sangam_Protest.jpg"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Series", image: "https://upload.wikimedia.org/wikipedia/commons/1/10/Meta-image-netflix-symbol-black.png"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Anime", image: "https://www.thenerddaily.com/wp-content/uploads/2018/08/Reasons-To-Watch-Anime.jpg"})-[:BELONGS_TO]->(entertainment)</query>
         <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Cartoon"})-[:BELONGS_TO]->(entertainment)</query>
         <query>MATCH (interest:Interest{name: "Animation"}) MATCH (entertainment:Category{name: "Entertainment"}) MERGE (interest)-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Gaming"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Gaming", image: "http://www.elitegamerindia.com/img/5a.png"})-[:BELONGS_TO]->(entertainment)</query>
         <query>MATCH (entertainment:Category{name: "Entertainment"}) MATCH (interest:Interest{name: "Music"}) MERGE (interest)-[:BELONGS_TO]->(entertainment)</query>
         <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "News"})-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Cinema"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Cinema", image: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Sivaji_Ganesan_1.jpg"})-[:BELONGS_TO]->(entertainment)</query>
         <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Exposed"})-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Unpopular opinion"})-[:BELONGS_TO]->(entertainment)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Cooking"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (entertainment:Category{name: "Entertainment"}) CREATE (interest:Interest{name: "Unpopular opinion", image: "https://images.unsplash.com/photo-1542490556-9232e06befc7"})-[:BELONGS_TO]->(entertainment)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Cooking", image: "https://images.unsplash.com/photo-1604740795024-c06eeca4bf89"})-[:BELONGS_TO]->(culture)</query>
         <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Food"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Agriculture"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Festival"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Language"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Philosophy"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Travel"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Agriculture", image: "https://upload.wikimedia.org/wikipedia/commons/f/f1/%281%29_Agriculture_and_rural_farms_of_India.jpg"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Festival", image: "https://images.unsplash.com/photo-1576394435759-02a2674ff6e0"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Language", image: "https://upload.wikimedia.org/wikipedia/commons/3/35/Word_Tamil.svg"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Philosophy", image: "https://en.wikipedia.org/wiki/Swami_Vivekananda#/media/File:Swami_Vivekananda-1893-09-signed.jpg"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Travel", image: "https://images.unsplash.com/photo-1595503867626-fc2d52c0218a"})-[:BELONGS_TO]->(culture)</query>
         <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Clothing"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Sacred places"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Environment"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "History"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Astrology"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Ritual"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Sacred places", image: "https://images.unsplash.com/photo-1572146462570-2129a547e6dd"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Environment", image: "https://images.unsplash.com/photo-1576054132013-d848d0fa7d93"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "History", image: "https://images.unsplash.com/photo-1607016383084-8f8d1358161c"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Astrology", image: "https://upload.wikimedia.org/wikipedia/commons/1/1c/Zodiac_symbols_painted_Relief_on_the_terrace_of_a_Gopuram_at_Kanipakam.jpg"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Ritual", image: "https://images.unsplash.com/photo-1585563741139-4d488b8291c4"})-[:BELONGS_TO]->(culture)</query>
         <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Freedom"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Lifestyle"})-[:BELONGS_TO]->(culture)</query>
-        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Pets"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Lifestyle", image: "https://images.unsplash.com/photo-1524080989185-22b076ffb631"})-[:BELONGS_TO]->(culture)</query>
+        <query>MATCH (culture:Category{name: "Culture"}) CREATE (interest:Interest{name: "Pets", image: "https://images.unsplash.com/photo-1546722228-7baeca4bd0b3"})-[:BELONGS_TO]->(culture)</query>
         <query>MATCH (health:Category{name: "Health"}) MATCH (interest:Interest{name: "Food"}) MERGE (interest)-[:BELONGS_TO]->(health)</query>
-        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Fitness"})-[:BELONGS_TO]->(health)</query>
-        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Self-care"})-[:BELONGS_TO]->(health)</query>
-        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Skin-care"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Fitness", image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Self-care", image: "https://images.unsplash.com/photo-1505932794465-147d1f1b2c97"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Skin-care", image: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273"})-[:BELONGS_TO]->(health)</query>
         <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Diet"})-[:BELONGS_TO]->(health)</query>
         <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Yoga"})-[:BELONGS_TO]->(health)</query>
         <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Mental Health"})-[:BELONGS_TO]->(health)</query>
-        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Health tips"})-[:BELONGS_TO]->(health)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Work"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (health:Category{name: "Health"}) CREATE (interest:Interest{name: "Health tips", image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352"})-[:BELONGS_TO]->(health)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Work", image: "https://images.unsplash.com/photo-1532448416606-00984ce2cde9"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Leadership"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Startup"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Startup", image: "https://images.unsplash.com/photo-1511729530272-7198cdce7b8a"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) MATCH (interest:Interest{name: "Design"}) MERGE (interest)-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Engineering"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Engineering", image: "https://images.unsplash.com/photo-1581093806997-124204d9fa9d"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Entrepreneurship"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Venture capitalist"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Product management"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Media"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Business"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Economy"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Business", image: "https://images.unsplash.com/photo-1508385082359-f38ae991e8f2"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Economy", image: "https://images.unsplash.com/photo-1509603148757-f2a393f18afa"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Photography"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Tourism"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Freelancing"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Videography"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Automobile"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Finance"})-[:BELONGS_TO]->(industry)</query>
-        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Share market"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Automobile", image: "https://upload.wikimedia.org/wikipedia/commons/a/a8/CarService.JPG"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Finance", image: "https://images.unsplash.com/photo-1565514159479-989ff4504071"})-[:BELONGS_TO]->(industry)</query>
+        <query>MATCH (industry:Category{name: "Industry"}) CREATE (interest:Interest{name: "Share market", image: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Nifty_weekly_chart_with_200MA_by_me.png"})-[:BELONGS_TO]->(industry)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) MATCH (interest:Interest{name: "Creativity"}) MERGE (interest)-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Learning"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Exploring"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Learning", image: "https://images.unsplash.com/photo-1600195077909-46e573870d99"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Exploring", image: "https://images.unsplash.com/photo-1512441126141-b4382f37f112"})-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Money"})-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Writing"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Productivity"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Motivation"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Dream"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Productivity", image: "https://images.unsplash.com/photo-1502945015378-0e284ca1a5be"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Motivation", image: "https://images.unsplash.com/photo-1531323386183-43890b5c766d"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Dream", image: "https://images.unsplash.com/photo-1495539406979-bf61750d38ad"})-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Growth"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Skill"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Skill", image: "https://images.unsplash.com/photo-1593766818891-892421791902"})-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) MATCH (interest:Interest{name: "Finance"}) MERGE (interest)-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Stock market"})-[:BELONGS_TO]->(personalDevelopment)</query>
         <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Self"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Education"})-[:BELONGS_TO]->(personalDevelopment)</query>
-        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Election"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (personalDevelopment:Category{name: "Personal development"}) CREATE (interest:Interest{name: "Education", image: "https://images.unsplash.com/photo-1524069290683-0457abfe42c3"})-[:BELONGS_TO]->(personalDevelopment)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Election", image: "https://en.wikipedia.org/wiki/Politics_of_Tamil_Nadu#/media/File:TamilNadu_Logo.svg"})-[:BELONGS_TO]->(politics)</query>
         <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Development"})-[:BELONGS_TO]->(politics)</query>
-        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Social"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Social", image: "https://images.unsplash.com/photo-1526572690437-c3f99d109cfd"})-[:BELONGS_TO]->(politics)</query>
         <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "Environment"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
         <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "History"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
         <query>MATCH (politics:Category{name: "Politics"}) MATCH (interest:Interest{name: "Finance"}) MERGE (interest)-[:BELONGS_TO]->(politics)</query>
-        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Law and order"})-[:BELONGS_TO]->(politics)</query>
-        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "IT"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (politics:Category{name: "Politics"}) CREATE (interest:Interest{name: "Law and order", image: "https://upload.wikimedia.org/wikipedia/commons/6/62/Chennai_High_Court.jpg"})-[:BELONGS_TO]->(politics)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "IT", image: "https://upload.wikimedia.org/wikipedia/commons/5/52/India_Land_Tech_Park%2CAmbattur.JPG"})-[:BELONGS_TO]->(software)</query>
         <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Photo editing"})-[:BELONGS_TO]->(software)</query>
         <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Video editing"})-[:BELONGS_TO]->(software)</query>
-        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Hacking"})-[:BELONGS_TO]->(software)</query>
-        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Programming"})-[:BELONGS_TO]->(software)</query>
-        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Technology"})-[:BELONGS_TO]->(software)</query>
-        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Invention"})-[:BELONGS_TO]->(science)</query>
-        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Astronomy"})-[:BELONGS_TO]->(science)</query>
-        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Archeology"})-[:BELONGS_TO]->(science)</query>
-        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Theories"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Hacking", image: "https://images.unsplash.com/photo-1544890225-2f3faec4cd60"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Programming", image: "https://upload.wikimedia.org/wikipedia/commons/5/50/Wikipedia_Academy_Preparation_-_Visveswaraya_Guest_House_-_Indian_Institute_of_Technology_-_Kharagpur_-_West_Midnapore_2015-01-24_4939.JPG"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (software:Category{name: "Software"}) CREATE (interest:Interest{name: "Technology", image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e"})-[:BELONGS_TO]->(software)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Invention", image: "https://en.wikipedia.org/wiki/A._P._J._Abdul_Kalam#/media/File:A._P._J._Abdul_Kalam.jpg"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Astronomy", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Kalpana_Chawla%2C_NASA_photo_portrait_in_orange_suit.jpg/330px-Kalpana_Chawla%2C_NASA_photo_portrait_in_orange_suit.jpg"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Archeology", image: "https://upload.wikimedia.org/wikipedia/commons/5/57/KeeladiExcavationCamp2.jpg"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (science:Category{name: "Science"}) CREATE (interest:Interest{name: "Theories", image: "https://images.unsplash.com/photo-1447600514716-ca6f3974c346"})-[:BELONGS_TO]->(science)</query>
+        <query>MATCH (sports:Category{name: "Sports"}) CREATE (interest:Interest{name: "Hockey"})-[:BELONGS_TO]->(sports)</query>
+        <query>MATCH (sports:Category{name: "Sports"}) CREATE (interest:Interest{name: "Cricket", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/IPL_T20_Chennai_vs_Kolkata.JPG/1200px-IPL_T20_Chennai_vs_Kolkata.JPG"})-[:BELONGS_TO]->(sports)</query>
+        <query>MATCH (sports:Category{name: "Sports"}) CREATE (interest:Interest{name: "Kabadi", image: "https://en.wikipedia.org/wiki/Sports_in_Tamil_Nadu#/media/File:Sadugudu_sadugude.jpg"})-[:BELONGS_TO]->(sports)</query>
+        <query>MATCH (sports:Category{name: "Sports"}) CREATE (interest:Interest{name: "Cock fight", image: ""})-[:BELONGS_TO]->(sports)</query>
+        <query>MATCH (sports:Category{name: "Sports"}) CREATE (interest:Interest{name: "Jallikattu", image: "https://en.wikipedia.org/wiki/Sports_in_Tamil_Nadu#/media/File:A_bull_being_tamed_in_Jallikattu_held_in_palamedu.jpg"})-[:BELONGS_TO]->(sports)</query>
     </changeset>
     <changeset id="create-comment-constraints" author="Hariharan">
-        <query>CREATE CONSTRAINT unique_comment IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.comment);</query>
-        <query>CREATE CONSTRAINT unique_comment_audit IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.createdAt);</query>
-        <query>CREATE CONSTRAINT unique_comment_id IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.commentId);</query>
+        <query>CREATE CONSTRAINT unique_comment IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.comment)</query>
+        <query>CREATE CONSTRAINT unique_comment_audit IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.createdAt)</query>
+        <query>CREATE CONSTRAINT unique_comment_id IF NOT EXISTS ON ()-[commentObj:COMMENTED]-() ASSERT EXISTS (commentObj.commentId)</query>
     </changeset>
 </changelog>

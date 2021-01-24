@@ -22,6 +22,7 @@ const (
 	MinimumInterestCountNotMatchCode string = "ERR_MINIMUM_INTERESTS_COUNT_NOT_MATCH"
 	NoPostFoundCode                  string = "ERR_NO_POST_FOUND"
 	PostNotInReadLaterCode           string = "ERR_POST_NOT_IN_READ_LATER"
+	NoInterestsAndCategoriesCode     string = "ERR_NO_INTERESTS_AND_CATEGORIES"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	PostNotFoundErr                 = golaerror.Error{ErrorCode: PostNotFoundCode, ErrorMessage: "no post found for the given post uid"}
 	MinimumInterestCountNotMatchErr = golaerror.Error{ErrorCode: MinimumInterestCountNotMatchCode, ErrorMessage: "interest tags requirement not met", AdditionalData: "Please select 3-5 interest tags"}
 	PostNotInReadLaterErr           = golaerror.Error{ErrorCode: PostNotInReadLaterCode, ErrorMessage: "post currently not in read later"}
+	NoInterestsAndCategoriesErr     = golaerror.Error{ErrorCode: NoInterestsAndCategoriesCode, ErrorMessage: "no categories and interests found"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
@@ -54,6 +56,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	PostNotFoundCode:                 http.StatusNotFound,
 	MinimumInterestCountNotMatchCode: http.StatusNotAcceptable,
 	PostNotInReadLaterCode:           http.StatusNotAcceptable,
+	NoInterestsAndCategoriesCode:     http.StatusNotFound,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {
