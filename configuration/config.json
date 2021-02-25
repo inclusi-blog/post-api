@@ -18,5 +18,8 @@
   ],
   "crypto_service_url": "http://localhost:8082",
   "oauth_url": "http://localhost:4445",
-  "token_validation_ignore_urls": []
+  "user_profile_base_url": "http://localhost:8084",
+  "fetch_user_followed_interests": "/api/user-profile/v1/interest",
+  "token_validation_ignore_urls": [],
+  "request_timeout": 60
 }

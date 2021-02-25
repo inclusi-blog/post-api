@@ -2,6 +2,7 @@ package init
 
 import (
 	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"post-api/clients/user_profile"
 	"post-api/configuration"
 	"post-api/controller"
 	"post-api/mapper"
@@ -17,10 +18,11 @@ var (
 )
 
 func Objects(db neo4j.Session, configData *configuration.ConfigData) {
+	userProfileClient := user_profile.NewClient(requestBuilder, configData)
 	interestsMapper := mapper.NewInterestsMapper()
 	draftRepository := repository.NewDraftRepository(db)
 	interestsRepository := repository.NewInterestRepository(db)
-	interestsService := service.NewInterestsService(interestsRepository, interestsMapper)
+	interestsService := service.NewInterestsService(interestsRepository, userProfileClient, interestsMapper)
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)

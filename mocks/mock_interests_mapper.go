@@ -36,15 +36,15 @@ func (m *MockInterestsMapper) EXPECT() *MockInterestsMapperMockRecorder {
 }
 
 // MapUserFollowedInterest mocks base method
-func (m *MockInterestsMapper) MapUserFollowedInterest(ctx context.Context, dbCategoriesAndInterests []db.CategoryAndInterest) []response.CategoryAndInterest {
+func (m *MockInterestsMapper) MapUserFollowedInterest(ctx context.Context, dbCategoriesAndInterests []db.CategoryAndInterest, userFollowingInterests []string) []response.CategoryAndInterest {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MapUserFollowedInterest", ctx, dbCategoriesAndInterests)
+	ret := m.ctrl.Call(m, "MapUserFollowedInterest", ctx, dbCategoriesAndInterests, userFollowingInterests)
 	ret0, _ := ret[0].([]response.CategoryAndInterest)
 	return ret0
 }
 
 // MapUserFollowedInterest indicates an expected call of MapUserFollowedInterest
-func (mr *MockInterestsMapperMockRecorder) MapUserFollowedInterest(ctx, dbCategoriesAndInterests interface{}) *gomock.Call {
+func (mr *MockInterestsMapperMockRecorder) MapUserFollowedInterest(ctx, dbCategoriesAndInterests, userFollowingInterests interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MapUserFollowedInterest", reflect.TypeOf((*MockInterestsMapper)(nil).MapUserFollowedInterest), ctx, dbCategoriesAndInterests)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MapUserFollowedInterest", reflect.TypeOf((*MockInterestsMapper)(nil).MapUserFollowedInterest), ctx, dbCategoriesAndInterests, userFollowingInterests)
 }

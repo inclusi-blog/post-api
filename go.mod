@@ -24,6 +24,7 @@ require (
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.7.0
+	go.opencensus.io v0.22.3
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
 	golang.org/x/tools v0.0.0-20210106214847-113979e3529a // indirect
 	google.golang.org/appengine v1.6.6 // indirect

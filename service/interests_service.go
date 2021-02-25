@@ -1,12 +1,15 @@
 package service
 
 //go:generate mockgen -source=interests_service.go -destination=./../mocks/mock_interests_service.go -package=mocks
+
 import (
 	"context"
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
+	"post-api/clients/user_profile"
 	"post-api/constants"
 	"post-api/mapper"
+	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/response"
 	"post-api/repository"
@@ -18,8 +21,9 @@ type InterestsService interface {
 }
 
 type interestsService struct {
-	repository repository.InterestsRepository
-	mapper     mapper.InterestsMapper
+	repository        repository.InterestsRepository
+	userProfileClient user_profile.Client
+	mapper            mapper.InterestsMapper
 }
 
 func (service interestsService) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, *golaerror.Error) {
@@ -44,6 +48,16 @@ func (service interestsService) GetExploreCategoriesAndInterests(ctx context.Con
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsService").WithField("method", "GetExploreCategoriesAndInterests")
 	logger.Info("Calling repository to fetch explore categories and interest")
 
+	var apiChannel = make(chan models.APIChannel)
+	go service.getUserFollowingInterests(ctx, apiChannel)
+
+	userFollowingInterestsChannel := <-apiChannel
+	userProfileErr := userFollowingInterestsChannel.Error.(*golaerror.Error)
+	if userProfileErr != nil {
+		return nil, &constants.InternalServerError
+	}
+	userFollowingInterests := userFollowingInterestsChannel.Response.([]string)
+
 	categoriesAndInterests, err := service.repository.FetchCategoriesAndInterests(ctx)
 	if err != nil {
 		if err.Error() == constants.NoInterestsAndCategoriesCode {
@@ -61,14 +75,28 @@ func (service interestsService) GetExploreCategoriesAndInterests(ctx context.Con
 
 	logger.Info("successfully fetched categories and interests")
 
-	categoriesAndInterestsWithUserFollowStatus := service.mapper.MapUserFollowedInterest(ctx, categoriesAndInterests)
+	categoriesAndInterestsWithUserFollowStatus := service.mapper.MapUserFollowedInterest(ctx, categoriesAndInterests, userFollowingInterests)
 
 	return categoriesAndInterestsWithUserFollowStatus, nil
 }
 
-func NewInterestsService(interestsRepository repository.InterestsRepository, interestsMapper mapper.InterestsMapper) InterestsService {
+func (service interestsService) getUserFollowingInterests(ctx context.Context, ch chan<- models.APIChannel) {
+	logger := logging.GetLogger(ctx).WithField("class", "").WithField("method", "GetExploreCategoriesAndInterests").WithField("operation", "getUserFollowingInterests")
+	logger.Info("Fetching user following interests from user profile")
+
+	userprofileInterets, err := service.userProfileClient.FetchUserFollowingInterests(ctx)
+
+	var data models.APIChannel
+	data.Error = err
+	data.Response = userprofileInterets
+
+	ch <- data
+}
+
+func NewInterestsService(interestsRepository repository.InterestsRepository, client user_profile.Client, interestsMapper mapper.InterestsMapper) InterestsService {
 	return interestsService{
-		repository: interestsRepository,
-		mapper:     interestsMapper,
+		repository:        interestsRepository,
+		userProfileClient: client,
+		mapper:            interestsMapper,
 	}
 }

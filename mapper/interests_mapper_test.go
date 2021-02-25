@@ -96,6 +96,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 			},
 		},
 	}
+	userFollowingInterests := []string{"Books", "Series", "Festival"}
 	expectedData := []response.CategoryAndInterest{
 		{
 			Category: "Art",
@@ -113,7 +114,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 				{
 					Name:             "Books",
 					Image:            "https://upload.wikimedia.org/wikipedia/commons/a/a0/Book_fair-Tamil_Nadu-35th-Chennai-january-2012-part_30.JPG",
-					IsFollowedByUser: false,
+					IsFollowedByUser: true,
 				},
 				{
 					Name:             "Poem",
@@ -133,7 +134,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 				{
 					Name:             "Series",
 					Image:            "https://upload.wikimedia.org/wikipedia/commons/1/10/Meta-image-netflix-symbol-black.png",
-					IsFollowedByUser: false,
+					IsFollowedByUser: true,
 				},
 				{
 					Name:             "Movies",
@@ -158,7 +159,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 				{
 					Name:             "Festival",
 					Image:            "https://images.unsplash.com/photo-1576394435759-02a2674ff6e0",
-					IsFollowedByUser: false,
+					IsFollowedByUser: true,
 				},
 				{
 					Name:             "Agriculture",
@@ -173,7 +174,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 			},
 		},
 	}
-	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests)
+	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests, userFollowingInterests)
 	suite.Len(categoriesAndInterests, 3)
 	suite.EqualValues(expectedData, categoriesAndInterests)
 }
@@ -181,7 +182,7 @@ func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenValidDataSent(
 func (suite *InterestsMapperTest) TestMapUserFollowedInterest_WhenEmptyDataSentShouldReturnEmptyData() {
 	var categoryAndInterests []db.CategoryAndInterest
 	var expectedData []response.CategoryAndInterest
-	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests)
+	categoriesAndInterests := suite.interestsMapper.MapUserFollowedInterest(suite.goContext, categoryAndInterests, []string{})
 	suite.Len(categoriesAndInterests, 0)
 	suite.EqualValues(expectedData, categoriesAndInterests)
 }
