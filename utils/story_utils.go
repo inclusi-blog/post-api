@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/models"
 	"reflect"
 	"regexp"

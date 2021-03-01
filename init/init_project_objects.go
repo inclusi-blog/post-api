@@ -1,7 +1,7 @@
 package init
 
 import (
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/clients/user_profile"
 	"post-api/configuration"
 	"post-api/controller"

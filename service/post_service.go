@@ -4,7 +4,7 @@ package service
 
 import (
 	"context"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/models/response"

@@ -7,7 +7,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	neo4j "github.com/neo4j/neo4j-go-driver/neo4j"
+	neo4j "github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	db "post-api/models/db"
 	response "post-api/models/response"
 	reflect "reflect"

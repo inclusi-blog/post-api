@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/constants"
 	"post-api/models/db"
 	"post-api/utils"
@@ -46,13 +46,6 @@ func (repository interestsRepository) GetInterests(ctx context.Context, searchKe
 		return []db.Interest{}, err
 	}
 
-	_, err = result.Summary()
-
-	if err != nil {
-		logger.Errorf("Error occurred while getting summary  get interests %v", err)
-		return []db.Interest{}, err
-	}
-
 	for result.Next() {
 		value, isPresent := result.Record().Get("name")
 		if !isPresent {
@@ -81,12 +74,6 @@ func (repository interestsRepository) FetchCategoriesAndInterests(ctx context.Co
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching categories and interests Error %v", err)
-		return nil, err
-	}
-
-	_, err = result.Summary()
-	if err != nil {
-		logger.Errorf("Error occurred while getting summary for fetch categories and interests. Error %v", err)
 		return nil, err
 	}
 

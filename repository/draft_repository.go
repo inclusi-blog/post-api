@@ -8,7 +8,7 @@ import (
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/jmoiron/sqlx/types"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
@@ -156,13 +156,6 @@ func (repository draftRepository) GetDraft(ctx context.Context, draftUID string,
 		return db.DraftDB{}, err
 	}
 
-	_, err = result.Summary()
-
-	if err != nil {
-		logger.Errorf("Error occurred while fetching summary draft from draft repository %v", err)
-		return db.DraftDB{}, err
-	}
-
 	if result.Next() {
 		var draft db.DraftForm
 		bindDbValues, err := utils.BindDbValues(result, draft)
@@ -208,7 +201,7 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		logger.Errorf("error occured while fetching result summary %v", err)
@@ -234,7 +227,7 @@ func (repository draftRepository) DeleteInterest(ctx context.Context, deleteInte
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 	if err != nil {
 		logger.Errorf("Error occurred while fetching summary while deleting draft interest %v", err)
 		return err
@@ -261,7 +254,7 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 	if err != nil {
 		logger.Errorf("Error occurred while fetching affected result summary for preview image update of draft %v", err)
 		return err
@@ -285,7 +278,7 @@ func (repository draftRepository) DeleteDraft(ctx context.Context, draftId strin
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		logger.Errorf("Error occurred while validating result summary for deleting draft with id %v", draftId)
@@ -310,13 +303,6 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching all draft from draft repository %v", err)
-		return drafts, err
-	}
-
-	_, err = result.Summary()
-
-	if err != nil {
-		logger.Errorf("Error occurred while fetching result summary for fetch all draft %v", err)
 		return drafts, err
 	}
 
@@ -384,12 +370,6 @@ func (repository draftRepository) UpdatePublishedStatus(ctx context.Context, dra
 
 	if err != nil {
 		logger.Errorf("Error occurred while updating draft publish status for draft %v, Error %v", draftId, err)
-		return err
-	}
-
-	_, err = result.Summary()
-	if err != nil {
-		logger.Errorf("Error occurred while fetching summary for draft publish status update for draft %v, Error %v", draftId, err)
 		return err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/jmoiron/sqlx/types"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"os"
 	"post-api/constants"
 	"post-api/dbhelper"
@@ -37,19 +37,18 @@ func (suite *DraftRepositoryIntegrationTest) SetupTest() {
 	suite.Nil(err)
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
 	logger := logging.GetLogger(context.Background())
-	configForNeo4j40 := func(conf *neo4j.Config) { conf.Encrypted = false }
-	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""), configForNeo4j40)
+	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""))
 	suite.Nil(err)
-	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""), configForNeo4j40)
+	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""))
 	suite.Nil(err)
 	suite.NotNil(suite.adminDriver)
 	suite.NotNil(suite.driver)
 
 	logger.Info("logging")
 	sessionConfig := neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite, DatabaseName: os.Getenv("DB_SERVICE_NAME")}
-	suite.db, err = suite.driver.NewSession(sessionConfig)
+	suite.db = suite.driver.NewSession(sessionConfig)
 	suite.Nil(err)
-	suite.adminDb, err = suite.adminDriver.NewSession(sessionConfig)
+	suite.adminDb = suite.adminDriver.NewSession(sessionConfig)
 	suite.Nil(err)
 
 	suite.draftRepository = NewDraftRepository(suite.db)
@@ -123,7 +122,7 @@ func (suite *DraftRepositoryIntegrationTest) TestCreateNewPostWithData_WhenAlrea
 	suite.Nil(err)
 	err = suite.draftRepository.CreateNewPostWithData(draft, suite.goContext)
 	suite.NotNil(err)
-	suite.True(neo4j.IsClientError(err))
+	suite.True(neo4j.IsNeo4jError(err))
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestUpdateDraft_WhenThereIsADraft() {
@@ -536,8 +535,6 @@ func (suite *DraftRepositoryIntegrationTest) TestUpdatePublishedStatus_WhenThere
 	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		err := suite.draftRepository.UpdatePublishedStatus(suite.goContext, "1q2w3e4r5t6y", "some-user", transaction)
 		suite.NotNil(err)
-		err = transaction.Close()
-		suite.Nil(err)
 		return nil, err
 	})
 	suite.NotNil(err)

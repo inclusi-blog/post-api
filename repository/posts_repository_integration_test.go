@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx/types"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -37,19 +37,18 @@ func (suite *PostsRepositoryIntegrationTest) SetupTest() {
 	suite.Nil(err)
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
 	logger := logging.GetLogger(context.Background())
-	configForNeo4j40 := func(conf *neo4j.Config) { conf.Encrypted = false }
-	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""), configForNeo4j40)
+	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""))
 	suite.Nil(err)
-	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""), configForNeo4j40)
+	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""))
 	suite.Nil(err)
 	suite.NotNil(suite.adminDriver)
 	suite.NotNil(suite.driver)
 
 	logger.Info("logging")
 	sessionConfig := neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite, DatabaseName: os.Getenv("DB_SERVICE_NAME")}
-	suite.db, err = suite.driver.NewSession(sessionConfig)
+	suite.db = suite.driver.NewSession(sessionConfig)
 	suite.Nil(err)
-	suite.adminDb, err = suite.adminDriver.NewSession(sessionConfig)
+	suite.adminDb = suite.adminDriver.NewSession(sessionConfig)
 	suite.Nil(err)
 
 	suite.postsRepository = NewPostsRepository(suite.db)
@@ -123,8 +122,6 @@ func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSamePostIsSavedD
 	}
 	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		err = transaction.Commit()
 		suite.Nil(err)
 		err = suite.postsRepository.CreatePost(suite.goContext, post, transaction)
 		return nil, err

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/jmoiron/sqlx/types"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
@@ -66,7 +66,7 @@ func (repository postRepository) CreatePost(ctx context.Context, post db.Publish
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		logger.Errorf("Error while getting result summary for publish post %v", err)
@@ -94,7 +94,7 @@ func (repository postRepository) LikePost(postID string, userID string, ctx cont
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		log.Errorf("Error occurred while getting summary for post like update for post %v ,Error %v", postID, err)
@@ -149,7 +149,7 @@ func (repository postRepository) UnlikePost(ctx context.Context, userId string, 
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching result summary for unliking the post %v by user %v", postId, userId)
@@ -177,7 +177,7 @@ func (repository postRepository) CommentPost(ctx context.Context, userId string,
 		return err
 	}
 
-	_, err = result.Summary()
+	_, err = result.Consume()
 
 	if err != nil {
 		logger.Errorf("Error occurred while getting summary for comment to post %v by user %v ,Error %v", postId, userId, err)
@@ -200,13 +200,6 @@ func (repository postRepository) GetLikesCountByPostID(ctx context.Context, post
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching like count for post %v, Error %v", postId, err)
-		return 0, err
-	}
-
-	_, err = result.Summary()
-
-	if err != nil {
-		logger.Errorf("Error occurred while fetching summary for get likes count for post %v, Error %v", postId, err)
 		return 0, err
 	}
 
@@ -240,12 +233,6 @@ func (repository postRepository) FetchPost(ctx context.Context, postId string, u
 		return response.Post{}, err
 	}
 
-	_, err = result.Summary()
-
-	if err != nil {
-		logger.Errorf("Error occurred while fetching summary of post fetch for user id %v of post id %v ,Error %v", userId, postId, err)
-		return response.Post{}, err
-	}
 	if result.Next() {
 		var post response.DBPost
 		bindDbValues, err := utils.BindDbValues(result, post)
@@ -275,14 +262,6 @@ func (repository postRepository) MarkPostAsReadLater(ctx context.Context, postId
 		return err
 	}
 
-	_, err = result.Summary()
-
-	logger.Info("Fetching summary for the read later update")
-	if err != nil {
-		logger.Errorf("Unable to retrieve summary for read later request for post id %v and user %v, Error %v", postId, userId, err)
-		return err
-	}
-
 	if result.Next() {
 		logger.Infof("post present for post id %v and successfully added as read later", postId)
 		return nil
@@ -307,7 +286,7 @@ func (repository postRepository) RemoveReadLater(ctx context.Context, postId, us
 		return err
 	}
 
-	summary, err := result.Summary()
+	summary, err := result.Consume()
 
 	logger.Info("Fetching summary for the read later update")
 	if err != nil {
