@@ -48,13 +48,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
 	router.Use(middleware.SessionTracingMiddleware)
-	router.Use(request_response_trace.HttpRequestResponseTracingMiddleware([]request_response_trace.IgnoreRequestResponseLogs{
-		{
-			PartialApiPath:       "api/post/healthz",
-			IsRequestLogAllowed:  true,
-			IsResponseLogAllowed: true,
-		},
-	}))
+	router.Use(request_response_trace.HttpRequestResponseTracingAllMiddleware)
 
 	corsConfig := corsModel.CorsConfig{
 		AllowedOrigins: configData.AllowedOrigins,

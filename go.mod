@@ -8,7 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/gola-glitch/gola-utils v0.0.0-20210110081158-b47fc98a6d7b
+	github.com/gola-glitch/gola-utils v0.0.0-20210110121354-446f9e5422ab
 	github.com/golang/mock v1.4.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
