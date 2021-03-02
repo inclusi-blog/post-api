@@ -87,34 +87,33 @@ func (service postService) PublishPost(ctx context.Context, draftUID string, use
 
 	logger.Infof("Saving post in post repository for post id %v", draftUID)
 
-	_, err = service.postTransaction.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err = service.repository.CreatePost(ctx, post, transaction)
-		if err != nil {
-			logger.Errorf("Error occurred while publishing post in post repository %v", err)
-			err = transaction.Rollback()
-			if err != nil {
-				logger.Errorf("Error occurred while rolling back create post transaction %v", err)
-				return nil, err
+	_, transactionErr := service.postTransaction.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		createPostErr := service.repository.CreatePost(ctx, post, transaction)
+		if createPostErr != nil {
+			logger.Errorf("Error occurred while publishing post in post repository %v", createPostErr)
+			closeTransactionErr := transaction.Close()
+			if closeTransactionErr != nil {
+				logger.Errorf("Error occurred while rolling back create post transaction %v", closeTransactionErr)
+				return nil, closeTransactionErr
 			}
-			return nil, err
+			return nil, createPostErr
 		}
-		err = service.draftRepository.UpdatePublishedStatus(ctx, draftUID, userId, transaction)
-		if err != nil {
-			err := transaction.Rollback()
-			if err != nil {
-				logger.Errorf("Error occurred while rolling back update published status for draft transaction %v", err)
-				return nil, err
+		updateStatusErr := service.draftRepository.UpdatePublishedStatus(ctx, draftUID, userId, transaction)
+		if updateStatusErr != nil {
+			closeTransactionErr := transaction.Close()
+			if closeTransactionErr != nil {
+				logger.Errorf("Error occurred while rolling back update published status for draft transaction %v", closeTransactionErr)
+				return nil, closeTransactionErr
 			}
-			logger.Errorf("Error occurred while updating draft publish status for draft id %v, Error %v", draftUID, err)
-			return nil, err
+			logger.Errorf("Error occurred while updating draft publish status for draft id %v, Error %v", draftUID, updateStatusErr)
+			return nil, updateStatusErr
 		}
-
 		return nil, nil
 	})
 
-	if err != nil {
-		logger.Errorf("Error occurred while publishing draft for draft id %v, Error %v", draftUID, err)
-		return "", constants.StoryInternalServerError(err.Error())
+	if transactionErr != nil {
+		logger.Errorf("Error occurred while publishing draft for draft id %v, Error %v", draftUID, transactionErr)
+		return "", constants.StoryInternalServerError(transactionErr.Error())
 	}
 
 	logger.Infof("Successfully saved story for post id %v", draftUID)

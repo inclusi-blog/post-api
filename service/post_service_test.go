@@ -88,6 +88,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		ReadTime: 22,
 	}, nil).Times(1)
 	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
+	suite.mockNeo4jSession.EXPECT().Close().Return(nil).Times(1)
 	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
 	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)
@@ -126,6 +127,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		PreviewImage: "https://www.some-url.com",
 	}, nil).Times(1)
 	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
+	suite.mockNeo4jSession.EXPECT().Close().Return(nil).Times(1)
 	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
 	suite.Nil(err)
 	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)

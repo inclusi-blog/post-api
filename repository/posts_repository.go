@@ -66,12 +66,7 @@ func (repository postRepository) CreatePost(ctx context.Context, post db.Publish
 		return err
 	}
 
-	_, err = result.Consume()
-
-	if err != nil {
-		logger.Errorf("Error while getting result summary for publish post %v", err)
-		return err
-	}
+	_ = result.Next()
 
 	logger.Infof("Successfully posted the post for post postID %v", post.PUID)
 
