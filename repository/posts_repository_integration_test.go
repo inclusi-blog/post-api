@@ -2,72 +2,48 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-	"os"
-	"post-api/constants"
+	"database/sql"
+	"fmt"
 	"post-api/dbhelper"
 	"post-api/models"
 	"post-api/models/db"
-	"post-api/models/response"
 	"post-api/repository/helper"
 	"testing"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type PostsRepositoryIntegrationTest struct {
 	suite.Suite
-	db              neo4j.Session
-	driver          neo4j.Driver
-	adminDb         neo4j.Session
-	adminDriver     neo4j.Driver
+	db              *sqlx.DB
 	goContext       context.Context
 	postsRepository PostsRepository
-	draftRepository DraftRepository
 	dbHelper        helper.DbHelper
 }
 
 func (suite *PostsRepositoryIntegrationTest) SetupTest() {
 	err := godotenv.Load("../docker-compose-test.env")
 	suite.Nil(err)
+	connectionString := dbhelper.BuildConnectionString()
+	db, err := sqlx.Open("postgres", connectionString)
+	if err != nil {
+		panic(fmt.Sprintln("Could not connect to test DB", err))
+	}
+	fmt.Print(db)
+	suite.db = db
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
-	logger := logging.GetLogger(context.Background())
-	suite.driver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), ""))
-	suite.Nil(err)
-	suite.adminDriver, err = neo4j.NewDriver(dbhelper.BuildConnectionString(), neo4j.BasicAuth(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), ""))
-	suite.Nil(err)
-	suite.NotNil(suite.adminDriver)
-	suite.NotNil(suite.driver)
-
-	logger.Info("logging")
-	sessionConfig := neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite, DatabaseName: os.Getenv("DB_SERVICE_NAME")}
-	suite.db = suite.driver.NewSession(sessionConfig)
-	suite.Nil(err)
-	suite.adminDb = suite.adminDriver.NewSession(sessionConfig)
-	suite.Nil(err)
-
-	suite.postsRepository = NewPostsRepository(suite.db)
-	suite.draftRepository = NewDraftRepository(suite.db)
-	suite.dbHelper = helper.NewDbHelper(suite.adminDb)
-	suite.insertInterestEntries()
-	suite.createSampleUser("some-user")
+	suite.postsRepository = NewPostsRepository(db)
+	suite.dbHelper = helper.NewDbHelper(db)
 }
 
 func (suite *PostsRepositoryIntegrationTest) TearDownTest() {
 	suite.ClearPostsData()
-	err := suite.driver.Close()
-	suite.Nil(err)
-	err = suite.adminDriver.Close()
-	suite.Nil(err)
-	err = suite.db.Close()
-	suite.Nil(err)
-	err = suite.adminDb.Close()
-	suite.Nil(err)
+	_ = suite.db.Close()
 }
 
 func (suite *PostsRepositoryIntegrationTest) ClearPostsData() {
@@ -84,839 +60,224 @@ func TestPostsRepositoryIntegrationTest(t *testing.T) {
 func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStoredInDB() {
 	post := db.PublishPost{
 		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		UserID: "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
 
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, err
-	})
+	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
 
-	suite.Nil(result)
 	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSamePostIsSavedDBShouldReturnError() {
+func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenDBReturnsError() {
 	post := db.PublishPost{
 		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		UserID: "some-invalid-id",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		err = suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		return nil, err
-	})
-	suite.Nil(result)
+
+	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
+
 	suite.NotNil(err)
-
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestLikePost_WhenUserLikes() {
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsAPostAvailable() {
 	post := db.PublishPost{
 		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		UserID: "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
 
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
-	suite.Nil(err)
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
 	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
+	err = suite.postsRepository.SaveInitialLike(suite.goContext, postID)
 	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestLikePost_WhenThereIsNoPost() {
-	err := suite.postsRepository.LikePost("1q2w3e4r5t6y", "some-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q2w3e4r5t6y")
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsNoPostAvailable() {
+	err := suite.postsRepository.SaveInitialLike(suite.goContext, 1)
 	suite.NotNil(err)
-	suite.Equal("no results found", err.Error())
-	suite.False(isLiked)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestIsPostLikedByPerson_WhenThereArePostAndLikes() {
+func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsAPost() {
 	post := db.PublishPost{
 		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		UserID: "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
 
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
-	suite.Nil(err)
+	expectedPostID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
 	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
+	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, post.PUID)
 	suite.Nil(err)
+	suite.Equal(expectedPostID, actualPostID)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestIsPostLikedByPerson_WhenThereIsNoPostAndLikes() {
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q2w3e4r5t6y")
+func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsNoPost() {
+	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, "qw23e5tsa")
 	suite.NotNil(err)
-	suite.Equal("no results found", err.Error())
-	suite.False(isLiked)
+	suite.Equal(sql.ErrNoRows, err)
+	suite.Zero(actualPostID)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestUnlikePost_WhenUserLikes() {
+func (suite *PostsRepositoryIntegrationTest) TestAppendOrRemoveUserFromLikedByWhenUserLikes() {
 	post := db.PublishPost{
 		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		UserID: "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
 
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 	suite.Nil(err)
 
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
+	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
+	suite.Nil(saveLikeErr)
+
+	var userID = int64(1)
+
+	appendOrRemoveUserErr := suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
+	suite.Nil(appendOrRemoveUserErr)
+
+	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
+
+	suite.Equal(int64(1), likeCount)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestAppendOrRemoveUserFromLikedByWhenUserDisLikes() {
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 	suite.Nil(err)
 
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
+	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
+	suite.Nil(saveLikeErr)
+
+	var userID = int64(1)
+
+	appendOrRemoveUserErr := suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
+	suite.Nil(appendOrRemoveUserErr)
+
+	appendOrRemoveUserErr = suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
+	suite.Nil(appendOrRemoveUserErr)
+
+	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
+
+	suite.Equal(int64(0), likeCount)
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetLikeCountByPost_WhenValidPostID() {
+
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r43",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 	suite.Nil(err)
 
-	err = suite.postsRepository.UnlikePost(suite.goContext, "some-user", "1q323e4r4r43")
+	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
+	suite.Nil(saveLikeErr)
+
+	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
 	suite.Nil(err)
 
-	isLiked, err = suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.False(isLiked)
+	suite.Equal(int64(0), likeCount)
+
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestGetLikeCountByPost_WhenInValidPostID() {
+
+	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, int64(3))
+	suite.Equal(sql.ErrNoRows, err)
+	suite.Equal(int64(0), likeCount)
+
+}
+
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsAPostAvailable() {
+	post := db.PublishPost{
+		PUID:   "1q323e4r4r42",
+		UserID: "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
+		},
+		ReadTime:  73,
+		ViewCount: 0,
+	}
+
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+
+	suite.Nil(err)
+	err = suite.postsRepository.SaveInitialComment(suite.goContext, postID)
 	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestUnlikePost_WhenThereIsNoPost() {
-	err := suite.postsRepository.UnlikePost(suite.goContext, "some-user", "1q2w3e4r5t6y")
-	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q2w3e4r5t6y")
+func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsNoPostAvailable() {
+	err := suite.postsRepository.SaveInitialComment(suite.goContext, 1)
 	suite.NotNil(err)
-	suite.Equal("no results found", err.Error())
-	suite.False(isLiked)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenUserCommentOnAPost() {
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
+func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenInValidPostID() {
+
 	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
+		PUID:   "1q323e4r4e43",
+		UserID: "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
+		ReadTime:  73,
+		ViewCount: 0,
 	}
 
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
+	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
 	suite.Nil(err)
 
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
+	saveLikeErr := suite.postsRepository.SaveInitialComment(suite.goContext, postID)
+	suite.Nil(saveLikeErr)
+
+	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, postID)
 	suite.Nil(err)
 
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
+	suite.Equal("[]", comments)
 
-	err = suite.postsRepository.CommentPost(suite.goContext, "third-user", "this is awesome", "1q323e4r4r43")
-	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenThereIsNoPost() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
-
-	err = suite.postsRepository.CommentPost(suite.goContext, "third-user", "this is awesome", "1q323e4r4r43")
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenThereIsUserButNoPost() {
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-
-	err := suite.postsRepository.CommentPost(suite.goContext, "third-user", "this is awesome", "1q323e4r4r43")
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestCommentPost_WhenThereIsNoUserAndNoPost() {
-	err := suite.postsRepository.CommentPost(suite.goContext, "third-user", "this is awesome", "1q323e4r4r43")
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetLikesCountByPostID_WhenThereIsAPost() {
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "second-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err = suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
-
-	likesCount, err := suite.postsRepository.GetLikesCountByPostID(suite.goContext, "1q323e4r4r43")
-	suite.Nil(err)
-	suite.Equal(int64(2), likesCount)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetLikesCountByPostID_WhenThereIsNoPost() {
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-	err := suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "second-user", suite.goContext)
-	suite.Nil(err)
-
-	likesCount, err := suite.postsRepository.GetLikesCountByPostID(suite.goContext, "1q323e4r4r43")
-	suite.Nil(err)
-	suite.Equal(int64(0), likesCount)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetLikesCountByPostID_WhenThereIsNoUserWhenLikingPost() {
-	suite.createSampleUser("third-user")
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		if err != nil {
-			err := transaction.Commit()
-			suite.Nil(err)
-		}
-		return nil, err
-	})
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "some-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err := suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost("1q323e4r4r43", "second-user", suite.goContext)
-	suite.Nil(err)
-
-	isLiked, err = suite.postsRepository.IsPostLikedByPerson(suite.goContext, "some-user", "1q323e4r4r43")
-	suite.True(isLiked)
-	suite.Nil(err)
-
-	likesCount, err := suite.postsRepository.GetLikesCountByPostID(suite.goContext, "1q323e4r4r43")
-	suite.Nil(err)
-	suite.Equal(int64(1), likesCount)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPost() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	expectedDraft := response.Post{
-		PostID: "1q323e4r4r43",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		LikeCount:              0,
-		CommentCount:           0,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            0,
-		IsViewerLiked:          false,
-		IsViewerIsAuthor:       true,
-		IsViewerFollowedAuthor: false,
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "some-user")
-	suite.Nil(err)
-	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
-	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
-	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
-	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
-	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
-	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
-	suite.Equal(expectedDraft.CommentCount, fetchPost.CommentCount)
-	suite.ElementsMatch(expectedDraft.Interests, fetchPost.Interests)
-	suite.NotEmpty(fetchPost.PublishedAt)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSomeOneLikedIt() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	expectedDraft := response.Post{
-		PostID: "1q323e4r4r43",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		LikeCount:              2,
-		CommentCount:           0,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            0,
-		IsViewerLiked:          false,
-		IsViewerIsAuthor:       true,
-		IsViewerFollowedAuthor: false,
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "second-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "third-user", suite.goContext)
-	suite.Nil(err)
-
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "some-user")
-	suite.Nil(err)
-	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
-	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
-	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
-	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
-	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
-	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
-	suite.Equal(expectedDraft.CommentCount, fetchPost.CommentCount)
-	suite.ElementsMatch(expectedDraft.Interests, fetchPost.Interests)
-	suite.NotEmpty(fetchPost.PublishedAt)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndSomeOneLikedAndCommentedOnIt() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	expectedDraft := response.Post{
-		PostID: "1q323e4r4r43",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		LikeCount:              2,
-		CommentCount:           1,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            0,
-		IsViewerLiked:          false,
-		IsViewerIsAuthor:       true,
-		IsViewerFollowedAuthor: false,
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-	suite.createSampleUser("fourth-user")
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "second-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "third-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.CommentPost(suite.goContext, "fourth-user", "this is nice post", expectedDraft.PostID)
-	suite.Nil(err)
-
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "some-user")
-	suite.Nil(err)
-	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
-	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
-	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
-	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
-	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
-	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
-	suite.Equal(expectedDraft.CommentCount, fetchPost.CommentCount)
-	suite.ElementsMatch(expectedDraft.Interests, fetchPost.Interests)
-	suite.NotEmpty(fetchPost.PublishedAt)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostAndDifferentUserViewingThePost() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	expectedDraft := response.Post{
-		PostID: "1q323e4r4r43",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		LikeCount:              2,
-		CommentCount:           1,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            0,
-		IsViewerLiked:          false,
-		IsViewerIsAuthor:       false,
-		IsViewerFollowedAuthor: false,
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-	suite.createSampleUser("fourth-user")
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "second-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "third-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.CommentPost(suite.goContext, "fourth-user", "this is nice post", expectedDraft.PostID)
-	suite.Nil(err)
-
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "fourth-user")
-	suite.Nil(err)
-	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
-	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
-	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
-	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
-	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
-	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
-	suite.Equal(expectedDraft.CommentCount, fetchPost.CommentCount)
-	suite.ElementsMatch(expectedDraft.Interests, fetchPost.Interests)
-	suite.NotEmpty(fetchPost.PublishedAt)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsAPostViewerLikedThePost() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	expectedDraft := response.Post{
-		PostID: "1q323e4r4r43",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		LikeCount:              2,
-		CommentCount:           1,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            0,
-		IsViewerLiked:          true,
-		IsViewerIsAuthor:       false,
-		IsViewerFollowedAuthor: false,
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	suite.createSampleUser("second-user")
-	suite.createSampleUser("third-user")
-	suite.createSampleUser("fourth-user")
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "second-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.LikePost(expectedDraft.PostID, "third-user", suite.goContext)
-	suite.Nil(err)
-
-	err = suite.postsRepository.CommentPost(suite.goContext, "fourth-user", "this is nice post", expectedDraft.PostID)
-	suite.Nil(err)
-
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.Nil(err)
-	suite.Equal(expectedDraft.PreviewImage, fetchPost.PreviewImage)
-	suite.Equal(expectedDraft.PostData, fetchPost.PostData)
-	suite.Equal(expectedDraft.IsViewerFollowedAuthor, fetchPost.IsViewerFollowedAuthor)
-	suite.Equal(expectedDraft.IsViewerIsAuthor, fetchPost.IsViewerIsAuthor)
-	suite.Equal(expectedDraft.IsViewerLiked, fetchPost.IsViewerLiked)
-	suite.Equal(expectedDraft.AuthorID, fetchPost.AuthorID)
-	suite.Equal(expectedDraft.LikeCount, fetchPost.LikeCount)
-	suite.Equal(expectedDraft.CommentCount, fetchPost.CommentCount)
-	suite.ElementsMatch(expectedDraft.Interests, fetchPost.Interests)
-	suite.NotEmpty(fetchPost.PublishedAt)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestFetchPost_WhenThereIsNoPost() {
-	fetchPost, err := suite.postsRepository.FetchPost(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.NotNil(err)
-	suite.Equal(errors.New(constants.NoPostFoundCode), err)
-	suite.Empty(fetchPost)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestMarkPostAsReadLater_WhenThereIsAPost() {
-	suite.createSampleUser("second-user")
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.MarkPostAsReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestMarkPostAsReadLater_WhenThereIsNoPost() {
-	suite.createSampleUser("second-user")
-	err := suite.postsRepository.MarkPostAsReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.NotNil(err)
-	suite.Equal(errors.New(constants.NoPostFoundCode), err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsAPost() {
-	suite.createSampleUser("second-user")
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.MarkPostAsReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.Nil(err)
-
-	err = suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsNoPost() {
-	suite.createSampleUser("second-user")
-	err := suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.NotNil(err)
-	suite.Equal(errors.New(constants.PostNotInReadLaterCode), err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestRemoveReadLater_WhenThereIsAPostButNoReadLaterRelationship() {
-	suite.createSampleUser("second-user")
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-user",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:     73,
-		Interest:     []string{"Art", "Books", "Grammar"},
-		Title:        "this is some title",
-		Tagline:      "this is some tagline",
-		PreviewImage: "some-url",
-		PostUrl:      "this-is-some-url",
-	}
-
-	result, err := suite.db.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-		err := suite.postsRepository.CreatePost(suite.goContext, post, transaction)
-		suite.Nil(err)
-		return nil, nil
-	})
-
-	suite.Nil(result)
-	suite.Nil(err)
-
-	err = suite.postsRepository.RemoveReadLater(suite.goContext, "1q323e4r4r43", "second-user")
-	suite.NotNil(err)
-	suite.Equal(errors.New(constants.PostNotInReadLaterCode), err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) insertInterestEntries() {
-	interests := []string{
-		"CREATE (interest:Category:Interest{name: 'Art'})",
-		"CREATE (interest:Category:Interest{name: 'Entertainment'})",
-		"CREATE (interest:Category:Interest{name: 'Culture'})",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Poem'})-[:BELONGS_TO]->(art)",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Short stories'})-[:BELONGS_TO]->(art)",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Books'})-[:BELONGS_TO]->(art)",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Literature'})-[:BELONGS_TO]->(art)",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Grammar'})-[:BELONGS_TO]->(art)",
-		"MATCH (art:Category{name: 'Art'}) CREATE (interest:Interest{name: 'Comics'})-[:BELONGS_TO]->(art)",
-		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Movies'})-[:BELONGS_TO]->(entertainment)",
-		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Series'})-[:BELONGS_TO]->(entertainment)",
-		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Anime'})-[:BELONGS_TO]->(entertainment)",
-		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Cartoon'})-[:BELONGS_TO]->(entertainment)",
-		"MATCH (entertainment:Category{name: 'Entertainment'}) CREATE (interest:Interest{name: 'Animation'})-[:BELONGS_TO]->(entertainment)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Cooking'})-[:BELONGS_TO]->(culture)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Food'})-[:BELONGS_TO]->(culture)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Agriculture'})-[:BELONGS_TO]->(culture)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Festival'})-[:BELONGS_TO]->(culture)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Language'})-[:BELONGS_TO]->(culture)",
-		"MATCH (culture:Category{name: 'Culture'}) CREATE (interest:Interest{name: 'Philosophy'})-[:BELONGS_TO]->(culture)",
-	}
-	for _, query := range interests {
-		_, err := suite.adminDb.Run(query, nil)
-		suite.Nil(err)
-	}
-}
-
-func (suite *PostsRepositoryIntegrationTest) createSampleUser(userId string) {
-	_, err := suite.adminDb.Run("CREATE (person:Person{ userId: $userId, displayName: $userId})", map[string]interface{}{
-		"userId": userId,
-	})
-	suite.Nil(err)
+func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenThereIsNoPostAvailable() {
+	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, 111)
+	suite.NotNil(sql.ErrNoRows, err)
+	suite.Equal("", comments)
 }

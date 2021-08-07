@@ -1,32 +1,16 @@
 version: "3.7"
 services:
   gola-db:
+    image: postgres:latest
+    restart: always
     container_name: gola-db
-    image: neo4j:4.2.1-enterprise
-    restart: unless-stopped
+    env_file:
+      - docker-compose-local.env
     ports:
-      - 7474:7474
-      - 7687:7687
+      - '5432:5432'
     volumes:
-      - ./conf:/conf
-      - ./data:/data
-      - ./import:/import
-      - ./logs:/logs
-      - ./plugins:/plugins
-      - ./infrastructure/database/create_user.cql:/create_user.cql
-      - ./infrastructure/database/create_test_user.cql:/create_test_user.cql
-      - ./infrastructure/database/create_user.sh:/create_user.sh
-    environment:
-      # Raise memory limits
-      - NEO4J_dbms_memory_pagecache_size=512m
-      - NEO4J_dbms.memory.heap.initial_size=512m
-      - NEO4J_dbms_memory_heap_max__size=1G
-      - NEO4J_AUTH=neo4j/1234
-      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-      - NEO4J_apoc_export_file_enabled=true
-      - NEO4J_apoc_import_file_enabled=true
-      - NEO4J_apoc_import_file_use__neo4j__config=true
-      - NEO4JLABS_PLUGINS=["apoc"]
+      - ./sql:/sql
+      - gola-volume:/var/lib/mysql
     networks:
       - gola-network
 
@@ -36,12 +20,15 @@ services:
     build:
       context: .
       dockerfile: infrastructure/Migrate.Dockerfile
+    command: -url=jdbc:postgresql://gola-db:5432/post -schemas=post -user=post -password=gola -connectRetries=60 migrate
     depends_on:
       - gola-db
-    command: --changelog /home/gola/database/changelog.xml --username gola_admin --password gola --database gola --graph-db-uri jdbc:neo4j:bolt://gola-db:7687/
     networks:
       - gola-network
 
 networks:
   gola-network:
     name: gola-network
+
+volumes:
+  gola-volume:

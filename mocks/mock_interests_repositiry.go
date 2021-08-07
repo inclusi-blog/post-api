@@ -48,18 +48,3 @@ func (mr *MockInterestsRepositoryMockRecorder) GetInterests(ctx, searchKeyword, 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsRepository)(nil).GetInterests), ctx, searchKeyword, selectedTags)
 }
-
-// FetchCategoriesAndInterests mocks base method
-func (m *MockInterestsRepository) FetchCategoriesAndInterests(ctx context.Context) ([]db.CategoryAndInterest, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchCategoriesAndInterests", ctx)
-	ret0, _ := ret[0].([]db.CategoryAndInterest)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchCategoriesAndInterests indicates an expected call of FetchCategoriesAndInterests
-func (mr *MockInterestsRepositoryMockRecorder) FetchCategoriesAndInterests(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchCategoriesAndInterests", reflect.TypeOf((*MockInterestsRepository)(nil).FetchCategoriesAndInterests), ctx)
-}

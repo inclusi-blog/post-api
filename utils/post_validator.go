@@ -13,23 +13,29 @@ import (
 )
 
 type PostValidator interface {
-	ValidateAndGetMetaData(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error)
+	ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error)
 }
 
 type postValidator struct {
 	configData *configuration.ConfigData
 }
 
-func (validator postValidator) ValidateAndGetMetaData(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
-	logger := logging.GetLogger(ctx).WithField("class", "PostValidator").WithField("method", "ValidateAndGetMetaData")
+func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostValidator").WithField("method", "ValidateAndGetReadTime")
 
 	draftID := draft.DraftID
 	id := draftID
 	logger.Infof("Validating draft to publish for draft id %v", id)
 
-	configData := validator.configData
-	contentReadTime := configData.ContentReadTimeConfig
-	minimumPostReadTime := configData.MinimumPostReadTime
+	config := validator.configData.ContentReadTimeConfig
+
+	var interests []interface{}
+	err := draft.Interest.Unmarshal(&interests)
+
+	if err != nil {
+		logger.Errorf("Error occurred while validating draft interests for draft id %v .%v", id, err)
+		return models.MetaData{}, &constants.DraftInterestParseError
+	}
 
 	var postWordsCount int
 	var imageCount int
@@ -46,10 +52,24 @@ func (validator postValidator) ValidateAndGetMetaData(draft db.Draft, ctx contex
 
 	readTime = CountContentReadTime(postWordsCount)
 	CountImageReadTime(imageCount, &readTime)
-	err := draft.IsValidInterest(ctx, contentReadTime, readTime, minimumPostReadTime)
-	if err != nil {
-		logger.Errorf("error occurred while validating interest for draft %v, Error %v", draftID, err)
-		return models.MetaData{}, err
+	for _, value := range interests {
+		interest := value.(map[string]interface{})
+		if interest["name"] == "" {
+			return models.MetaData{}, &constants.DraftInterestParseError
+		}
+		configReadTime := config[interest["name"].(string)]
+		if configReadTime != 0 {
+			if readTime < configReadTime {
+				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)
+				return models.MetaData{}, &constants.InterestReadTimeDoesNotMeetErr
+			}
+			continue
+		} else {
+			if readTime < validator.configData.MinimumPostReadTime {
+				logger.Errorf("post doesn't meet minimum read time %v .%v", draftID, readTime)
+				return models.MetaData{}, &constants.ReadTimeNotMeetError
+			}
+		}
 	}
 
 	logger.Infof("Successfully validated draft for id %v", draftID)

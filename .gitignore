@@ -9,8 +9,3 @@ coverage.*
 vendor/
 bin/
 post-api
-conf
-data
-import
-plugins
-logs

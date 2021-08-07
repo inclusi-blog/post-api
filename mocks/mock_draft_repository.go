@@ -7,7 +7,6 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	neo4j "github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	models "post-api/models"
 	db "post-api/models/db"
 	request "post-api/models/request"
@@ -37,46 +36,18 @@ func (m *MockDraftRepository) EXPECT() *MockDraftRepositoryMockRecorder {
 	return m.recorder
 }
 
-// IsDraftPresent mocks base method
-func (m *MockDraftRepository) IsDraftPresent(ctx context.Context, draftId, userId string) error {
+// SavePostDraft mocks base method
+func (m *MockDraftRepository) SavePostDraft(draft models.UpsertDraft, ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsDraftPresent", ctx, draftId, userId)
+	ret := m.ctrl.Call(m, "SavePostDraft", draft, ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// IsDraftPresent indicates an expected call of IsDraftPresent
-func (mr *MockDraftRepositoryMockRecorder) IsDraftPresent(ctx, draftId, userId interface{}) *gomock.Call {
+// SavePostDraft indicates an expected call of SavePostDraft
+func (mr *MockDraftRepositoryMockRecorder) SavePostDraft(draft, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDraftPresent", reflect.TypeOf((*MockDraftRepository)(nil).IsDraftPresent), ctx, draftId, userId)
-}
-
-// CreateNewPostWithData mocks base method
-func (m *MockDraftRepository) CreateNewPostWithData(draft models.UpsertDraft, ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNewPostWithData", draft, ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateNewPostWithData indicates an expected call of CreateNewPostWithData
-func (mr *MockDraftRepositoryMockRecorder) CreateNewPostWithData(draft, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewPostWithData", reflect.TypeOf((*MockDraftRepository)(nil).CreateNewPostWithData), draft, ctx)
-}
-
-// UpdateDraft mocks base method
-func (m *MockDraftRepository) UpdateDraft(draft models.UpsertDraft, ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateDraft", draft, ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateDraft indicates an expected call of UpdateDraft
-func (mr *MockDraftRepositoryMockRecorder) UpdateDraft(draft, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockDraftRepository)(nil).UpdateDraft), draft, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePostDraft", reflect.TypeOf((*MockDraftRepository)(nil).SavePostDraft), draft, ctx)
 }
 
 // SaveTaglineToDraft mocks base method
@@ -107,33 +78,34 @@ func (mr *MockDraftRepositoryMockRecorder) SaveInterestsToDraft(interestsSaveReq
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInterestsToDraft", reflect.TypeOf((*MockDraftRepository)(nil).SaveInterestsToDraft), interestsSaveRequest, ctx)
 }
 
-// DeleteInterest mocks base method
-func (m *MockDraftRepository) DeleteInterest(ctx context.Context, saveRequest request.InterestsSaveRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteInterest", ctx, saveRequest)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteInterest indicates an expected call of DeleteInterest
-func (mr *MockDraftRepositoryMockRecorder) DeleteInterest(ctx, saveRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInterest", reflect.TypeOf((*MockDraftRepository)(nil).DeleteInterest), ctx, saveRequest)
-}
-
 // GetDraft mocks base method
-func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID, userId string) (db.DraftDB, error) {
+func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID, userId)
+	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID)
 	ret0, _ := ret[0].(db.DraftDB)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDraft indicates an expected call of GetDraft
-func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID, userId interface{}) *gomock.Call {
+func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID)
+}
+
+// GetAllDraft mocks base method
+func (m *MockDraftRepository) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllDraft", ctx, allDraftReq)
+	ret0, _ := ret[0].([]db.Draft)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllDraft indicates an expected call of GetAllDraft
+func (mr *MockDraftRepositoryMockRecorder) GetAllDraft(ctx, allDraftReq interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetAllDraft), ctx, allDraftReq)
 }
 
 // UpsertPreviewImage mocks base method
@@ -151,44 +123,15 @@ func (mr *MockDraftRepositoryMockRecorder) UpsertPreviewImage(ctx, saveRequest i
 }
 
 // DeleteDraft mocks base method
-func (m *MockDraftRepository) DeleteDraft(ctx context.Context, draftUID, userId string) error {
+func (m *MockDraftRepository) DeleteDraft(ctx context.Context, draftUID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteDraft", ctx, draftUID, userId)
+	ret := m.ctrl.Call(m, "DeleteDraft", ctx, draftUID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteDraft indicates an expected call of DeleteDraft
-func (mr *MockDraftRepositoryMockRecorder) DeleteDraft(ctx, draftUID, userId interface{}) *gomock.Call {
+func (mr *MockDraftRepositoryMockRecorder) DeleteDraft(ctx, draftUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftRepository)(nil).DeleteDraft), ctx, draftUID, userId)
-}
-
-// GetAllDraft mocks base method
-func (m *MockDraftRepository) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftDB, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllDraft", ctx, allDraftReq)
-	ret0, _ := ret[0].([]db.DraftDB)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllDraft indicates an expected call of GetAllDraft
-func (mr *MockDraftRepositoryMockRecorder) GetAllDraft(ctx, allDraftReq interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetAllDraft), ctx, allDraftReq)
-}
-
-// UpdatePublishedStatus mocks base method
-func (m *MockDraftRepository) UpdatePublishedStatus(ctx context.Context, draftId, userId string, transaction neo4j.Transaction) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePublishedStatus", ctx, draftId, userId, transaction)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePublishedStatus indicates an expected call of UpdatePublishedStatus
-func (mr *MockDraftRepositoryMockRecorder) UpdatePublishedStatus(ctx, draftId, userId, transaction interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePublishedStatus", reflect.TypeOf((*MockDraftRepository)(nil).UpdatePublishedStatus), ctx, draftId, userId, transaction)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftRepository)(nil).DeleteDraft), ctx, draftUID)
 }

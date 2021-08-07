@@ -7,9 +7,7 @@ package mocks
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	neo4j "github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	db "post-api/models/db"
-	response "post-api/models/response"
 	reflect "reflect"
 )
 
@@ -37,130 +35,74 @@ func (m *MockPostsRepository) EXPECT() *MockPostsRepositoryMockRecorder {
 }
 
 // CreatePost mocks base method
-func (m *MockPostsRepository) CreatePost(ctx context.Context, post db.PublishPost, transaction neo4j.Transaction) error {
+func (m *MockPostsRepository) CreatePost(ctx context.Context, post db.PublishPost) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePost", ctx, post, transaction)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreatePost indicates an expected call of CreatePost
-func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post, transaction interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePost", reflect.TypeOf((*MockPostsRepository)(nil).CreatePost), ctx, post, transaction)
-}
-
-// LikePost mocks base method
-func (m *MockPostsRepository) LikePost(postID, userID string, ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LikePost", postID, userID, ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// LikePost indicates an expected call of LikePost
-func (mr *MockPostsRepositoryMockRecorder) LikePost(postID, userID, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LikePost", reflect.TypeOf((*MockPostsRepository)(nil).LikePost), postID, userID, ctx)
-}
-
-// UnlikePost mocks base method
-func (m *MockPostsRepository) UnlikePost(ctx context.Context, userId, postId string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnlikePost", ctx, userId, postId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnlikePost indicates an expected call of UnlikePost
-func (mr *MockPostsRepositoryMockRecorder) UnlikePost(ctx, userId, postId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlikePost", reflect.TypeOf((*MockPostsRepository)(nil).UnlikePost), ctx, userId, postId)
-}
-
-// IsPostLikedByPerson mocks base method
-func (m *MockPostsRepository) IsPostLikedByPerson(ctx context.Context, userId, postId string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsPostLikedByPerson", ctx, userId, postId)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsPostLikedByPerson indicates an expected call of IsPostLikedByPerson
-func (mr *MockPostsRepositoryMockRecorder) IsPostLikedByPerson(ctx, userId, postId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPostLikedByPerson", reflect.TypeOf((*MockPostsRepository)(nil).IsPostLikedByPerson), ctx, userId, postId)
-}
-
-// CommentPost mocks base method
-func (m *MockPostsRepository) CommentPost(ctx context.Context, userId, comment, postId string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommentPost", ctx, userId, comment, postId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CommentPost indicates an expected call of CommentPost
-func (mr *MockPostsRepositoryMockRecorder) CommentPost(ctx, userId, comment, postId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommentPost", reflect.TypeOf((*MockPostsRepository)(nil).CommentPost), ctx, userId, comment, postId)
-}
-
-// GetLikesCountByPostID mocks base method
-func (m *MockPostsRepository) GetLikesCountByPostID(ctx context.Context, postId string) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLikesCountByPostID", ctx, postId)
+	ret := m.ctrl.Call(m, "CreatePost", ctx, post)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetLikesCountByPostID indicates an expected call of GetLikesCountByPostID
-func (mr *MockPostsRepositoryMockRecorder) GetLikesCountByPostID(ctx, postId interface{}) *gomock.Call {
+// CreatePost indicates an expected call of CreatePost
+func (mr *MockPostsRepositoryMockRecorder) CreatePost(ctx, post interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLikesCountByPostID", reflect.TypeOf((*MockPostsRepository)(nil).GetLikesCountByPostID), ctx, postId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePost", reflect.TypeOf((*MockPostsRepository)(nil).CreatePost), ctx, post)
 }
 
-// FetchPost mocks base method
-func (m *MockPostsRepository) FetchPost(ctx context.Context, postId, userId string) (response.Post, error) {
+// GetLikeCountByPost mocks base method
+func (m *MockPostsRepository) GetLikeCountByPost(ctx context.Context, postID int64) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchPost", ctx, postId, userId)
-	ret0, _ := ret[0].(response.Post)
+	ret := m.ctrl.Call(m, "GetLikeCountByPost", ctx, postID)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FetchPost indicates an expected call of FetchPost
-func (mr *MockPostsRepositoryMockRecorder) FetchPost(ctx, postId, userId interface{}) *gomock.Call {
+// GetLikeCountByPost indicates an expected call of GetLikeCountByPost
+func (mr *MockPostsRepositoryMockRecorder) GetLikeCountByPost(ctx, postID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPost", reflect.TypeOf((*MockPostsRepository)(nil).FetchPost), ctx, postId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLikeCountByPost", reflect.TypeOf((*MockPostsRepository)(nil).GetLikeCountByPost), ctx, postID)
 }
 
-// MarkPostAsReadLater mocks base method
-func (m *MockPostsRepository) MarkPostAsReadLater(ctx context.Context, postId, userId string) error {
+// AppendOrRemoveUserFromLikedBy mocks base method
+func (m *MockPostsRepository) AppendOrRemoveUserFromLikedBy(postID, userID int64, ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkPostAsReadLater", ctx, postId, userId)
+	ret := m.ctrl.Call(m, "AppendOrRemoveUserFromLikedBy", postID, userID, ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// MarkPostAsReadLater indicates an expected call of MarkPostAsReadLater
-func (mr *MockPostsRepositoryMockRecorder) MarkPostAsReadLater(ctx, postId, userId interface{}) *gomock.Call {
+// AppendOrRemoveUserFromLikedBy indicates an expected call of AppendOrRemoveUserFromLikedBy
+func (mr *MockPostsRepositoryMockRecorder) AppendOrRemoveUserFromLikedBy(postID, userID, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPostAsReadLater", reflect.TypeOf((*MockPostsRepository)(nil).MarkPostAsReadLater), ctx, postId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendOrRemoveUserFromLikedBy", reflect.TypeOf((*MockPostsRepository)(nil).AppendOrRemoveUserFromLikedBy), postID, userID, ctx)
 }
 
-// RemoveReadLater mocks base method
-func (m *MockPostsRepository) RemoveReadLater(ctx context.Context, postId, userId string) error {
+// SaveInitialLike mocks base method
+func (m *MockPostsRepository) SaveInitialLike(ctx context.Context, postID int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveReadLater", ctx, postId, userId)
+	ret := m.ctrl.Call(m, "SaveInitialLike", ctx, postID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RemoveReadLater indicates an expected call of RemoveReadLater
-func (mr *MockPostsRepositoryMockRecorder) RemoveReadLater(ctx, postId, userId interface{}) *gomock.Call {
+// SaveInitialLike indicates an expected call of SaveInitialLike
+func (mr *MockPostsRepositoryMockRecorder) SaveInitialLike(ctx, postID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveReadLater", reflect.TypeOf((*MockPostsRepository)(nil).RemoveReadLater), ctx, postId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInitialLike", reflect.TypeOf((*MockPostsRepository)(nil).SaveInitialLike), ctx, postID)
+}
+
+// GetPostID mocks base method
+func (m *MockPostsRepository) GetPostID(ctx context.Context, postUUID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPostID", ctx, postUUID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPostID indicates an expected call of GetPostID
+func (mr *MockPostsRepositoryMockRecorder) GetPostID(ctx, postUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostID", reflect.TypeOf((*MockPostsRepository)(nil).GetPostID), ctx, postUUID)
 }

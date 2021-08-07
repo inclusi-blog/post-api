@@ -3,12 +3,8 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	"github.com/golang/mock/gomock"
-	"github.com/jmoiron/sqlx/types"
-	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"post-api/constants"
@@ -16,10 +12,14 @@ import (
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
-	"post-api/models/response"
 	"post-api/service/test_helper"
 	"post-api/validators"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/jmoiron/sqlx/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type DraftControllerTest struct {
@@ -158,9 +158,11 @@ func (suite *DraftControllerTest) TestSaveTagline_WhenServiceReturnsError() {
 
 func (suite *DraftControllerTest) TestSaveInterests_WhenAPISuccess() {
 	newInterest := request.InterestsSaveRequest{
-		Interest: "sports",
-		DraftID:  "121212",
-		UserID:   "1",
+		Interests: models.JSONString{
+			JSONText: types.JSONText(`[{"id":"1","name":"sports"},{"id":"2","name":"economy"}]`),
+		},
+		DraftID: "121212",
+		UserID:  "1",
 	}
 
 	suite.mockDraftService.EXPECT().UpsertInterests(newInterest, suite.context).Return(nil).Times(1)
@@ -195,45 +197,6 @@ func (suite *DraftControllerTest) TestSaveInterests_WhenBadRequest() {
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
 
-func (suite *DraftControllerTest) TestDeleteInterest_WhenAPISuccess() {
-	newInterest := request.InterestsSaveRequest{
-		Interest: "sports",
-		DraftID:  "121212",
-		UserID:   "1",
-	}
-
-	suite.mockDraftService.EXPECT().DeleteInterest(suite.context, newInterest).Return(nil).Times(1)
-
-	jsonBytes, err := json.Marshal(newInterest)
-	suite.Nil(err)
-
-	suite.context.Request, err = http.NewRequest(http.MethodPost, "/api/v1/post/draft/delete-interests", bytes.NewBufferString(string(jsonBytes)))
-	suite.Nil(err)
-
-	suite.draftController.DeleteInterest(suite.context)
-	suite.Equal(http.StatusOK, suite.recorder.Code)
-}
-
-func (suite *DraftControllerTest) TestDeleteInterest_WhenBadRequest() {
-	newInterst := request.InterestsSaveRequest{}
-
-	requestBody := `{
-		"interests": "sports",
-		"user_id": "1"
-	  }`
-
-	suite.mockDraftService.EXPECT().DeleteInterest(suite.context, newInterst).Return(nil).Times(0)
-
-	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/draft/upsert-interests", bytes.NewBufferString(requestBody))
-
-	marshal, err := json.Marshal(constants.PayloadValidationError)
-	suite.Nil(err)
-
-	suite.draftController.DeleteInterest(suite.context)
-	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
-	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
-}
-
 func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	DraftID := "q3w4e5r5t6y7"
 	params := gin.Params{
@@ -244,7 +207,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, nil).Times(1)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(1)
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
 	suite.draftController.GetDraft(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
@@ -253,7 +216,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenAPISuccess() {
 func (suite *DraftControllerTest) TestGetDraft_WhenBadRequest() {
 	DraftID := "q3w4e5r5t6y"
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, nil).Times(0)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, nil).Times(0)
 
 	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y", nil)
 
@@ -274,7 +237,7 @@ func (suite *DraftControllerTest) TestGetDraft_WhenServiceFails() {
 	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
 	suite.Nil(err)
 
-	suite.mockDraftService.EXPECT().GetDraft(DraftID, "some-user", suite.context).Return(db.DraftDB{}, &constants.NoDraftFoundError).Times(1)
+	suite.mockDraftService.EXPECT().GetDraft(DraftID, suite.context).Return(db.Draft{}, &constants.NoDraftFoundError).Times(1)
 
 	suite.draftController.GetDraft(suite.context)
 
@@ -383,7 +346,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenSuccess() {
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(nil).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(nil).Times(1)
 
 	suite.draftController.DeleteDraft(suite.context)
 
@@ -394,7 +357,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenSuccess() {
 func (suite *DraftControllerTest) TestDeleteDraft_WhenBadRequest() {
 	suite.context.Request, _ = http.NewRequest(http.MethodDelete, "/api/v1/post/draft/1", nil)
 
-	suite.mockDraftService.EXPECT().DeleteDraft("1", "some-user", suite.context).Return(nil).Times(0)
+	suite.mockDraftService.EXPECT().DeleteDraft("1", suite.context).Return(nil).Times(0)
 
 	jsonBytes, err := json.Marshal(&constants.PayloadValidationError)
 	suite.Nil(err)
@@ -415,7 +378,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithNotFoun
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(&constants.NoDraftFoundError).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(&constants.NoDraftFoundError).Times(1)
 
 	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
 	suite.Nil(err)
@@ -436,7 +399,7 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithGeneric
 	}
 	suite.context.Params = params
 
-	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", "some-user", suite.context).Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockDraftService.EXPECT().DeleteDraft("q2w3e4r5t6y7", suite.context).Return(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong)).Times(1)
 
 	jsonBytes, err := json.Marshal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong))
 	suite.Nil(err)
@@ -444,69 +407,5 @@ func (suite *DraftControllerTest) TestDeleteDraft_WhenBadServiceFailsWithGeneric
 	suite.draftController.DeleteDraft(suite.context)
 
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
-	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
-}
-
-func (suite *DraftControllerTest) TestGetPreviewDraft_WhenAPISuccess() {
-	DraftID := "q3w4e5r5t6y7"
-	params := gin.Params{
-		gin.Param{
-			Key:   "draft_id",
-			Value: "q3w4e5r5t6y7",
-		},
-	}
-	suite.context.Params = params
-
-	title := "this is some title"
-	tagline := "this is some tagline"
-	image := "this is preview image"
-	userId := "some-user"
-	draft := response.PreviewDraft{
-		DraftID:      "q3w4e5r5t6y7",
-		Title:        &title,
-		Tagline:      &tagline,
-		Interest:     []string{"sports", "economy"},
-		PreviewImage: &image,
-		AuthorName:   &userId,
-	}
-	jsonBytes, err := json.Marshal(draft)
-	suite.Nil(err)
-
-	suite.mockDraftService.EXPECT().ValidateAndGetDraft(suite.context, DraftID, userId).Return(draft, nil).Times(1)
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
-	suite.draftController.GetPreviewDraft(suite.context)
-	suite.Equal(http.StatusOK, suite.recorder.Code)
-	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
-}
-
-func (suite *DraftControllerTest) TestGetPreviewDraft_WhenBadRequest() {
-	DraftID := "q3w4e5r5t6y"
-
-	suite.mockDraftService.EXPECT().ValidateAndGetDraft(suite.context, DraftID, "some-user").Return(response.PreviewDraft{}, nil).Times(0)
-
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y", nil)
-
-	suite.draftController.GetPreviewDraft(suite.context)
-	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
-}
-
-func (suite *DraftControllerTest) TestGetPreviewDraft_WhenServiceFails() {
-	DraftID := "q3w4e5r5t6y7"
-	params := gin.Params{
-		gin.Param{
-			Key:   "draft_id",
-			Value: "q3w4e5r5t6y7",
-		},
-	}
-	suite.context.Params = params
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/draft/get-draft/q3w4e5r5t6y7", nil)
-	jsonBytes, err := json.Marshal(&constants.NoDraftFoundError)
-	suite.Nil(err)
-
-	suite.mockDraftService.EXPECT().ValidateAndGetDraft(suite.context, DraftID, "some-user").Return(response.PreviewDraft{}, &constants.NoDraftFoundError).Times(1)
-
-	suite.draftController.GetPreviewDraft(suite.context)
-
-	suite.Equal(http.StatusNotFound, suite.recorder.Code)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 }

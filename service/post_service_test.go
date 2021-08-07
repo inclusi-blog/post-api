@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"post-api/constants"
 	"post-api/mocks"
 	"post-api/models"
 	"post-api/models/db"
-	"post-api/models/response"
+	"post-api/models/request"
 	"post-api/service/test_helper"
 	"testing"
 
@@ -24,7 +25,6 @@ type PostServiceTest struct {
 	mockDraftsRepository      *mocks.MockDraftRepository
 	mockPreviewPostRepository *mocks.MockPreviewPostsRepository
 	mockPostValidator         *mocks.MockPostValidator
-	mockNeo4jSession          *mocks.MockSession
 	postService               PostService
 }
 
@@ -39,8 +39,7 @@ func (suite *PostServiceTest) SetupTest() {
 	suite.mockDraftsRepository = mocks.NewMockDraftRepository(suite.mockController)
 	suite.mockPostValidator = mocks.NewMockPostValidator(suite.mockController)
 	suite.mockPreviewPostRepository = mocks.NewMockPreviewPostsRepository(suite.mockController)
-	suite.mockNeo4jSession = mocks.NewMockSession(suite.mockController)
-	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator, suite.mockNeo4jSession)
+	suite.postService = NewPostService(suite.mockPostsRepository, suite.mockDraftsRepository, suite.mockPostValidator, suite.mockPreviewPostRepository)
 }
 
 func (suite *PostServiceTest) TearDownTest() {
@@ -56,42 +55,125 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "",
-		Interest:     []string{"sports", "economy"},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 	draft := db.Draft{
 		DraftID: "1231212",
+		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		PreviewImage: &tmpPreviewImage,
 		Tagline:      &tmpTagLine,
-		Interest:     []string{"sports", "economy"},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
-	_ = db.PublishPost{
-		PUID:         "1231212",
-		UserID:       "1",
-		PostData:     draft.PostData,
-		ReadTime:     22,
-		Interest:     []string{"sports", "economy"},
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
 		Title:        "Install apps via helm in kubernetes",
-		Tagline:      "",
+		Tagline:      *draft.Tagline,
 		PreviewImage: "https://www.some-url.com",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
 	}, nil).Times(1)
-	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
-	suite.mockNeo4jSession.EXPECT().Close().Return(nil).Times(1)
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().SaveInitialLike(suite.goContext, int64(1)).Return(nil).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.Nil(err)
-	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)
+}
+
+func (suite *PostServiceTest) TestPublishPost_WhenSaveInitialLikeFails() {
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+	draft := db.Draft{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      *draft.Tagline,
+		PreviewImage: "https://www.some-url.com",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:    "Install apps via helm in kubernetes",
+		Tagline:  "",
+		ReadTime: 22,
+	}, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().SaveInitialLike(suite.goContext, int64(1)).Return(errors.New("something went wrong")).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
+	suite.Nil(err)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
@@ -105,84 +187,132 @@ func (suite *PostServiceTest) TestPublishPost_WhenNoPreviewImageInDraft() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "",
-		Tagline:      "",
-		Interest:     []string{"sports", "economy"},
+		PreviewImage: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 	draft := db.Draft{
 		DraftID: "1231212",
+		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		PreviewImage: &tmpPreviewImage,
 		Tagline:      &tmpTagLine,
-		Interest:     []string{"sports", "economy"},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      *draft.Tagline,
+		PreviewImage: "https://www.some-url.com",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      "",
 		ReadTime:     22,
 		PreviewImage: "https://www.some-url.com",
 	}, nil).Times(1)
-	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, nil).Times(1)
-	suite.mockNeo4jSession.EXPECT().Close().Return(nil).Times(1)
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().SaveInitialLike(suite.goContext, int64(1)).Return(nil).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.Nil(err)
-	suite.Equal("install-apps-via-helm-in-kubernetes-1231212", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsError() {
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(db.DraftDB{}, errors.New("something went wrong")).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(1), nil).Times(0)
+
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
-	suite.Equal("", postUrl)
 }
 
-func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsNoDraftFoundError() {
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(db.DraftDB{}, errors.New(constants.NoDraftFoundCode)).Times(1)
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+func (suite *PostServiceTest) TestPublishPost_WhenGetDraftReturnsSqlNoRowError() {
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(db.DraftDB{}, sql.ErrNoRows).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, db.PublishPost{}).Return(int64(0), nil).Times(0)
+
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(&constants.NoDraftFoundError, err)
-	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenCreatePostReturnsError() {
 	draftDB := db.DraftDB{
 		DraftID: "1231212",
-		UserID:  "some-user",
+		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "this is some tag line",
-		Interest:     []string{"sports", "economy"},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "this is some tag line",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	draft := db.Draft{
 		DraftID: "1231212",
+		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: &draftDB.PreviewImage,
-		Tagline:      &draftDB.Tagline,
-		Interest:     []string{"sports", "economy"},
+		PreviewImage: &draftDB.PreviewImage.String,
+		Tagline:      &draftDB.Tagline.String,
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
 		ReadTime: 22,
 	}, nil).Times(1)
-	suite.mockNeo4jSession.EXPECT().WriteTransaction(gomock.Any()).Return(nil, errors.New("something went wrong")).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), errors.New("something went wrong")).Times(1)
 
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
-	suite.Equal("", postUrl)
 }
 
 func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
@@ -192,9 +322,17 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		PreviewImage: "https://www.some-url.com",
-		Tagline:      "",
-		Interest:     []string{"sports", "economy"},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
 	tmpPreviewImage := "https://www.some-url.com"
@@ -202,187 +340,168 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidateDraftFails() {
 
 	draft := db.Draft{
 		DraftID: "1231212",
+		UserID:  "1",
 		PostData: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		PreviewImage: &tmpPreviewImage,
 		Tagline:      &tmpTagLine,
-		Interest:     []string{"sports", "economy"},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
 	}
 
-	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212", "some-user").Return(draftDB, nil).Times(1)
-	suite.mockPostValidator.EXPECT().ValidateAndGetMetaData(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
 
-	postUrl, err := suite.postService.PublishPost(suite.goContext, "1231212", "some-user")
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(0), nil).Times(0)
+
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
 	suite.NotNil(err)
 	suite.Equal(&constants.DraftValidationFailedError, err)
-	suite.Equal("", postUrl)
+}
+
+func (suite *PostServiceTest) TestPublishPost_WhenSavePreviewPostFails() {
+	draftDB := db.DraftDB{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: sql.NullString{
+			String: "https://www.some-url.com",
+			Valid:  true,
+		},
+		Tagline: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
+	tmpPreviewImage := "https://www.some-url.com"
+	tmpTagLine := ""
+
+	draft := db.Draft{
+		DraftID: "1231212",
+		UserID:  "1",
+		PostData: models.JSONString{
+			JSONText: types.JSONText(test_helper.ContentTestData),
+		},
+		PreviewImage: &tmpPreviewImage,
+		Tagline:      &tmpTagLine,
+		Interest: models.JSONString{
+			JSONText: types.JSONText(`[{"name":"sports","id":"1"},{"name":"economy","id":"2"}]`),
+		},
+	}
+
+	post := db.PublishPost{
+		PUID:      "1231212",
+		UserID:    "1",
+		PostData:  draft.PostData,
+		ReadTime:  22,
+		ViewCount: 0,
+	}
+
+	previewPost := db.PreviewPost{
+		PostID:       1,
+		Title:        "Install apps via helm in kubernetes",
+		Tagline:      *draft.Tagline,
+		PreviewImage: "https://www.some-url.com",
+		LikeCount:    0,
+		CommentCount: 0,
+		ViewTime:     0,
+	}
+
+	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, "1231212").Return(draftDB, nil).Times(1)
+	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
+		Title:    "Install apps via helm in kubernetes",
+		Tagline:  "",
+		ReadTime: 22,
+	}, nil).Times(1)
+	suite.mockPostsRepository.EXPECT().CreatePost(suite.goContext, post).Return(int64(1), nil).Times(1)
+	suite.mockPreviewPostRepository.EXPECT().SavePreview(suite.goContext, previewPost).Return(int64(1), errors.New("something went wrong")).Times(1)
+	err := suite.postService.PublishPost(suite.goContext, "1231212")
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
 }
 
 func (suite *PostServiceTest) TestLikePost_WhenSuccess() {
 	postUUID := "q1dsct52"
 
-	suite.mockPostsRepository.EXPECT().LikePost(postUUID, "some-user", suite.goContext).Return(nil).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(int64(1), int64(1), suite.goContext).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, int64(1)).Return(int64(1), nil).Times(1)
 
-	expectedCount := response.LikedByCount{LikeCount: 1}
+	expectedCount := request.LikedByCount{LikeCount: 1}
 
-	likeCount, err := suite.postService.LikePost("some-user", postUUID, suite.goContext)
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
 
 	suite.Nil(err)
 	suite.Equal(expectedCount, likeCount)
 }
 
-func (suite *PostServiceTest) TestLikePost_WhenRepositoryLikePostFails() {
+func (suite *PostServiceTest) TestLikePost_WhenGetPostIDFailsWithError() {
 	postUUID := "q1dsct52"
 
-	suite.mockPostsRepository.EXPECT().LikePost(postUUID, "some-user", suite.goContext).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(0)
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(0), errors.New("something went wrong")).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(int64(0), int64(0), suite.goContext).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, int64(0)).Return(int64(1), nil).Times(0)
 
-	likeCount, err := suite.postService.LikePost("some-user", postUUID, suite.goContext)
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(constants.StoryInternalServerError("something went wrong"), err)
+	suite.Equal(request.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenGetPostIDFailsWithSQLNoRowsError() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(0), sql.ErrNoRows).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(int64(0), int64(0), suite.goContext).Return(nil).Times(0)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, int64(0)).Return(int64(1), nil).Times(0)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
+
+	suite.NotNil(err)
+	suite.Equal(&constants.PostNotFoundErr, err)
+	suite.Equal(request.LikedByCount{}, likeCount)
+}
+
+func (suite *PostServiceTest) TestLikePost_WhenAppendOrRemoveUserLikeByFails() {
+	postUUID := "q1dsct52"
+
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(int64(1), int64(1), suite.goContext).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, int64(1)).Return(int64(1), nil).Times(0)
+
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
 
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(response.LikedByCount{}, likeCount)
+	suite.Equal(request.LikedByCount{}, likeCount)
 }
 
 func (suite *PostServiceTest) TestLikePost_WhenGetCountByPostFails() {
 	postUUID := "q1dsct52"
 
-	suite.mockPostsRepository.EXPECT().LikePost(postUUID, "some-user", suite.goContext).Return(nil).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(0), errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
+	suite.mockPostsRepository.EXPECT().GetPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
+	suite.mockPostsRepository.EXPECT().AppendOrRemoveUserFromLikedBy(int64(1), int64(1), suite.goContext).Return(nil).Times(1)
+	suite.mockPostsRepository.EXPECT().GetLikeCountByPost(suite.goContext, int64(1)).Return(int64(0), errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
 
-	likeCount, err := suite.postService.LikePost("some-user", postUUID, suite.goContext)
-
-	suite.NotNil(err)
-	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(response.LikedByCount{}, likeCount)
-}
-
-func (suite *PostServiceTest) TestUnlikePost_WhenSuccess() {
-	postUUID := "q1dsct52"
-
-	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(nil).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(1)
-
-	expectedCount := response.LikedByCount{LikeCount: 1}
-
-	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
-
-	suite.Nil(err)
-	suite.Equal(expectedCount, likeCount)
-}
-
-func (suite *PostServiceTest) TestUnlikePost_WhenRepositoryUnlikePostFails() {
-	postUUID := "q1dsct52"
-
-	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(1), nil).Times(0)
-
-	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
+	likeCount, err := suite.postService.LikePost(int64(1), postUUID, suite.goContext)
 
 	suite.NotNil(err)
 	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(response.LikedByCount{}, likeCount)
-}
-
-func (suite *PostServiceTest) TestUnlikePost_WhenGetCountByPostFails() {
-	postUUID := "q1dsct52"
-
-	suite.mockPostsRepository.EXPECT().UnlikePost(suite.goContext, "some-user", postUUID).Return(nil).Times(1)
-	suite.mockPostsRepository.EXPECT().GetLikesCountByPostID(suite.goContext, postUUID).Return(int64(0), errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-
-	likeCount, err := suite.postService.UnlikePost("some-user", postUUID, suite.goContext)
-
-	suite.NotNil(err)
-	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Equal(response.LikedByCount{}, likeCount)
-}
-
-func (suite *PostServiceTest) TestComment_WhenRepositoryCommentFails() {
-	suite.mockPostsRepository.EXPECT().CommentPost(suite.goContext, "some-user", "this is some comment", "1q2w3e4r5t6y").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	err := suite.postService.CommentPost(suite.goContext, "some-user", "1q2w3e4r5t6y", "this is some comment")
-	suite.NotNil(err)
-}
-
-func (suite *PostServiceTest) TestComment_WhenRepositoryCommentReturnsNoError() {
-	suite.mockPostsRepository.EXPECT().CommentPost(suite.goContext, "some-user", "this is some comment", "1q2w3e4r5t6y").Return(nil).Times(1)
-	err := suite.postService.CommentPost(suite.goContext, "some-user", "1q2w3e4r5t6y", "this is some comment")
-	suite.Nil(err)
-}
-
-func (suite *PostServiceTest) TestGetPost_WhenDbReturnsPost() {
-	post := response.Post{
-		PostID:                 "1q2w3e4r5t6y",
-		PostData:               models.JSONString{},
-		LikeCount:              1,
-		CommentCount:           1,
-		Interests:              []string{"Art", "Books", "Grammar"},
-		AuthorID:               "some-user",
-		PreviewImage:           "some-url",
-		PublishedAt:            1234567890,
-		IsViewerLiked:          true,
-		IsViewerIsAuthor:       false,
-		IsViewerFollowedAuthor: false,
-	}
-	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(post, nil).Times(1)
-	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.Nil(err)
-	suite.Equal(post, actualPost)
-}
-
-func (suite *PostServiceTest) TestGetPost_WhenDbReturnsNoPostFoundError() {
-	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(constants.NoPostFoundCode)).Times(1)
-	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(&constants.PostNotFoundErr, err)
-	suite.Empty(actualPost)
-}
-
-func (suite *PostServiceTest) TestGetPost_WhenDbReturnCommonError() {
-	suite.mockPostsRepository.EXPECT().FetchPost(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(response.Post{}, errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	actualPost, err := suite.postService.GetPost(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-	suite.Empty(actualPost)
-}
-
-func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsSuccess() {
-	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(nil).Times(1)
-	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.Nil(err)
-}
-
-func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsCommonError() {
-	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(constants.StoryInternalServerError(test_helper.ErrSomethingWentWrong), err)
-}
-
-func (suite *PostServiceTest) TestMarkReadLater_WhenRepositoryReturnsPostNotFoundError() {
-	suite.mockPostsRepository.EXPECT().MarkPostAsReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.NoPostFoundCode)).Times(1)
-	err := suite.postService.MarkReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(&constants.PostNotFoundErr, err)
-}
-
-func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsSuccess() {
-	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(nil).Times(1)
-	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.Nil(err)
-}
-
-func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsCommonError() {
-	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(test_helper.ErrSomethingWentWrong)).Times(1)
-	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(&constants.PostServiceFailureError, err)
-}
-
-func (suite *PostServiceTest) TestRemoveReadLater_WhenRepositoryReturnsPostNotFoundError() {
-	suite.mockPostsRepository.EXPECT().RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user").Return(errors.New(constants.PostNotInReadLaterCode)).Times(1)
-	err := suite.postService.RemoveReadLater(suite.goContext, "1q2w3e4r5t6y", "some-user")
-	suite.NotNil(err)
-	suite.Equal(&constants.PostNotInReadLaterErr, err)
+	suite.Equal(request.LikedByCount{}, likeCount)
 }

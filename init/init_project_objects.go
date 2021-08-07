@@ -1,11 +1,9 @@
 package init
 
 import (
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
-	"post-api/clients/user_profile"
+	"github.com/jmoiron/sqlx"
 	"post-api/configuration"
 	"post-api/controller"
-	"post-api/mapper"
 	"post-api/repository"
 	"post-api/service"
 	"post-api/utils"
@@ -17,17 +15,16 @@ var (
 	postController      controller.PostController
 )
 
-func Objects(db neo4j.Session, configData *configuration.ConfigData) {
-	userProfileClient := user_profile.NewClient(requestBuilder, configData)
-	interestsMapper := mapper.NewInterestsMapper()
+func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	draftRepository := repository.NewDraftRepository(db)
+	draftService := service.NewDraftService(draftRepository)
+	draftController = controller.NewDraftController(draftService)
 	interestsRepository := repository.NewInterestRepository(db)
-	interestsService := service.NewInterestsService(interestsRepository, userProfileClient, interestsMapper)
+	interestsService := service.NewInterestsService(interestsRepository)
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
-	draftService := service.NewDraftService(draftRepository, postValidator)
-	draftController = controller.NewDraftController(draftService)
-	postService := service.NewPostService(postRepository, draftRepository, postValidator, db)
+	previewPostRepository := repository.NewPreviewPostsRepository(db)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator, previewPostRepository)
 	postController = controller.NewPostController(postService)
 }

@@ -2,12 +2,8 @@ package utils
 
 import (
 	"context"
-	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"post-api/models"
-	"reflect"
-	"regexp"
 	"strings"
 )
 
@@ -86,85 +82,33 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 	return nil
 }
 
-func GetTitleAndTaglineFromSlateJson(ctx context.Context, titleJson models.JSONString) (string, string, error) {
+func GetTitleFromSlateJson(ctx context.Context, titleJson models.JSONString) (string, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
 	var postData []interface{}
 	err := titleJson.Unmarshal(&postData)
 
 	if err != nil {
 		logger.Errorf("Error occurred while unmarshalling title text from slate json %v", err)
-		return "", "", err
+		return "", err
 	}
 
-	var tagline string
 	var titleString string
 	for _, data := range postData {
-		if tagline != "" && titleString != "" {
-			break
-		}
 		singleData := data.(map[string]interface{})
 		singleChildren := singleData["children"].([]interface{})
 		for _, childrenData := range singleChildren {
-			if tagline != "" && titleString != "" {
-				break
-			}
 			data := childrenData.(map[string]interface{})
 			textString := data["text"].(string)
 			if textString != "" {
-				logger.Info(textString)
-				if titleString == "" {
-					if len(textString) > 100 {
-						titleString = string([]rune(textString)[:100])
-						continue
-					}
-					titleString = textString
-					continue
+				if len(textString) > 100 {
+					titleString = string([]rune(textString)[:100])
+					break
 				}
-				if tagline == "" {
-					if len(textString) > 100 {
-						tagline = string([]rune(textString)[:100])
-						continue
-					}
-					tagline = textString
-					continue
-				}
+				titleString = textString
+				break
 			}
 		}
 	}
 
-	return titleString, tagline, nil
-}
-
-func GenerateUrl(titleString string) string {
-	chars := []string{"]", "^", "\\\\", "[", ".", "(", ")", "!", "-", "@", "#", "%", "&", "*", "_", "+", "~", "`", "=", "{", "}", "\\", "/", "|", ",", ">", "<", "?", "$"}
-	r := strings.Join(chars, "")
-	re := regexp.MustCompile("[" + r + "]+")
-	titleString = re.ReplaceAllString(titleString, "")
-	lower := strings.ToLower(titleString)
-	trimmedSpace := spaceFieldJoin(lower)
-	return trimmedSpace
-}
-
-func spaceFieldJoin(str string) string {
-	return strings.Join(strings.Fields(str), "-")
-}
-
-func BindDbValues(result neo4j.Result, destination interface{}) (interface{}, error) {
-	reflection := reflect.ValueOf(destination)
-	values := make(map[string]interface{})
-	for i := 0; i < reflection.Type().NumField(); i++ {
-		field := reflection.Type().Field(i)
-		tag := field.Tag
-		bindingKey := tag.Get("db")
-		jsonBinding := tag.Get("json")
-		if bindingKey == "" || jsonBinding == "" {
-			continue
-		}
-		value, isPresent := result.Record().Get(bindingKey)
-		if !isPresent {
-			return nil, errors.New("key not found in db result")
-		}
-		values[jsonBinding] = value
-	}
-	return values, nil
+	return titleString, nil
 }

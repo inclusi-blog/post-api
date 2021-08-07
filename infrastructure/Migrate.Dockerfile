@@ -1,3 +1,3 @@
-FROM gola05/liquigraph:latest
+FROM gola05/flyway_alpine:latest
 
-COPY /database /home/gola/database
+COPY /database /home/gola/sql
