@@ -8,8 +8,9 @@ require (
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/gola-glitch/gola-utils v0.0.0-20201109184203-f981778adb53
-	github.com/golang/mock v1.4.3
+	github.com/gola-glitch/gola-utils v0.0.0-20210302140855-693836c039e7
+	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10 // indirect
@@ -19,7 +20,5 @@ require (
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.6.7
-	golang.org/x/tools v0.0.0-20200828161849-5deb26317202 // indirect
-	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

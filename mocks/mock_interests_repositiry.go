@@ -6,45 +6,61 @@ package mocks
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
-	db "post-api/models/db"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
-// MockInterestsRepository is a mock of InterestsRepository interface
+// MockInterestsRepository is a mock of InterestsRepository interface.
 type MockInterestsRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockInterestsRepositoryMockRecorder
 }
 
-// MockInterestsRepositoryMockRecorder is the mock recorder for MockInterestsRepository
+// MockInterestsRepositoryMockRecorder is the mock recorder for MockInterestsRepository.
 type MockInterestsRepositoryMockRecorder struct {
 	mock *MockInterestsRepository
 }
 
-// NewMockInterestsRepository creates a new mock instance
+// NewMockInterestsRepository creates a new mock instance.
 func NewMockInterestsRepository(ctrl *gomock.Controller) *MockInterestsRepository {
 	mock := &MockInterestsRepository{ctrl: ctrl}
 	mock.recorder = &MockInterestsRepositoryMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockInterestsRepository) EXPECT() *MockInterestsRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetInterests mocks base method
-func (m *MockInterestsRepository) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error) {
+// GetInterestIDs mocks base method.
+func (m *MockInterestsRepository) GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInterests", ctx, searchKeyword, selectedTags)
-	ret0, _ := ret[0].([]db.Interest)
+	ret := m.ctrl.Call(m, "GetInterestIDs", ctx, interestNames)
+	ret0, _ := ret[0].([]uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetInterests indicates an expected call of GetInterests
-func (mr *MockInterestsRepositoryMockRecorder) GetInterests(ctx, searchKeyword, selectedTags interface{}) *gomock.Call {
+// GetInterestIDs indicates an expected call of GetInterestIDs.
+func (mr *MockInterestsRepositoryMockRecorder) GetInterestIDs(ctx, interestNames interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsRepository)(nil).GetInterests), ctx, searchKeyword, selectedTags)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterestIDs", reflect.TypeOf((*MockInterestsRepository)(nil).GetInterestIDs), ctx, interestNames)
+}
+
+// GetInterests mocks base method.
+func (m *MockInterestsRepository) GetInterests(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInterests", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInterests indicates an expected call of GetInterests.
+func (mr *MockInterestsRepositoryMockRecorder) GetInterests(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInterests", reflect.TypeOf((*MockInterestsRepository)(nil).GetInterests), ctx)
 }

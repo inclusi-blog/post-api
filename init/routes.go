@@ -23,13 +23,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	})
 
 	router.Use(middleware.SessionTracingMiddleware)
-	router.Use(request_response_trace.HttpRequestResponseTracingMiddleware([]request_response_trace.IgnoreRequestResponseLogs{
-		{
-			PartialApiPath:       "api/post/healthz",
-			IsRequestLogAllowed:  false,
-			IsResponseLogAllowed: false,
-		},
-	}))
+	router.Use(request_response_trace.HttpRequestResponseTracingAllMiddlewareWithCustomHealthEndpoint("api/post/healthz"))
 
 	corsConfig := corsModel.CorsConfig{
 		AllowedOrigins: configData.AllowedOrigins,
@@ -56,19 +50,19 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	draftGroup := defaultRouterGroup.Group("/draft")
 	{
-		draftGroup.POST("/upsert-draft", draftController.SaveDraft)
-		draftGroup.POST("/tagline", draftController.SaveTagline)
-		draftGroup.POST("/upsert-interests", draftController.SaveInterests)
-		draftGroup.GET("/get-draft/:draft_id", draftController.GetDraft)
+		draftGroup.PUT("", draftController.SaveDraft)
+		draftGroup.PUT("/tagline", draftController.SaveTagline)
+		draftGroup.PUT("/interests", draftController.SaveInterests)
+		draftGroup.GET("/draft", draftController.GetDraft)
 		draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
-		draftGroup.POST("/upsert-preview-image", draftController.SavePreviewImage)
+		draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
 	}
 
-	defaultRouterGroup.POST("/get-interests", interestsController.GetInterests)
+	defaultRouterGroup.GET("/interests", interestsController.GetInterests)
 
 	postGroup := defaultRouterGroup.Group("/post")
 	{
 		postGroup.POST("/publish", postController.PublishPost)
-		postGroup.GET("/update-likes/:post_id", postController.UpdateLikes)
+		postGroup.GET("/like", postController.Like)
 	}
 }

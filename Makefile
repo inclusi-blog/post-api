@@ -4,7 +4,7 @@ PROJECT := post-api
 REVISION := latest
 RELEASE_SCRIPTS_VERSION := latest
 
-BUILD_VENDOR := git config --global url."https://gola-glitch:2f139c1997392434c4acfd282d8d91d70325ac8f@github.com".insteadOf "https://github.com" && \
+BUILD_VENDOR := git config --global url."https://gola-glitch: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@github.com".insteadOf "https://github.com" && \
                 go env -w GOPRIVATE=github.com/gola-glitch && go mod vendor && chmod -R +w vendor
 
 docker_login:

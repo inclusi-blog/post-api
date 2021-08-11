@@ -23,19 +23,16 @@ type postValidator struct {
 func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx context.Context) (models.MetaData, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostValidator").WithField("method", "ValidateAndGetReadTime")
 
+	if len(draft.InterestTags) == 0 {
+		logger.Error("interest is empty")
+		return models.MetaData{}, &constants.DraftInterestParseError
+	}
+
 	draftID := draft.DraftID
 	id := draftID
 	logger.Infof("Validating draft to publish for draft id %v", id)
 
 	config := validator.configData.ContentReadTimeConfig
-
-	var interests []interface{}
-	err := draft.Interest.Unmarshal(&interests)
-
-	if err != nil {
-		logger.Errorf("Error occurred while validating draft interests for draft id %v .%v", id, err)
-		return models.MetaData{}, &constants.DraftInterestParseError
-	}
 
 	var postWordsCount int
 	var imageCount int
@@ -43,7 +40,7 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 	var extractedTagline string
 	var titleString string
 	var previewImage string
-	wordCountFetchErr := GetNumberOfWords(draft.PostData, &postWordsCount, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
+	wordCountFetchErr := GetNumberOfWords(draft.Data, &postWordsCount, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
 
 	if wordCountFetchErr != nil {
 		logger.Errorf("invalid post data for draft id %v .%v", id, wordCountFetchErr)
@@ -52,12 +49,8 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 
 	readTime = CountContentReadTime(postWordsCount)
 	CountImageReadTime(imageCount, &readTime)
-	for _, value := range interests {
-		interest := value.(map[string]interface{})
-		if interest["name"] == "" {
-			return models.MetaData{}, &constants.DraftInterestParseError
-		}
-		configReadTime := config[interest["name"].(string)]
+	for _, value := range draft.InterestTags {
+		configReadTime := config[value]
 		if configReadTime != 0 {
 			if readTime < configReadTime {
 				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)

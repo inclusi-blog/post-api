@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
@@ -10,8 +9,6 @@ import (
 	"net/http/httptest"
 	"post-api/constants"
 	"post-api/mocks"
-	"post-api/models/db"
-	"post-api/models/request"
 	"testing"
 )
 
@@ -41,21 +38,11 @@ func TestInterestsControllerTestSuite(t *testing.T) {
 }
 
 func (suite *InterestsControllerTest) TestGetInterests_WhenSuccess() {
-	interestSearchRequest := request.SearchInterests{
-		SearchKeyword: "sport",
-		SelectedTags:  []string{"he"},
-	}
-
-	bytesJson, err := json.Marshal(interestSearchRequest)
-	suite.Nil(err)
-
-	expectedInterests := []db.Interest{{
-		Name: "some-interest",
-	}}
-	suite.mockInterestService.EXPECT().GetInterests(suite.context, "sport", []string{"he"}).Return(expectedInterests, nil).Times(1)
+	expectedInterests := []string{"some-interests"}
+	suite.mockInterestService.EXPECT().GetInterests(suite.context).Return(expectedInterests, nil).Times(1)
 	marshal, err := json.Marshal(expectedInterests)
 
-	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", bytes.NewBufferString(string(bytesJson)))
+	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/interests", nil)
 	suite.Nil(err)
 
 	suite.interestsController.GetInterests(suite.context)
@@ -65,33 +52,13 @@ func (suite *InterestsControllerTest) TestGetInterests_WhenSuccess() {
 }
 
 func (suite *InterestsControllerTest) TestGetInterests_WhenServiceReturnsError() {
-	interestSearchRequest := request.SearchInterests{
-		SearchKeyword: "sport",
-		SelectedTags:  []string{"he"},
-	}
-
-	bytesJson, err := json.Marshal(interestSearchRequest)
-	suite.Nil(err)
-
-	suite.mockInterestService.EXPECT().GetInterests(suite.context, "sport", []string{"he"}).Return(nil, &constants.PostServiceFailureError).Times(1)
+	suite.mockInterestService.EXPECT().GetInterests(suite.context).Return(nil, &constants.PostServiceFailureError).Times(1)
 
 	marshal, err := json.Marshal(&constants.PostServiceFailureError)
-	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", bytes.NewBufferString(string(bytesJson)))
+	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", nil)
 	suite.Nil(err)
 	suite.interestsController.GetInterests(suite.context)
 
 	suite.Equal(500, suite.recorder.Code)
-	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
-}
-
-func (suite *InterestsControllerTest) TestGetInterests_WhenInvalidRequest() {
-	suite.mockInterestService.EXPECT().GetInterests(suite.context, "sport", []string{}).Return([]db.Interest{}, nil).Times(0)
-
-	marshal, err := json.Marshal(&constants.PayloadValidationError)
-	suite.context.Request, err = http.NewRequest(http.MethodGet, "/api/v1/post/get-interests", bytes.NewBufferString(`{}`))
-	suite.Nil(err)
-	suite.interestsController.GetInterests(suite.context)
-
-	suite.Equal(400, suite.recorder.Code)
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }

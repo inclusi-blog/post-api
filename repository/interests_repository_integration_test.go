@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -21,6 +22,7 @@ type InterestsRepositoryIntegrationTest struct {
 }
 
 func (suite *InterestsRepositoryIntegrationTest) SetupTest() {
+	err := godotenv.Load("../docker-compose-test.env")
 	connectionString := dbhelper.BuildConnectionString()
 	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
@@ -50,13 +52,13 @@ func TestInterestsRepositoryIntegrationTest(t *testing.T) {
 }
 
 func (suite *InterestsRepositoryIntegrationTest) TestGetInterests_WhenDbReturnsData() {
-	interests, err := suite.interestsRepository.GetInterests(suite.goContext, "", []string{"sports"})
+	interests, err := suite.interestsRepository.GetInterests(suite.goContext)
 	suite.Nil(err)
-	suite.Equal(13, len(interests))
+	suite.Len(interests, 103)
 }
 
-func (suite *InterestsRepositoryIntegrationTest) TestGetInterests_WhenSearchKeywordPassedDbReturnsData() {
-	interests, err := suite.interestsRepository.GetInterests(suite.goContext, "he", []string{})
+func (suite *InterestsRepositoryIntegrationTest) TestGetInterestIDs_WhenThereAreInterests() {
+	interestIDs, err := suite.interestsRepository.GetInterestIDs(suite.goContext, []string{"Art", "Culture", "Entertainment"})
 	suite.Nil(err)
-	suite.Equal(1, len(interests))
+	suite.Len(interestIDs, 3)
 }

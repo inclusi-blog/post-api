@@ -1,13 +1,20 @@
 package models
 
+import "github.com/google/uuid"
+
 type UpsertDraft struct {
-	DraftID  string     `json:"draft_id" binding:"required" db:"DRAFT_ID"`
-	UserID   string     `json:"user_id" binding:"required" db:"USER_ID"`
-	PostData JSONString `json:"post_data" db:"POST_DATA"`
+	DraftID uuid.UUID
+	UserID  uuid.UUID
+	Data    JSONString `json:"data" db:"data"`
 }
 
 type GetAllDraftRequest struct {
-	UserID     string `json:"user_id" binding:"required" db:"USER_ID"`
-	StartValue int    `json:"start_value" binding:"required" `
-	Limit      int    `json:"limit" binding:"required" `
+	UserID     uuid.UUID
+	StartValue int `json:"start_value" binding:"required" `
+	Limit      int `json:"limit" binding:"required" `
+}
+
+type CreateDraft struct {
+	Data   JSONString `json:"data"`
+	UserID uuid.UUID
 }

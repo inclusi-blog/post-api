@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"post-api/constants"
 	"post-api/mocks"
-	"post-api/models/db"
 	"testing"
 )
 
@@ -35,31 +34,26 @@ func (suite *InterestsServiceTest) TearDownTest() {
 }
 
 func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() {
-	expectedData := []db.Interest{
-		{
-			Name: "some-interests",
-			ID:   "1",
-		},
-	}
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(expectedData, nil).Times(1)
+	expectedData := []string{"Sports","Culture"}
+	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext).Return(expectedData, nil).Times(1)
 
-	actualInterests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
+	actualInterests, err := suite.interestsService.GetInterests(suite.goContext)
 
 	suite.Nil(err)
 	suite.Equal(expectedData, actualInterests)
 }
 
 func (suite *InterestsServiceTest) TestGetInterests_WhenDbReturnsError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, sql.ErrNoRows).Times(1)
-	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
+	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext).Return(nil, sql.ErrNoRows).Times(1)
+	interests, err := suite.interestsService.GetInterests(suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(&constants.PostServiceFailureError, err)
 	suite.Len(interests, 0)
 }
 
 func (suite *InterestsServiceTest) TestGetInterests_WhenNoDataReturnedWithNoError() {
-	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext, "sports", []string{}).Return(nil, nil).Times(1)
-	interests, err := suite.interestsService.GetInterests(suite.goContext, "sports", []string{})
+	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext).Return(nil, nil).Times(1)
+	interests, err := suite.interestsService.GetInterests(suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(&constants.NoInterestsFoundError, err)
 	suite.Len(interests, 0)

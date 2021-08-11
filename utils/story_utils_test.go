@@ -52,6 +52,6 @@ func TestGetNumberOfWords(t *testing.T) {
 	titleString := ""
 	previewImage := ""
 	err := GetNumberOfWords(models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}, &readTime, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
-	assert.Equal(t, 890, readTime)
+	assert.Equal(t, 892, readTime)
 	assert.Nil(t, err)
 }

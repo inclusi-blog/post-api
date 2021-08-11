@@ -1,18 +1,19 @@
 package controller
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	golaConstants "github.com/gola-glitch/gola-utils/middleware/introspection/oauth-middleware/constants"
+	"github.com/gola-glitch/gola-utils/model"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"post-api/constants"
 	"post-api/mocks"
-	"post-api/models/request"
 	"post-api/validators"
 	"testing"
 )
@@ -24,6 +25,8 @@ type PostControllerTest struct {
 	context         *gin.Context
 	mockPostService *mocks.MockPostService
 	postController  PostController
+	userUUID        uuid.UUID
+	idToken         model.IdToken
 }
 
 func (suite *PostControllerTest) SetupTest() {
@@ -35,6 +38,15 @@ func (suite *PostControllerTest) SetupTest() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		_ = v.RegisterValidation("validPostUID", validators.ValidPostUID)
 	}
+	suite.userUUID = uuid.New()
+	suite.idToken = model.IdToken{
+		UserId:          suite.userUUID.String(),
+		Username:        "dummy-user",
+		Email:           "dummuser@gmail.com",
+		Subject:         "gola",
+		AccessTokenHash: "dummy-hash",
+	}
+	suite.context.Set(golaConstants.ContextDecryptedIdTokenKey, suite.idToken)
 }
 
 func (suite *PostControllerTest) TearDownTest() {
@@ -46,20 +58,32 @@ func TestPostControllerTestSuite(t *testing.T) {
 }
 
 func (suite *PostControllerTest) TestPublishPost_WhenSuccess() {
-	draftId := "1q2we3r"
-
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(nil).Times(1)
-	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
+	draftId := uuid.New()
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, suite.userUUID).Return(nil).Times(1)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/publish?draft="+draftId.String(), nil)
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 	suite.Equal(`{"status":"published"}`, string(suite.recorder.Body.Bytes()))
 }
 
+func (suite *PostControllerTest) TestPublishPost_WhenTokenNotExists() {
+	suite.context, _ = gin.CreateTestContext(suite.recorder)
+	draftId := uuid.New()
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, suite.userUUID).Return(nil).Times(0)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/publish?draft="+draftId.String(), nil)
+	suite.postController.PublishPost(suite.context)
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	expectedErr := &constants.InternalServerError
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
+
 func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 	draftId := "1q2we3r"
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(nil).Times(0)
-	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": ""}`))
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, suite.userUUID).Return(nil).Times(0)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/publish?draft", nil)
 	suite.postController.PublishPost(suite.context)
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 	expectedErr := &constants.PayloadValidationError
@@ -69,10 +93,10 @@ func (suite *PostControllerTest) TestPublishPost_WhenBadRequest() {
 }
 
 func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
-	draftId := "1q2we3r"
+	draftId := uuid.New()
 
-	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId).Return(&constants.InternalServerError).Times(1)
-	suite.context.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/post/publish", bytes.NewBufferString(`{ "draft_id": "1q2we3r"}`))
+	suite.mockPostService.EXPECT().PublishPost(suite.context, draftId, suite.userUUID).Return(&constants.InternalServerError).Times(1)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/publish?draft="+draftId.String(), nil)
 	suite.postController.PublishPost(suite.context)
 	expectedErr := &constants.InternalServerError
 	marshal, err := json.Marshal(expectedErr)
@@ -81,84 +105,78 @@ func (suite *PostControllerTest) TestPublishPost_WhenPublishPostFails() {
 	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenSuccess() {
-	postID := "q2w3e4r5tqaz"
+func (suite *PostControllerTest) TestLikes_WhenSuccess() {
+	postID := uuid.New()
 
-	likeCount := request.LikedByCount{LikeCount: 1}
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(1)
+	suite.mockPostService.EXPECT().LikePost(suite.context, postID, suite.userUUID).Return(nil).Times(1)
 
 	params := gin.Params{
 		gin.Param{
-			Key:   "post_id",
-			Value: "q2w3e4r5tqaz",
+			Key:   "post",
+			Value: postID.String(),
 		},
 	}
 	suite.context.Params = params
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
-	jsonBytes, err := json.Marshal(likeCount)
-	suite.Nil(err)
-	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/like?post="+postID.String(), nil)
+
+	suite.postController.Like(suite.context)
 	suite.Equal(http.StatusOK, suite.recorder.Code)
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenBadRequest() {
-	postID := "1"
+func (suite *PostControllerTest) TestLikes_WhenIDTokenNotPresent() {
+	suite.context, _ = gin.CreateTestContext(suite.recorder)
+	postID := uuid.New()
 
-	likeCount := request.LikedByCount{LikeCount: 1}
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(likeCount, nil).Times(0)
+	suite.mockPostService.EXPECT().LikePost(suite.context, postID, suite.userUUID).Return(nil).Times(0)
 
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/1", nil)
 	params := gin.Params{
 		gin.Param{
-			Key:   "post_id",
-			Value: "1",
+			Key:   "post",
+			Value: postID.String(),
 		},
 	}
 	suite.context.Params = params
-	suite.postController.UpdateLikes(suite.context)
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/like?post="+postID.String(), nil)
+
+	suite.postController.Like(suite.context)
+	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
+	expectedErr := &constants.InternalServerError
+	marshal, err := json.Marshal(expectedErr)
+	suite.Nil(err)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
+}
+
+func (suite *PostControllerTest) TestLikes_WhenBadRequest() {
+	postID := uuid.New()
+
+	suite.mockPostService.EXPECT().LikePost(suite.context, postID, suite.userUUID).Return(nil).Times(0)
+
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/like?post=", nil)
+	suite.postController.Like(suite.context)
 	jsonBytes, err := json.Marshal(constants.PayloadValidationError)
 	suite.Nil(err)
 	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
 	suite.Equal(http.StatusBadRequest, suite.recorder.Code)
 }
 
-func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFails() {
-	postID := "q2w3e4r5tqaz"
+func (suite *PostControllerTest) TestLikes_WhenUnableToLikePost() {
+	postID := uuid.New()
 
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(request.LikedByCount{}, constants.StoryInternalServerError("something went wrong")).Times(1)
+	suite.mockPostService.EXPECT().LikePost(suite.context, postID, suite.userUUID).Return(&constants.InternalServerError).Times(1)
 
 	params := gin.Params{
 		gin.Param{
-			Key:   "post_id",
-			Value: "q2w3e4r5tqaz",
+			Key:   "post",
+			Value: postID.String(),
 		},
 	}
 	suite.context.Params = params
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
-	jsonBytes, err := json.Marshal(constants.StoryInternalServerError("something went wrong"))
-	suite.Nil(err)
-	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
+	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/like?post="+postID.String(), nil)
+
+	suite.postController.Like(suite.context)
 	suite.Equal(http.StatusInternalServerError, suite.recorder.Code)
-}
-
-func (suite *PostControllerTest) TestUpdateLikes_WhenLikeUpdateServiceFailsWithNotFoundPostForGivenPostID() {
-	postID := "q2w3e4r5tqaz"
-
-	suite.mockPostService.EXPECT().LikePost(int64(1), postID, suite.context).Return(request.LikedByCount{}, &constants.PostNotFoundErr).Times(1)
-
-	params := gin.Params{
-		gin.Param{
-			Key:   "post_id",
-			Value: "q2w3e4r5tqaz",
-		},
-	}
-	suite.context.Params = params
-	suite.context.Request, _ = http.NewRequest(http.MethodGet, "/api/v1/post/update-likes/q2w3e4r5tqaz", nil)
-	suite.postController.UpdateLikes(suite.context)
-	jsonBytes, err := json.Marshal(&constants.PostNotFoundErr)
+	expectedErr := &constants.InternalServerError
+	marshal, err := json.Marshal(expectedErr)
 	suite.Nil(err)
-	suite.Equal(string(jsonBytes), suite.recorder.Body.String())
-	suite.Equal(http.StatusNotFound, suite.recorder.Code)
+	suite.Equal(string(marshal), string(suite.recorder.Body.Bytes()))
 }

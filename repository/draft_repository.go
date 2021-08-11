@@ -6,6 +6,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/models/request"
@@ -16,26 +18,39 @@ import (
 
 type DraftRepository interface {
 	SavePostDraft(draft models.UpsertDraft, ctx context.Context) error
+	CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error)
 	SaveTaglineToDraft(taglineSaveRequest request.TaglineSaveRequest, ctx context.Context) error
 	SaveInterestsToDraft(interestsSaveRequest request.InterestsSaveRequest, ctx context.Context) error
-	GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error)
+	GetDraft(ctx context.Context, draftUID, userID uuid.UUID) (db.Draft, error)
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
-	DeleteDraft(ctx context.Context, draftUID string) error
+	DeleteDraft(ctx context.Context, draftUID, userUUID uuid.UUID) error
 }
 
 const (
-	SavePostDraft    = "INSERT INTO drafts (draft_id, user_id, post_data) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET POST_DATA = $4, UPDATED_AT = current_timestamp"
-	SaveTagline      = "INSERT INTO drafts (draft_id, user_id, tagline) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET tagline = $4, UPDATED_AT = current_timestamp"
-	SaveInterests    = "INSERT INTO drafts (draft_id, user_id, interest) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET interest = $4, UPDATED_AT = current_timestamp"
-	FetchDraft       = "SELECT draft_id, user_id, tagline, preview_image, interest, post_data FROM DRAFTS WHERE draft_id = $1"
-	SavePreviewImage = "INSERT INTO drafts (draft_id, user_id, preview_image) VALUES($1, $2, $3) ON CONFLICT(draft_id) DO UPDATE SET preview_image = $4, UPDATED_AT = current_timestamp"
-	FetchAllDraft    = "SELECT draft_id, user_id, tagline, interest, post_data FROM DRAFTS WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-	DeleteDraft      = "DELETE FROM drafts where draft_id = $1"
+	CreateDraft      = "insert into drafts (id, user_id, data) values(uuid_generate_v4(), $1, $2) returning id"
+	SavePostDraft    = "update drafts set data = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	SaveTagline      = "update drafts set tagline = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	SaveInterests    = "update drafts set interests = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	FetchDraft       = "select id, user_id, data, preview_image, tagline, interests from drafts where id = $1 and user_id = $2"
+	SavePreviewImage = "update drafts set preview_image = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	FetchAllDraft    = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 order by created_at desc limit $2 offset $3"
+	DeleteDraft      = "delete from drafts where id = $1 and user_id = $2"
 )
 
 type draftRepository struct {
 	db *sqlx.DB
+}
+
+func (repository draftRepository) CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error) {
+	var draftUUID uuid.UUID
+	err := repository.db.GetContext(ctx, &draftUUID, CreateDraft, draft.UserID, draft.Data)
+
+	if err != nil {
+		return draftUUID, err
+	}
+
+	return draftUUID, nil
 }
 
 func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error {
@@ -43,7 +58,7 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 
 	logger.Infof("Storing preview image for draft id %v", saveRequest.DraftID)
 
-	result, err := repository.db.ExecContext(ctx, SavePreviewImage, saveRequest.DraftID, saveRequest.UserID, saveRequest.PreviewImageUrl, saveRequest.PreviewImageUrl)
+	result, err := repository.db.ExecContext(ctx, SavePreviewImage, saveRequest.PreviewImageUrl, saveRequest.DraftID, saveRequest.UserID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while saving preview image of draft %v", saveRequest.DraftID)
@@ -57,9 +72,9 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 		return err
 	}
 
-	if affectedNoRows != 1 {
+	if affectedNoRows == 0 {
 		logger.Errorf("Error occurred while updating preview image for draft .%v", "More than one entry got updated")
-		return errors.New("more than one entry got updated")
+		return errors.New("draft not found")
 	}
 
 	logger.Infof("Successfully updated the preview image for draft id %v", saveRequest.DraftID)
@@ -67,18 +82,18 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 	return nil
 }
 
-func (repository draftRepository) GetDraft(ctx context.Context, draftUID string) (db.DraftDB, error) {
+func (repository draftRepository) GetDraft(ctx context.Context, draftUID, userID uuid.UUID) (db.Draft, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "GetDraft")
 
 	logger.Infof("Fetching draft from draft repository for the given draft id %v", draftUID)
 
-	var draft db.DraftDB
+	var draft db.Draft
 
-	err := repository.db.GetContext(ctx, &draft, FetchDraft, draftUID)
+	err := repository.db.GetContext(ctx, &draft, FetchDraft, draftUID, userID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching draft from draft repository %v", err)
-		return db.DraftDB{}, err
+		return db.Draft{}, err
 	}
 
 	logger.Infof("Successfully fetching draft from draft repository for given draft id %v", draftUID)
@@ -92,11 +107,21 @@ func (repository draftRepository) SavePostDraft(draft models.UpsertDraft, ctx co
 
 	log.Infof("Inserting or updating the existing post in draft for user %v", draft.UserID)
 
-	_, err := repository.db.ExecContext(ctx, SavePostDraft, draft.DraftID, draft.UserID, draft.PostData, draft.PostData)
+	result, err := repository.db.ExecContext(ctx, SavePostDraft, draft.Data, draft.DraftID, draft.UserID)
 
 	if err != nil {
 		log.Errorf("Error occurred while updating post in draft for user %v", err)
 		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Infof("unable to get affected rows")
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Error("no such draft")
+		return errors.New("draft not found")
 	}
 
 	return nil
@@ -106,12 +131,22 @@ func (repository draftRepository) SaveTaglineToDraft(taglineSaveRequest request.
 	logger := logging.GetLogger(ctx).WithField("class", "DraftRepository").WithField("method", "SaveTaglineToDraft")
 	logger.Info("Inserting tagline or upserting to the draft for the given draft id")
 
-	//TODO Need to check affected rows
-	_, err := repository.db.ExecContext(ctx, SaveTagline, taglineSaveRequest.DraftID, taglineSaveRequest.UserID, taglineSaveRequest.Tagline, taglineSaveRequest.Tagline)
+	result, err := repository.db.ExecContext(ctx, SaveTagline, taglineSaveRequest.Tagline, taglineSaveRequest.DraftID, taglineSaveRequest.UserID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while updating post tagline in draft for user %v", err)
 		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Errorf("unable to get affected rows %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		logger.Errorf("draft not found")
+		return errors.New("draft not found")
 	}
 
 	logger.Infof("Successfully saved the tagline for draft id %v", taglineSaveRequest.Tagline)
@@ -123,11 +158,22 @@ func (repository draftRepository) SaveInterestsToDraft(interestsSaveRequest requ
 	logger.Info("Inserting interests or upserting to the draft for the given draft id")
 
 	// TODO Need to check affected rows
-	_, err := repository.db.ExecContext(ctx, SaveInterests, interestsSaveRequest.DraftID, interestsSaveRequest.UserID, interestsSaveRequest.Interests, interestsSaveRequest.Interests)
+	result, err := repository.db.ExecContext(ctx, SaveInterests, pq.Array(interestsSaveRequest.Interests), interestsSaveRequest.DraftID, interestsSaveRequest.UserID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while updating post tagline in draft for user %v", err)
 		return err
+	}
+
+	rowAffected, err := result.RowsAffected()
+
+	if err != nil {
+		logger.Errorf("unable to get affected rows %v", err)
+		return err
+	}
+	if rowAffected == 0 {
+		logger.Errorf("no row affected, draft not found")
+		return errors.New("draft not found")
 	}
 
 	logger.Infof("Successfully saved the Interests for draft id %v", interestsSaveRequest.Interests)
@@ -139,33 +185,26 @@ func (repository draftRepository) GetAllDraft(ctx context.Context, allDraftReq m
 
 	logger.Infof("Fetching draft from draft repository for the given user id %v", allDraftReq.UserID)
 
-	var allDraft []db.Draft
+	var drafts []db.Draft
 
-	rows, err := repository.db.QueryContext(ctx, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
+	err := repository.db.SelectContext(ctx, &drafts, FetchAllDraft, allDraftReq.UserID, allDraftReq.Limit, allDraftReq.StartValue)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching all draft from draft repository %v", err)
-		return allDraft, err
+		return drafts, err
 	}
 
-	for rows.Next() {
-		var draft db.Draft
-		if scanErr := rows.Scan(&draft.DraftID, &draft.UserID, &draft.Tagline, &draft.Interest, &draft.PostData); scanErr != nil {
-			return []db.Draft{}, scanErr
-		}
-		allDraft = append(allDraft, draft)
-	}
 	logger.Infof("Successfully fetching draft from draft repository for given user id %v", allDraftReq.UserID)
 
-	return allDraft, nil
+	return drafts, nil
 }
 
-func (repository draftRepository) DeleteDraft(ctx context.Context, draftUID string) error {
+func (repository draftRepository) DeleteDraft(ctx context.Context, draftUID, userUUID uuid.UUID) error {
 	logger := logging.GetLogger(ctx).WithField("class", "").WithField("method", "DeleteDraft")
 
 	logger.Infof("Deleting draft for the given draft uid %v", draftUID)
 
-	result, err := repository.db.ExecContext(ctx, DeleteDraft, draftUID)
+	result, err := repository.db.ExecContext(ctx, DeleteDraft, draftUID, userUUID)
 
 	if err != nil {
 		logger.Errorf("error occurred while deleting draft from draft repository for draft id %v", draftUID)
@@ -178,10 +217,11 @@ func (repository draftRepository) DeleteDraft(ctx context.Context, draftUID stri
 		return err
 	}
 
-	if affectedRows != 1 {
+	if affectedRows == 0 {
 		logger.Errorf("draft not found or more than on draft deleted for draft id %v", draftUID)
 		return sql.ErrNoRows
 	}
+
 	logger.Info("Successfully deleted draft")
 	return nil
 }

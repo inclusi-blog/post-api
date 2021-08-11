@@ -4,6 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"post-api/configuration"
 	"post-api/controller"
+	"post-api/helper"
 	"post-api/repository"
 	"post-api/service"
 	"post-api/utils"
@@ -16,6 +17,7 @@ var (
 )
 
 func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
+	manager := helper.NewTransactionManager(db)
 	draftRepository := repository.NewDraftRepository(db)
 	draftService := service.NewDraftService(draftRepository)
 	draftController = controller.NewDraftController(draftService)
@@ -24,7 +26,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	interestsController = controller.NewInterestsController(interestsService)
 	postRepository := repository.NewPostsRepository(db)
 	postValidator := utils.NewPostValidator(configData)
-	previewPostRepository := repository.NewPreviewPostsRepository(db)
-	postService := service.NewPostService(postRepository, draftRepository, postValidator, previewPostRepository)
+	previewPostRepository := repository.NewAbstractPostRepository(db)
+	postService := service.NewPostService(postRepository, draftRepository, postValidator, previewPostRepository, interestsRepository, manager)
 	postController = controller.NewPostController(postService)
 }

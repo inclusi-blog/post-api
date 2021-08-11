@@ -6,66 +6,127 @@ package mocks
 
 import (
 	context "context"
-	golaerror "github.com/gola-glitch/gola-utils/golaerror"
-	gomock "github.com/golang/mock/gomock"
 	models "post-api/models"
 	db "post-api/models/db"
 	request "post-api/models/request"
 	reflect "reflect"
+
+	golaerror "github.com/gola-glitch/gola-utils/golaerror"
+	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
-// MockDraftService is a mock of DraftService interface
+// MockDraftService is a mock of DraftService interface.
 type MockDraftService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDraftServiceMockRecorder
 }
 
-// MockDraftServiceMockRecorder is the mock recorder for MockDraftService
+// MockDraftServiceMockRecorder is the mock recorder for MockDraftService.
 type MockDraftServiceMockRecorder struct {
 	mock *MockDraftService
 }
 
-// NewMockDraftService creates a new mock instance
+// NewMockDraftService creates a new mock instance.
 func NewMockDraftService(ctrl *gomock.Controller) *MockDraftService {
 	mock := &MockDraftService{ctrl: ctrl}
 	mock.recorder = &MockDraftServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDraftService) EXPECT() *MockDraftServiceMockRecorder {
 	return m.recorder
 }
 
-// SaveDraft mocks base method
-func (m *MockDraftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
+// CreateDraft mocks base method.
+func (m *MockDraftService) CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveDraft", postData, ctx)
+	ret := m.ctrl.Call(m, "CreateDraft", ctx, draft)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDraft indicates an expected call of CreateDraft.
+func (mr *MockDraftServiceMockRecorder) CreateDraft(ctx, draft interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDraft", reflect.TypeOf((*MockDraftService)(nil).CreateDraft), ctx, draft)
+}
+
+// DeleteDraft mocks base method.
+func (m *MockDraftService) DeleteDraft(ctx context.Context, draftID, userUUID uuid.UUID) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDraft", ctx, draftID, userUUID)
 	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
-// SaveDraft indicates an expected call of SaveDraft
-func (mr *MockDraftServiceMockRecorder) SaveDraft(postData, ctx interface{}) *gomock.Call {
+// DeleteDraft indicates an expected call of DeleteDraft.
+func (mr *MockDraftServiceMockRecorder) DeleteDraft(ctx, draftID, userUUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveDraft", reflect.TypeOf((*MockDraftService)(nil).SaveDraft), postData, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), ctx, draftID, userUUID)
 }
 
-// UpsertTagline mocks base method
-func (m *MockDraftService) UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error {
+// GetAllDraft mocks base method.
+func (m *MockDraftService) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertTagline", taglineRequest, ctx)
+	ret := m.ctrl.Call(m, "GetAllDraft", ctx, allDraftReq)
+	ret0, _ := ret[0].([]db.DraftPreview)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllDraft indicates an expected call of GetAllDraft.
+func (mr *MockDraftServiceMockRecorder) GetAllDraft(ctx, allDraftReq interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftService)(nil).GetAllDraft), ctx, allDraftReq)
+}
+
+// GetDraft mocks base method.
+func (m *MockDraftService) GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID, userUUID)
+	ret0, _ := ret[0].(db.Draft)
+	ret1, _ := ret[1].(*golaerror.Error)
+	return ret0, ret1
+}
+
+// GetDraft indicates an expected call of GetDraft.
+func (mr *MockDraftServiceMockRecorder) GetDraft(ctx, draftUID, userUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), ctx, draftUID, userUUID)
+}
+
+// SavePreviewImage mocks base method.
+func (m *MockDraftService) SavePreviewImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SavePreviewImage", ctx, imageSaveRequest)
 	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
-// UpsertTagline indicates an expected call of UpsertTagline
-func (mr *MockDraftServiceMockRecorder) UpsertTagline(taglineRequest, ctx interface{}) *gomock.Call {
+// SavePreviewImage indicates an expected call of SavePreviewImage.
+func (mr *MockDraftServiceMockRecorder) SavePreviewImage(ctx, imageSaveRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTagline", reflect.TypeOf((*MockDraftService)(nil).UpsertTagline), taglineRequest, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePreviewImage", reflect.TypeOf((*MockDraftService)(nil).SavePreviewImage), ctx, imageSaveRequest)
 }
 
-// UpsertInterests mocks base method
+// UpdateDraft mocks base method.
+func (m *MockDraftService) UpdateDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDraft", postData, ctx)
+	ret0, _ := ret[0].(*golaerror.Error)
+	return ret0
+}
+
+// UpdateDraft indicates an expected call of UpdateDraft.
+func (mr *MockDraftServiceMockRecorder) UpdateDraft(postData, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockDraftService)(nil).UpdateDraft), postData, ctx)
+}
+
+// UpsertInterests mocks base method.
 func (m *MockDraftService) UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertInterests", interestRequest, ctx)
@@ -73,66 +134,22 @@ func (m *MockDraftService) UpsertInterests(interestRequest request.InterestsSave
 	return ret0
 }
 
-// UpsertInterests indicates an expected call of UpsertInterests
+// UpsertInterests indicates an expected call of UpsertInterests.
 func (mr *MockDraftServiceMockRecorder) UpsertInterests(interestRequest, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertInterests", reflect.TypeOf((*MockDraftService)(nil).UpsertInterests), interestRequest, ctx)
 }
 
-// GetDraft mocks base method
-func (m *MockDraftService) GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error) {
+// UpsertTagline mocks base method.
+func (m *MockDraftService) UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDraft", draftUID, ctx)
-	ret0, _ := ret[0].(db.Draft)
-	ret1, _ := ret[1].(*golaerror.Error)
-	return ret0, ret1
-}
-
-// GetDraft indicates an expected call of GetDraft
-func (mr *MockDraftServiceMockRecorder) GetDraft(draftUID, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftService)(nil).GetDraft), draftUID, ctx)
-}
-
-// GetAllDraft mocks base method
-func (m *MockDraftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllDraft", allDraftReq, ctx)
-	ret0, _ := ret[0].([]db.AllDraft)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllDraft indicates an expected call of GetAllDraft
-func (mr *MockDraftServiceMockRecorder) GetAllDraft(allDraftReq, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDraft", reflect.TypeOf((*MockDraftService)(nil).GetAllDraft), allDraftReq, ctx)
-}
-
-// SavePreviewImage mocks base method
-func (m *MockDraftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SavePreviewImage", imageSaveRequest, ctx)
+	ret := m.ctrl.Call(m, "UpsertTagline", taglineRequest, ctx)
 	ret0, _ := ret[0].(*golaerror.Error)
 	return ret0
 }
 
-// SavePreviewImage indicates an expected call of SavePreviewImage
-func (mr *MockDraftServiceMockRecorder) SavePreviewImage(imageSaveRequest, ctx interface{}) *gomock.Call {
+// UpsertTagline indicates an expected call of UpsertTagline.
+func (mr *MockDraftServiceMockRecorder) UpsertTagline(taglineRequest, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePreviewImage", reflect.TypeOf((*MockDraftService)(nil).SavePreviewImage), imageSaveRequest, ctx)
-}
-
-// DeleteDraft mocks base method
-func (m *MockDraftService) DeleteDraft(draftID string, ctx context.Context) *golaerror.Error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteDraft", draftID, ctx)
-	ret0, _ := ret[0].(*golaerror.Error)
-	return ret0
-}
-
-// DeleteDraft indicates an expected call of DeleteDraft
-func (mr *MockDraftServiceMockRecorder) DeleteDraft(draftID, ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDraft", reflect.TypeOf((*MockDraftService)(nil).DeleteDraft), draftID, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTagline", reflect.TypeOf((*MockDraftService)(nil).UpsertTagline), taglineRequest, ctx)
 }

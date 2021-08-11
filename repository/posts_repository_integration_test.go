@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"github.com/google/uuid"
 	"post-api/dbhelper"
+	repoHelper "post-api/helper"
 	"post-api/models"
 	"post-api/models/db"
 	"post-api/repository/helper"
+	"post-api/service/test_helper"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -23,6 +25,9 @@ type PostsRepositoryIntegrationTest struct {
 	db              *sqlx.DB
 	goContext       context.Context
 	postsRepository PostsRepository
+	draftHelper     DraftRepository
+	userHelper      helper.UserRepository
+	transaction     repoHelper.TransactionManager
 	dbHelper        helper.DbHelper
 }
 
@@ -30,15 +35,18 @@ func (suite *PostsRepositoryIntegrationTest) SetupTest() {
 	err := godotenv.Load("../docker-compose-test.env")
 	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
-	db, err := sqlx.Open("postgres", connectionString)
+	dbObj, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		panic(fmt.Sprintln("Could not connect to test DB", err))
 	}
-	fmt.Print(db)
-	suite.db = db
+	fmt.Print(dbObj)
+	suite.db = dbObj
 	suite.goContext = context.WithValue(context.Background(), "testKey", "testVal")
-	suite.postsRepository = NewPostsRepository(db)
-	suite.dbHelper = helper.NewDbHelper(db)
+	suite.postsRepository = NewPostsRepository(dbObj)
+	suite.userHelper = helper.NewUserRepository(suite.db)
+	suite.draftHelper = NewDraftRepository(suite.db)
+	suite.transaction = repoHelper.NewTransactionManager(suite.db)
+	suite.dbHelper = helper.NewDbHelper(dbObj)
 }
 
 func (suite *PostsRepositoryIntegrationTest) TearDownTest() {
@@ -58,226 +66,92 @@ func TestPostsRepositoryIntegrationTest(t *testing.T) {
 }
 
 func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenSuccessfullyStoredInDB() {
+	_, _, _ = suite.createPost()
+}
+
+func (suite *PostsRepositoryIntegrationTest) createPost() (uuid.UUID, uuid.UUID, uuid.UUID) {
+	userRequest := helper.CreateUserRequest{
+		Email: "dummy@gmail.com",
+		Role:  "User",
+	}
+	userID, err := suite.userHelper.CreateUser(suite.goContext, userRequest)
+	suite.Nil(err)
+	draft := models.CreateDraft{
+		Data:   models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)},
+		UserID: userID,
+	}
+	draftUUID, err := suite.draftHelper.CreateDraft(suite.goContext, draft)
+	suite.Nil(err)
 	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
+		UserID: userID,
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:  73,
-		ViewCount: 0,
+		DraftID: draftUUID,
 	}
-
-	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
-
+	transaction := suite.transaction.NewTransaction()
+	postUUID, err := suite.postsRepository.CreatePost(suite.goContext, transaction, post)
 	suite.Nil(err)
+	err = transaction.Commit()
+	suite.Nil(err)
+	return userID, draftUUID, postUUID
 }
 
 func (suite *PostsRepositoryIntegrationTest) TestCreatePost_WhenDBReturnsError() {
+	transaction := suite.transaction.NewTransaction()
 	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "some-invalid-id",
+		UserID: uuid.New(),
 		PostData: models.JSONString{
 			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
 		},
-		ReadTime:  73,
-		ViewCount: 0,
+		DraftID: uuid.New(),
 	}
 
-	_, err := suite.postsRepository.CreatePost(suite.goContext, post)
+	_, err := suite.postsRepository.CreatePost(suite.goContext, transaction, post)
 
 	suite.NotNil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsAPostAvailable() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
+func (suite *PostsRepositoryIntegrationTest) TestLike_WhenUserLikes() {
+	userID, _, postID := suite.createPost()
+	saveLikeErr := suite.postsRepository.Like(suite.goContext, postID, userID)
+	suite.Nil(saveLikeErr)
+}
 
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
+func (suite *PostsRepositoryIntegrationTest) TestLike_WhenUserDisLikes() {
+	saveLikeErr := suite.postsRepository.Like(suite.goContext, uuid.New(), uuid.New())
+	suite.NotNil(saveLikeErr)
+}
 
-	suite.Nil(err)
-	err = suite.postsRepository.SaveInitialLike(suite.goContext, postID)
+func (suite *PostsRepositoryIntegrationTest) TestUnLike_WhenUserLikes() {
+	userID, _, postID := suite.createPost()
+	saveLikeErr := suite.postsRepository.Like(suite.goContext, postID, userID)
+	suite.Nil(saveLikeErr)
+	err := suite.postsRepository.UnLike(suite.goContext, postID, userID)
 	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestSaveInitialLike_WhenThereIsNoPostAvailable() {
-	err := suite.postsRepository.SaveInitialLike(suite.goContext, 1)
+func (suite *PostsRepositoryIntegrationTest) TestUnLike_WhenUserDisLikes() {
+	err := suite.postsRepository.UnLike(suite.goContext, uuid.New(), uuid.New())
 	suite.NotNil(err)
+	suite.Equal("never liked", err.Error())
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsAPost() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	expectedPostID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-
+func (suite *PostsRepositoryIntegrationTest) TestAddInterests_WhenThereIsAPost() {
+	_, _, postID := suite.createPost()
+	interestsIDs, err := suite.dbHelper.GetInterestsIDs([]string{"Sports", "Art", "Entertainment"})
 	suite.Nil(err)
-	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, post.PUID)
+	transaction := suite.transaction.NewTransaction()
+	err = suite.postsRepository.AddInterests(suite.goContext, transaction, postID, interestsIDs)
 	suite.Nil(err)
-	suite.Equal(expectedPostID, actualPostID)
+	err = transaction.Commit()
+	suite.Nil(err)
 }
 
-func (suite *PostsRepositoryIntegrationTest) TestGetPostID_WhenThereIsNoPost() {
-	actualPostID, err := suite.postsRepository.GetPostID(suite.goContext, "qw23e5tsa")
+func (suite *PostsRepositoryIntegrationTest) TestAddInterests_WhenThereIsANoPost() {
+	interestsIDs, err := suite.dbHelper.GetInterestsIDs([]string{"Sports", "Art", "Entertainment"})
+	suite.Nil(err)
+	transaction := suite.transaction.NewTransaction()
+	err = suite.postsRepository.AddInterests(suite.goContext, transaction, uuid.New(), interestsIDs)
 	suite.NotNil(err)
-	suite.Equal(sql.ErrNoRows, err)
-	suite.Zero(actualPostID)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestAppendOrRemoveUserFromLikedByWhenUserLikes() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-	suite.Nil(err)
-
-	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
-	suite.Nil(saveLikeErr)
-
-	var userID = int64(1)
-
-	appendOrRemoveUserErr := suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
-	suite.Nil(appendOrRemoveUserErr)
-
-	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
-
-	suite.Equal(int64(1), likeCount)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestAppendOrRemoveUserFromLikedByWhenUserDisLikes() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-	suite.Nil(err)
-
-	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
-	suite.Nil(saveLikeErr)
-
-	var userID = int64(1)
-
-	appendOrRemoveUserErr := suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
-	suite.Nil(appendOrRemoveUserErr)
-
-	appendOrRemoveUserErr = suite.postsRepository.AppendOrRemoveUserFromLikedBy(postID, userID, suite.goContext)
-	suite.Nil(appendOrRemoveUserErr)
-
-	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
-
-	suite.Equal(int64(0), likeCount)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetLikeCountByPost_WhenValidPostID() {
-
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-	suite.Nil(err)
-
-	saveLikeErr := suite.postsRepository.SaveInitialLike(suite.goContext, postID)
-	suite.Nil(saveLikeErr)
-
-	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, postID)
-	suite.Nil(err)
-
-	suite.Equal(int64(0), likeCount)
-
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetLikeCountByPost_WhenInValidPostID() {
-
-	likeCount, err := suite.postsRepository.GetLikeCountByPost(suite.goContext, int64(3))
-	suite.Equal(sql.ErrNoRows, err)
-	suite.Equal(int64(0), likeCount)
-
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsAPostAvailable() {
-	post := db.PublishPost{
-		PUID:   "1q323e4r4r42",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-
-	suite.Nil(err)
-	err = suite.postsRepository.SaveInitialComment(suite.goContext, postID)
-	suite.Nil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestSaveInitialComment_WhenThereIsNoPostAvailable() {
-	err := suite.postsRepository.SaveInitialComment(suite.goContext, 1)
-	suite.NotNil(err)
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenInValidPostID() {
-
-	post := db.PublishPost{
-		PUID:   "1q323e4r4e43",
-		UserID: "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(`[{"children":[{"text":"You can use helm to deploy your apps via kubernetes"}]}]`),
-		},
-		ReadTime:  73,
-		ViewCount: 0,
-	}
-
-	postID, err := suite.postsRepository.CreatePost(suite.goContext, post)
-	suite.Nil(err)
-
-	saveLikeErr := suite.postsRepository.SaveInitialComment(suite.goContext, postID)
-	suite.Nil(saveLikeErr)
-
-	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, postID)
-	suite.Nil(err)
-
-	suite.Equal("[]", comments)
-
-}
-
-func (suite *PostsRepositoryIntegrationTest) TestGetCommentsByPostID_WhenThereIsNoPostAvailable() {
-	comments, err := suite.postsRepository.GetCommentsByPostID(suite.goContext, 111)
-	suite.NotNil(sql.ErrNoRows, err)
-	suite.Equal("", comments)
 }

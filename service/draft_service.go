@@ -5,6 +5,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"post-api/constants"
 	"post-api/models"
 	"post-api/models/db"
@@ -17,17 +18,31 @@ import (
 )
 
 type DraftService interface {
-	SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error
-	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
+	CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error)
+	UpdateDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error
 	UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error
-	GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error)
-	GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error)
-	SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error
-	DeleteDraft(draftID string, ctx context.Context) *golaerror.Error
+	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
+	GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error)
+	SavePreviewImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) *golaerror.Error
+	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error)
+	DeleteDraft(ctx context.Context, draftID, userUUID uuid.UUID) *golaerror.Error
 }
 
 type draftService struct {
 	draftRepository repository.DraftRepository
+}
+
+func (service draftService) CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "CreateDraft")
+	logger.Info("creating draft")
+	return service.draftRepository.CreateDraft(ctx, draft)
+}
+
+func (service draftService) UpdateDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "UpdateDraft")
+	logger.Infof("Saving post data to draft repository")
+	err := service.draftRepository.SavePostDraft(postData, ctx)
+	return InternalServerError(err, logger)
 }
 
 func (service draftService) UpsertInterests(interestRequest request.InterestsSaveRequest, ctx context.Context) *golaerror.Error {
@@ -47,13 +62,6 @@ func (service draftService) UpsertInterests(interestRequest request.InterestsSav
 	return nil
 }
 
-func (service draftService) SaveDraft(postData models.UpsertDraft, ctx context.Context) *golaerror.Error {
-	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SaveDraft")
-	logger.Infof("Saving post data to draft repository")
-	err := service.draftRepository.SavePostDraft(postData, ctx)
-	return InternalServerError(err, logger)
-}
-
 func (service draftService) UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "UpsertTagline")
 
@@ -71,13 +79,12 @@ func (service draftService) UpsertTagline(taglineRequest request.TaglineSaveRequ
 	return nil
 }
 
-func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.Draft, *golaerror.Error) {
-
+func (service draftService) GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
 
 	logger.Infof("Calling service to get draft using draft ID %s", draftUID)
 
-	draftData, err := service.draftRepository.GetDraft(ctx, draftUID)
+	draft, err := service.draftRepository.GetDraft(ctx, draftUID, userUUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while getting draft from repository %v", err)
@@ -90,19 +97,12 @@ func (service draftService) GetDraft(draftUID string, ctx context.Context) (db.D
 
 	logger.Info("Successfully stored got draft details")
 
-	draft := db.Draft{
-		DraftID:      draftData.DraftID,
-		UserID:       draftData.UserID,
-		PostData:     draftData.PostData,
-		PreviewImage: &draftData.PreviewImage.String,
-		Tagline:      &draftData.Tagline.String,
-		Interest:     draftData.Interest,
-	}
+	draft.ConvertInterests()
 
 	return draft, nil
 }
 
-func (service draftService) SavePreviewImage(imageSaveRequest request.PreviewImageSaveRequest, ctx context.Context) *golaerror.Error {
+func (service draftService) SavePreviewImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) *golaerror.Error {
 	id := imageSaveRequest.DraftID
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SavePreviewImage")
 	logger.Infof("Saving preview image for draft id %v", id)
@@ -118,53 +118,55 @@ func (service draftService) SavePreviewImage(imageSaveRequest request.PreviewIma
 	return nil
 }
 
-func (service draftService) GetAllDraft(allDraftReq models.GetAllDraftRequest, ctx context.Context) ([]db.AllDraft, error) {
-
+func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetAllDraft")
 
 	logger.Infof("Calling service to get draft using user ID %s", allDraftReq.UserID)
 
-	var allDraftData []db.AllDraft
+	var updatedDrafts []db.DraftPreview
 
-	draftData, err := service.draftRepository.GetAllDraft(ctx, allDraftReq)
+	drafts, err := service.draftRepository.GetAllDraft(ctx, allDraftReq)
 	if err != nil {
 		logger.Errorf("Error occurred while getting all draft from repository %v", err)
 		if err == sql.ErrNoRows {
 			logger.Errorf("Error occurred while getting draft data, no draft found for draft id %v .%v", allDraftReq.UserID, err)
-			return allDraftData, &constants.NoDraftFoundError
+			return updatedDrafts, &constants.NoDraftFoundError
 		}
-		return allDraftData, &constants.PostServiceFailureError
+		return updatedDrafts, &constants.PostServiceFailureError
 	}
 
-	for _, dbDraft := range draftData {
-		var draft db.AllDraft
-		draft.DraftID = dbDraft.DraftID
-		draft.PostData = dbDraft.PostData
-		draft.Tagline = dbDraft.Tagline
-		draft.Interest = dbDraft.Interest
-		draft.UserID = dbDraft.UserID
-
-		title, err := utils.GetTitleFromSlateJson(ctx, dbDraft.PostData)
-		if err != nil {
-			logger.Errorf("Error occurred while converting title json to string %v .%v", dbDraft.DraftID, err)
-			return allDraftData, &constants.ConvertTitleToStringError
+	for _, draft := range drafts {
+		draft.ConvertInterests()
+		updatedDraft := db.DraftPreview{
+			DraftID:   draft.DraftID,
+			UserID:    draft.UserID,
+			Data:      draft.Data,
+			Tagline:   *draft.Tagline,
+			Interests: draft.InterestTags,
+			CreatedAt: draft.CreatedAt,
 		}
 
-		draft.TitleData = title
-		allDraftData = append(allDraftData, draft)
+		title, err := utils.GetTitleFromSlateJson(ctx, draft.Data)
+		if err != nil {
+			logger.Errorf("Error occurred while converting title json to string %v .%v", draft.DraftID, err)
+			return updatedDrafts, &constants.ConvertTitleToStringError
+		}
+
+		updatedDraft.Title = title
+		updatedDrafts = append(updatedDrafts, updatedDraft)
 	}
 
 	logger.Info("Successfully stored got draft details")
 
-	return allDraftData, nil
+	return updatedDrafts, nil
 }
 
-func (service draftService) DeleteDraft(draftID string, ctx context.Context) *golaerror.Error {
+func (service draftService) DeleteDraft(ctx context.Context, draftID, userUUID uuid.UUID) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "DeleteDraft")
 
 	logger.Infof("Deleting draft from draft repository for draft id %v", draftID)
 
-	err := service.draftRepository.DeleteDraft(ctx, draftID)
+	err := service.draftRepository.DeleteDraft(ctx, draftID, userUUID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

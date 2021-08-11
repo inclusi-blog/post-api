@@ -1,33 +1,37 @@
 package db
 
 import (
-	"database/sql"
+	"github.com/google/uuid"
 	"post-api/models"
+	"strings"
+	"time"
 )
 
 type Draft struct {
-	DraftID      string            `json:"draft_id" db:"draft_id"`
-	UserID       string            `json:"user_id" db:"user_id"`
-	PostData     models.JSONString `json:"post_data" db:"post_data"`
+	DraftID      uuid.UUID         `json:"draft_id" db:"id"`
+	UserID       uuid.UUID         `json:"user_id" db:"user_id"`
+	Data         models.JSONString `json:"data" db:"data"`
 	PreviewImage *string           `json:"preview_image" db:"preview_image"`
 	Tagline      *string           `json:"tagline" db:"tagline"`
-	Interest     models.JSONString `json:"interest" db:"interest"`
+	Interests    *string           `json:"-" db:"interests"`
+	CreatedAt    *time.Time        `json:"created_at" db:"created_at"`
+	InterestTags []string          `json:"interests"`
 }
 
-type DraftDB struct {
-	DraftID      string            `json:"draft_id" db:"draft_id"`
-	UserID       string            `json:"user_id" db:"user_id"`
-	PostData     models.JSONString `json:"post_data" db:"post_data"`
-	PreviewImage sql.NullString    `json:"preview_image" db:"preview_image"`
-	Tagline      sql.NullString    `json:"tagline" db:"tagline"`
-	Interest     models.JSONString `json:"interest" db:"interest"`
+type DraftPreview struct {
+	DraftID   uuid.UUID         `json:"id"`
+	UserID    uuid.UUID         `json:"user_id"`
+	Data      models.JSONString `json:"data"`
+	Title     string            `json:"title"`
+	Tagline   string            `json:"tagline"`
+	Interests []string          `json:"interests"`
+	CreatedAt *time.Time        `json:"created_at"`
 }
 
-type AllDraft struct {
-	DraftID   string            `json:"draft_id" db:"draft_id"`
-	UserID    string            `json:"user_id" db:"user_id"`
-	PostData  models.JSONString `json:"post_data" db:"post_data"`
-	TitleData string            `json:"title_data" db:"title_data"`
-	Tagline   *string           `json:"tagline" db:"tagline"`
-	Interest  models.JSONString `json:"interest" db:"interest"`
+func (draft *Draft) ConvertInterests() {
+	length := len(*draft.Interests)
+	sliced := (*draft.Interests)[:length-1]
+	overAll := sliced[1:]
+	interests := strings.Split(overAll, ",")
+	draft.InterestTags = interests
 }

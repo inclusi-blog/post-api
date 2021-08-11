@@ -4,14 +4,14 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"post-api/models/db"
 )
 
 type InterestsRepository interface {
-	GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error)
+	GetInterests(ctx context.Context) ([]string, error)
+	GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error)
 }
 
 type interestsRepository struct {
@@ -19,52 +19,48 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterestsWithoutSelectedTags = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%' AND NAME NOT IN (:tags)"
-	GetInterests                    = "SELECT ID, NAME FROM INTERESTS WHERE NAME LIKE '%%%s%%'"
+	GetInterests = "select name from interests"
+	GetInterestIDs = "SELECT id from interests where name in (?)"
 )
 
-func (repository interestsRepository) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, error) {
+func (repository interestsRepository) GetInterests(ctx context.Context) ([]string, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
-
 	logger.Info("fetching over all interests")
 
-	var interests []db.Interest
-	selectionQuery := GetInterestsWithoutSelectedTags
-
-	if selectedTags == nil || len(selectedTags) == 0 {
-		logger.Info("Fetching all the interests related to search keyword")
-		selectionQuery = GetInterests
-	}
-
-	arg := map[string]interface{}{
-		"tags": selectedTags,
-	}
-
-	updatedQuery := fmt.Sprintf(selectionQuery, searchKeyword)
-
-	query, args, err := sqlx.Named(updatedQuery, arg)
-	if err != nil {
-		logger.Errorf("Error occurred while naming in query params for get interests %v", err)
-		return []db.Interest{}, err
-	}
-
-	query, args, err = sqlx.In(query, args...)
-	if err != nil {
-		logger.Errorf("Error occurred while binding In query params for get interests %v", err)
-		return []db.Interest{}, err
-	}
-
-	query = repository.db.Rebind(query)
-	err = repository.db.SelectContext(ctx, &interests, query, args...)
-
+	var interests []string
+	err := repository.db.SelectContext(ctx, &interests, GetInterests)
 	if err != nil {
 		logger.Errorf("Error occurred while fetching over all interests from repository %v", err)
 		return nil, err
 	}
 
 	logger.Info("Successfully fetched interests from db")
-
 	return interests, nil
+}
+
+func (repository interestsRepository) GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
+	logger.Info("fetching over all interests")
+
+	var interestsIDs []uuid.UUID
+	query, args, err := sqlx.In(GetInterestIDs, interestNames)
+
+	query = repository.db.Rebind(query)
+	rows, err := repository.db.Query(query, args...)
+	if err != nil {
+		logger.Errorf("unable to fetch interest ids %v", err)
+		return nil, err
+	}
+	for rows.Next() {
+		var id uuid.UUID
+		err = rows.Scan(&id)
+		interestsIDs = append(interestsIDs, id)
+	}
+	if err != nil{
+		logger.Errorf("error occurred while binding interest ids %v", err)
+		return nil, err
+	}
+	return interestsIDs, nil
 }
 
 func NewInterestRepository(db *sqlx.DB) InterestsRepository {

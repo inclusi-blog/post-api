@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
 	"github.com/stretchr/testify/suite"
 	"post-api/configuration"
@@ -42,17 +43,19 @@ func (suite *PostValidatorTest) TearDownTest() {
 }
 
 func (suite *PostValidatorTest) TestValidate_ValidPost() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
 	tagline := "this is some tagline"
+	interests := "{sports,economy,poem}"
 	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
+		DraftID: draftUUID,
+		UserID:  userUUID,
+		Data: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		Tagline:      &tagline,
+		Interests:    &interests,
+		InterestTags: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)
@@ -62,15 +65,17 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 }
 
 func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
 	tagline := "this is some tagline"
+	interests := "{sports,economy,poem}"
 	draft := db.Draft{
-		DraftID:  "a1v2b31n",
-		UserID:   "1",
-		PostData: models.JSONString{},
-		Tagline:  &tagline,
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		DraftID:      draftUUID,
+		UserID:       userUUID,
+		Data:         models.JSONString{},
+		Tagline:      &tagline,
+		Interests:    &interests,
+		InterestTags: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -79,36 +84,20 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 	suite.Zero(metaData.ReadTime)
 }
 
-func (suite *PostValidatorTest) TestValidate_InvalidInterestData() {
-	tagline := "this is some tagline"
-	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
-			JSONText: types.JSONText(test_helper.ContentTestData),
-		},
-		Tagline:  &tagline,
-		Interest: models.JSONString{},
-	}
-	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
-	suite.NotNil(err)
-	suite.Equal("", metaData.Title)
-	suite.Equal(&constants.DraftInterestParseError, err)
-	suite.Zero(metaData.ReadTime)
-}
-
 func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
 	tagline := "this is some tagline"
+	interests := ""
 	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
+		DraftID: draftUUID,
+		UserID:  userUUID,
+		Data: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": ""}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		Tagline:      &tagline,
+		Interests:    &interests,
+		InterestTags: nil,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -118,21 +107,23 @@ func (suite *PostValidatorTest) TestValidate_IfInterestNameEmpty() {
 }
 
 func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
+	interests := "{sports,economy,poem}"
 	suite.configData.ContentReadTimeConfig = map[string]int{
 		"poem": 50,
 	}
 
 	tagline := "this is some tagline"
 	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
+		DraftID: draftUUID,
+		UserID:  userUUID,
+		Data: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		Tagline:      &tagline,
+		Interests:    &interests,
+		InterestTags: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -142,6 +133,9 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 }
 
 func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfigTime() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
+	interests := "{sports,economy,poem}"
 	suite.configData.ContentReadTimeConfig = map[string]int{
 		"finance": 50,
 	}
@@ -149,15 +143,14 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 
 	tagline := "this is some tagline"
 	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
+		DraftID: draftUUID,
+		UserID:  userUUID,
+		Data: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Tagline: &tagline,
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		Tagline:      &tagline,
+		Interests:    &interests,
+		InterestTags: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -167,15 +160,17 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 }
 
 func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
+	draftUUID := uuid.New()
+	userUUID := uuid.New()
+	interests := "{sports,economy,poem}"
 	draft := db.Draft{
-		DraftID: "a1v2b31n",
-		UserID:  "1",
-		PostData: models.JSONString{
+		DraftID: draftUUID,
+		UserID:  userUUID,
+		Data: models.JSONString{
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
-		Interest: models.JSONString{
-			JSONText: types.JSONText(`[{ "id": "1", "name": "sports"}, {"id": "2", "name": "economy"}, {"id": "3", "name": "poem"}]`),
-		},
+		Interests:    &interests,
+		InterestTags: []string{"sports", "economy", "poem"},
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)

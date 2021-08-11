@@ -6,23 +6,22 @@ import (
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/constants"
-	"post-api/models/db"
 	"post-api/repository"
 )
 
 type InterestsService interface {
-	GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, *golaerror.Error)
+	GetInterests(ctx context.Context) ([]string, *golaerror.Error)
 }
 
 type interestsService struct {
 	repository repository.InterestsRepository
 }
 
-func (service interestsService) GetInterests(ctx context.Context, searchKeyword string, selectedTags []string) ([]db.Interest, *golaerror.Error) {
+func (service interestsService) GetInterests(ctx context.Context) ([]string, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsService").WithField("method", "GetInterests")
 
 	logger.Info("Calling repository to get all interests")
-	interests, err := service.repository.GetInterests(ctx, searchKeyword, selectedTags)
+	interests, err := service.repository.GetInterests(ctx)
 	if err != nil {
 		logger.Errorf("error occurred while fetching over all interests from interest repository %v", err)
 		return nil, &constants.PostServiceFailureError
