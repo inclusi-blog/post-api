@@ -3,11 +3,11 @@ package init
 import (
 	"github.com/jmoiron/sqlx"
 	"post-api/configuration"
-	"post-api/controller"
 	"post-api/helper"
-	"post-api/repository"
-	"post-api/service"
-	"post-api/utils"
+	"post-api/story/controller"
+	"post-api/story/repository"
+	"post-api/story/service"
+	"post-api/story/utils"
 )
 
 var (
