@@ -13,8 +13,8 @@ import (
 	repoHelper "post-api/helper"
 	"post-api/story/models"
 	"post-api/story/models/db"
-	"post-api/story/repository/helper"
 	"post-api/story/service/test_helper"
+	"post-api/test_helper/helper"
 	"testing"
 )
 
@@ -31,7 +31,7 @@ type PreviewPostsRepositoryIntegrationTest struct {
 }
 
 func (suite *PreviewPostsRepositoryIntegrationTest) SetupTest() {
-	err := godotenv.Load("../docker-compose-test.env")
+	err := godotenv.Load("../../docker-compose-test.env")
 	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
 	dbObj, err := sqlx.Open("postgres", connectionString)
@@ -97,8 +97,10 @@ func (suite *PreviewPostsRepositoryIntegrationTest) TestSavePreview_WhenNoPostSa
 
 func (suite *PreviewPostsRepositoryIntegrationTest) createPost() (uuid.UUID, uuid.UUID, uuid.UUID) {
 	userRequest := helper.CreateUserRequest{
-		Email: "dummy@gmail.com",
-		Role:  "User",
+		Email:    "dummy@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userID, err := suite.userHelper.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)

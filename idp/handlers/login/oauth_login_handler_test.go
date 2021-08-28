@@ -10,6 +10,7 @@ import (
 	utilMocks "github.com/gola-glitch/gola-utils/mocks"
 	"github.com/gola-glitch/gola-utils/model"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
@@ -68,15 +69,16 @@ func (suite *OauthLoginHandlerTest) TearDownTest() {
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraAcceptLoginSuccess() {
 	loginChallenge := "some-login-challenge"
 
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -110,16 +112,16 @@ func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraAcceptLoginSuccess(
 
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericNotFoundError() {
 	loginChallenge := "some-login-challenge"
-
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -162,16 +164,16 @@ func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericNotFo
 
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericUnAuthorizedError() {
 	loginChallenge := "some-login-challenge"
-
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -214,16 +216,16 @@ func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericUnAut
 
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericInternalServerError() {
 	loginChallenge := "some-login-challenge"
-
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -266,16 +268,16 @@ func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericInter
 
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenUnableToMarshalGenericError() {
 	loginChallenge := "some-login-challenge"
-
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -315,16 +317,16 @@ func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenUnableToMarshalGenericEr
 
 func (suite *OauthLoginHandlerTest) TestAcceptLogin_WhenHydraReturnsGenericOtherErrors() {
 	loginChallenge := "some-login-challenge"
-
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	acceptRequest := oauth.LoginAcceptRequest{
-		Subject:     "some-user-id",
+		Subject:     userUUID.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",
@@ -371,7 +373,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenSuccess() {
 	consentResponse := response.ConsentResponse{}
 
 	queryParams := make(map[string]string)
-
+	userUUID := uuid.New()
 	queryParams["consent_challenge"] = consentChallenge
 	suite.mockHttpRequestBuilder.EXPECT().NewRequest().Return(suite.mockHttpRequest).Times(1)
 	suite.mockHttpRequest.EXPECT().AddQueryParameters(queryParams).Return(suite.mockHttpRequest).Times(1)
@@ -380,7 +382,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenSuccess() {
 		tempResponsePointer := responseBuilder.(*response.ConsentResponse)
 		*tempResponsePointer = response.ConsentResponse{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -401,7 +403,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenSuccess() {
 		RememberFor:              1,
 		Session: oauth.Session{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -474,7 +476,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenGetConsentReque
 		RememberFor:              1,
 		Session: oauth.Session{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       uuid.New(),
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -498,6 +500,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenGetConsentReque
 }
 
 func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRequestFails() {
+	userUUID := uuid.New()
 	consentChallenge := "consent-challenge-code"
 
 	consentResponse := response.ConsentResponse{}
@@ -524,7 +527,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		tempResponsePointer := responseBuilder.(*response.ConsentResponse)
 		*tempResponsePointer = response.ConsentResponse{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -545,7 +548,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		RememberFor:              1,
 		Session: oauth.Session{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -570,7 +573,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 
 func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRequestFailsAndUnmarshalGenericError() {
 	consentChallenge := "consent-challenge-code"
-
+	userUUID := uuid.New()
 	consentResponse := response.ConsentResponse{}
 
 	queryParams := make(map[string]string)
@@ -590,7 +593,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		tempResponsePointer := responseBuilder.(*response.ConsentResponse)
 		*tempResponsePointer = response.ConsentResponse{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -611,7 +614,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		RememberFor:              1,
 		Session: oauth.Session{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -636,7 +639,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 
 func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRequestFailsAndDifferentStatusCodeForGenericError() {
 	consentChallenge := "consent-challenge-code"
-
+	userUUID := uuid.New()
 	consentResponse := response.ConsentResponse{}
 
 	queryParams := make(map[string]string)
@@ -661,7 +664,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		tempResponsePointer := responseBuilder.(*response.ConsentResponse)
 		*tempResponsePointer = response.ConsentResponse{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,
@@ -682,7 +685,7 @@ func (suite *OauthLoginHandlerTest) TestAcceptConsentRequest_WhenAcceptConsentRe
 		RememberFor:              1,
 		Session: oauth.Session{
 			Userprofile: db.UserProfile{
-				UserID:   "some-user",
+				Id:       userUUID,
 				Username: "some-user-name",
 				Email:    "dummy@gmail.com",
 				IsActive: true,

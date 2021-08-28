@@ -24,12 +24,12 @@ type userDetailsRepository struct {
 }
 
 const (
-	SaveUser                  = "INSERT INTO user_details(UUID, USERNAME, EMAIL, PASSWD, IS_ACTIVE)VALUES($1,$2,$3,$4,$5)"
-	UserExistence             = "SELECT COUNT(*) FROM user_details WHERE EMAIL = $1"
-	UsernameExistence         = "SELECT COUNT(*) FROM user_details WHERE USERNAME = $1"
-	UsernameAndEmailExistence = "SELECT COUNT(*) FROM user_details WHERE USERNAME = $1 OR EMAIL = $2"
-	FetchUserDetails          = "SELECT UUID, USERNAME, EMAIL, IS_ACTIVE FROM user_details WHERE EMAIL = $1"
-	FetchUserPassword         = "SELECT PASSWD FROM user_details WHERE EMAIL = $1"
+	SaveUser                  = "insert into users(id, username, email, password, is_active, role_id)values($1,$2,$3,$4,$5, (select id from roles where name = 'User'))"
+	UserExistence             = "select count(*) from users where email = $1"
+	UsernameExistence         = "select count(*) from users where username = $1"
+	UsernameAndEmailExistence = "select count(*) from users where username = $1 or email = $2"
+	FetchUserDetails          = "select id, username, email, is_active from users where email = $1"
+	FetchUserPassword         = "select password from users where email = $1"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -39,7 +39,7 @@ func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetai
 	username := details.Username
 	log.Infof("Saving user details for user %v", username)
 
-	result, err := repository.db.ExecContext(context, SaveUser, details.UUID, username, details.Email, details.Password, details.IsActive)
+	result, err := repository.db.ExecContext(context, SaveUser, details.ID, username, details.Email, details.Password, details.IsActive)
 
 	if err != nil {
 		log.Errorf("Unable to store user details for username %v . Error %v", username, err)

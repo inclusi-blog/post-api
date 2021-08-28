@@ -1,10 +1,10 @@
-with adminUserID as (select users.id as id
-                     from users
-                              inner join roles r on r.id = users.role_id
+with adminUserID as (select admin.id as id
+                     from admin
+                              inner join roles r on r.id = admin.role_id
                      where r.name = 'Admin'
                      limit 1)
 insert
-into interests(id, name, added_by, cover_pic)
+into interests(id, name, approved_by, cover_pic)
 values (uuid_generate_v4(), 'Art', (select id from adminUserID), null),
        (uuid_generate_v4(), 'Entertainment', (select id from adminUserID), null),
        (uuid_generate_v4(), 'Culture', (select id from adminUserID), null),

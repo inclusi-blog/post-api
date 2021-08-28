@@ -11,8 +11,8 @@ import (
 	"post-api/story/models"
 	"post-api/story/models/db"
 	"post-api/story/models/request"
-	"post-api/story/repository/helper"
 	"post-api/story/service/test_helper"
+	"post-api/test_helper/helper"
 	"testing"
 	"time"
 
@@ -33,7 +33,7 @@ type DraftRepositoryIntegrationTest struct {
 }
 
 func (suite *DraftRepositoryIntegrationTest) SetupTest() {
-	err := godotenv.Load("../docker-compose-test.env")
+	err := godotenv.Load("../../docker-compose-test.env")
 	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
 	database, err := sqlx.Open("postgres", connectionString)
@@ -67,8 +67,10 @@ func TestDraftRepositoryIntegrationTest(t *testing.T) {
 func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenUpdate() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -108,8 +110,10 @@ func (suite *DraftRepositoryIntegrationTest) TestSavePostDraft_WhenNoSuchPost() 
 func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenDbReturnsSuccess() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -147,8 +151,10 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveDraftTagline_WhenNoDraftPre
 func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftAvailable() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -181,8 +187,10 @@ func (suite *DraftRepositoryIntegrationTest) TestSaveInterestsToDraft_WhenDraftN
 func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSuccess() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -219,8 +227,10 @@ func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNoDraft(
 func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -292,8 +302,10 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasNoDrafts()
 func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasValues() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -331,8 +343,10 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenDBHasValues() {
 
 func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesUsingPagination() {
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -407,8 +421,10 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultiple
 
 func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultipleValuesForInBetweenPages() {
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)
@@ -484,8 +500,10 @@ func (suite *DraftRepositoryIntegrationTest) TestGetAllDraft_WhenReturnsMultiple
 func (suite *DraftRepositoryIntegrationTest) TestDeleteDraft_WhenDbDeletesDraft() {
 	draftUUID := uuid.New()
 	userRequest := helper.CreateUserRequest{
-		Email: "dummyUserOne@gmail.com",
-		Role:  "User",
+		Email:    "dummyUserOne@gmail.com",
+		Role:     "User",
+		Password: "some-password",
+		Username: "some-username",
 	}
 	userUUID, err := suite.userRepository.CreateUser(suite.goContext, userRequest)
 	suite.Nil(err)

@@ -4,15 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"idp-api/dbhelper"
-	"idp-api/models/db"
-	"idp-api/repository/helper"
+	"post-api/dbhelper"
+	"post-api/idp/models/db"
+	"post-api/test_helper/helper"
 	"testing"
 )
 
@@ -25,7 +25,7 @@ type UserDetailsRepositoryIntegrationTest struct { //test suite
 }
 
 func (suite *UserDetailsRepositoryIntegrationTest) SetupTest() {
-	err := godotenv.Load("../docker-compose-test.env")
+	err := godotenv.Load("../../docker-compose-test.env")
 	suite.Nil(err)
 	connectionString := dbhelper.BuildConnectionString()
 	database, err := sqlx.Open("postgres", connectionString)
@@ -56,7 +56,7 @@ func TestUserDetailsRepositoryIntegrationTest(t *testing.T) {
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestSaveUserDetails_WhenValidData() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -68,7 +68,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestSaveUserDetails_WhenValid
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestSaveUserDetails_WhenDbReturnsError() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -82,7 +82,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestSaveUserDetails_WhenDbRet
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserAvailable_WhenUserExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -99,7 +99,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserAvailable_WhenUserE
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserAvailable_WhenUserNotExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -114,7 +114,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserAvailable_WhenUserN
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAvailable_WhenUserNameExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -139,7 +139,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAvailable_WhenU
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailable_WhenUserNameExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -157,7 +157,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailab
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailable_WhenEmailExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -182,7 +182,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailab
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailable_WhenBothUserNameAndEmailExists() {
 	details := db.SaveUserDetails{
-		UUID:     "some-random-string",
+		ID:       uuid.New(),
 		Username: "someuser",
 		Email:    "someuser@gmail.com",
 		Password: "cksacba@!#$^*(*%$!UT!VBH!@B!B@INcksacba@!#$^*(*%$!UT!VBH!@B!",
@@ -199,15 +199,16 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestIsUserNameAndEmailAvailab
 }
 
 func (suite *UserDetailsRepositoryIntegrationTest) TestGetUserProfile_WhenDbReturnsUserProfile() {
+	userUUID := uuid.New()
 	profile := db.UserProfile{
-		UserID:   "some-id",
+		Id:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
 	}
 
 	details := db.SaveUserDetails{
-		UUID:     "some-id",
+		ID:       userUUID,
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		Password: "k$q3!@CAF#!@ASsdS!@!@",
@@ -238,7 +239,7 @@ func (suite *UserDetailsRepositoryIntegrationTest) TestGetPassword_WhenDbReturns
 	expectedPassword := "k$q3!@CAF#!@ASsdS!@!@"
 
 	details := db.SaveUserDetails{
-		UUID:     "some-id",
+		ID:       uuid.New(),
 		Username: "some-user",
 		Email:    "dummy@gmail.com",
 		Password: "k$q3!@CAF#!@ASsdS!@!@",

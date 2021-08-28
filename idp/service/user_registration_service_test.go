@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	mocksUtil "github.com/gola-glitch/gola-utils/mocks"
 	"github.com/golang/mock/gomock"
@@ -91,16 +90,16 @@ func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenUserExist
 }
 
 func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenNoUserOrEmailExists() {
-	userUUID := fmt.Sprintf("%s", uuid.New())
+	userUUID := uuid.New()
 	registrationRequest := request.InitiateRegistrationRequest{
 		Email:    "encrypted-username",
 		Password: "encrypted-password",
 		Username: "user123",
-		UUID:     userUUID,
+		Id:       userUUID,
 	}
 
 	userDetails := db.SaveUserDetails{
-		UUID:     userUUID,
+		ID:       userUUID,
 		Username: registrationRequest.Username,
 		Email:    registrationRequest.Email,
 		Password: "hashed-password",
@@ -110,23 +109,23 @@ func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenNoUserOrE
 	suite.mockUserDetailsRepository.EXPECT().IsUserNameAndEmailAvailable(registrationRequest.Username, registrationRequest.Email, suite.ginContext).Return(false, nil).Times(1)
 	suite.mockHashUtil.EXPECT().GenerateBcryptHash("decrypted-password").Return("hashed-password", nil).Times(1)
 	suite.mockUserDetailsRepository.EXPECT().SaveUserDetails(userDetails, suite.ginContext).Return(nil).Times(1)
-	suite.mockRedisStore.EXPECT().Delete(suite.ginContext.Request.Context(), userUUID).Return(nil).Times(1)
+	suite.mockRedisStore.EXPECT().Delete(suite.ginContext.Request.Context(), userUUID.String()).Return(nil).Times(1)
 
 	err := suite.userRegistrationService.InitiateRegistration(registrationRequest, suite.ginContext)
 	suite.Nil(err)
 }
 
 func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenUnableToSaveUser() {
-	userUUID := fmt.Sprintf("%s", uuid.New())
+	userUUID := uuid.New()
 	registrationRequest := request.InitiateRegistrationRequest{
 		Email:    "encrypted-username",
 		Password: "encrypted-password",
 		Username: "user123",
-		UUID:     userUUID,
+		Id:       userUUID,
 	}
 
 	userDetails := db.SaveUserDetails{
-		UUID:     userUUID,
+		ID:       userUUID,
 		Username: registrationRequest.Username,
 		Email:    registrationRequest.Email,
 		Password: "hashed-password",
@@ -143,16 +142,16 @@ func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenUnableToS
 }
 
 func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenHashPasswordFails() {
-	userUUID := fmt.Sprintf("%s", uuid.New())
+	userUUID := uuid.New()
 	registrationRequest := request.InitiateRegistrationRequest{
 		Email:    "encrypted-username",
 		Password: "encrypted-password",
 		Username: "user123",
-		UUID:     userUUID,
+		Id:       userUUID,
 	}
 
 	userDetails := db.SaveUserDetails{
-		UUID:     userUUID,
+		ID:       userUUID,
 		Username: registrationRequest.Username,
 		Email:    registrationRequest.Email,
 		Password: "hashed-password",
@@ -162,7 +161,7 @@ func (suite *UserRegistrationServiceTest) TestInitiateRegistration_WhenHashPassw
 	suite.mockUserDetailsRepository.EXPECT().IsUserNameAndEmailAvailable(registrationRequest.Username, registrationRequest.Email, suite.ginContext).Return(false, nil).Times(1)
 	suite.mockHashUtil.EXPECT().GenerateBcryptHash("decrypted-password").Return("", errors.New("something went wrong")).Times(1)
 	suite.mockUserDetailsRepository.EXPECT().SaveUserDetails(userDetails, suite.ginContext).Return(nil).Times(0)
-	suite.mockRedisStore.EXPECT().Delete(suite.ginContext.Request.Context(), userUUID).Return(nil).Times(0)
+	suite.mockRedisStore.EXPECT().Delete(suite.ginContext.Request.Context(), userUUID.String()).Return(nil).Times(0)
 
 	err := suite.userRegistrationService.InitiateRegistration(registrationRequest, suite.ginContext)
 	suite.NotNil(err)

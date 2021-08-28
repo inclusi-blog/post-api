@@ -49,11 +49,11 @@ func (service registrationCacheService) SaveUserDetailsInCache(newRequest reques
 		Email:    newRequest.Email,
 		Password: newRequest.Password,
 		Username: newRequest.Username,
-		UUID:     generatedUUID,
+		Id:       generatedUUID,
 	}
 	log.Infof("Saving new user registration request in cache %v for userEmail and user uuid %v", newRequest.Email, generatedUUID)
 
-	err := service.store.Set(ctx, generatedUUID, registrationRequest, 120)
+	err := service.store.Set(ctx, generatedUUID.String(), registrationRequest, 120)
 
 	if err != nil {
 		log.Errorf("Error occurred while saving user registration request in cache for userEmail %v . %v", newRequest.Email, err)
@@ -65,7 +65,7 @@ func (service registrationCacheService) SaveUserDetailsInCache(newRequest reques
 	}
 
 	// TODO Change the url when frontend route is played
-	activation := NewUserActivation{ActivationUrl: service.configData.ActivationCallback + `?token=` + generatedUUID + ``}
+	activation := NewUserActivation{ActivationUrl: service.configData.ActivationCallback + `?token=` + generatedUUID.String() + ``}
 	emailContent, _ := idputil.ParseTemplate(ctx, service.configData.Email.TemplatePaths.NewUserActivation, activation)
 
 	userEmail := registrationRequest.Email

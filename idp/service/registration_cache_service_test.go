@@ -6,6 +6,7 @@ import (
 	"github.com/gola-glitch/gola-utils/alert/email/models"
 	mocksUtil "github.com/gola-glitch/gola-utils/mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"post-api/configuration"
 	"post-api/idp/constants"
@@ -53,18 +54,20 @@ func (suite *RegistrationCacheServiceTest) TearDownTest() {
 }
 
 func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenSuccess() {
+	userUUID, err := uuid.Parse("fe538ef9-6ea8-4915-9a07-be9bb14e094b")
+	suite.Nil(err)
 	registrationRequest := request.NewRegistrationRequest{
 		Email:    "dummy@email.com",
 		Password: "dummy-encrypted-password",
 		Username: "dummy user",
 	}
 
-	suite.mockUUIDGenerator.EXPECT().Generate().Return("some-value").Times(1)
+	suite.mockUUIDGenerator.EXPECT().Generate().Return(userUUID).Times(1)
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
 		Username: registrationRequest.Username,
-		UUID:     "some-value",
+		Id:       userUUID,
 	}
 
 	details := models.EmailDetails{
@@ -74,8 +77,8 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenSucces
 		Content: constants.NewUserActivation,
 	}
 	suite.mockEmailUtil.EXPECT().SendWithContext(suite.goContext, details, true).Return(nil).Times(1)
-	suite.mockRedisStore.EXPECT().Set(suite.goContext, "some-value", initiateRegistrationRequest, 120).Return(nil).Times(1)
-	err := suite.registrationCacheService.SaveUserDetailsInCache(registrationRequest, suite.goContext)
+	suite.mockRedisStore.EXPECT().Set(suite.goContext, userUUID.String(), initiateRegistrationRequest, 120).Return(nil).Times(1)
+	err = suite.registrationCacheService.SaveUserDetailsInCache(registrationRequest, suite.goContext)
 	suite.Nil(err)
 }
 
@@ -85,33 +88,34 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 		Password: "dummy-encrypted-password",
 		Username: "dummy user",
 	}
-
-	suite.mockUUIDGenerator.EXPECT().Generate().Return("some-value").Times(1)
+	userUUID := uuid.New()
+	suite.mockUUIDGenerator.EXPECT().Generate().Return(userUUID).Times(1)
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
 		Username: registrationRequest.Username,
-		UUID:     "some-value",
+		Id:       userUUID,
 	}
-	suite.mockRedisStore.EXPECT().Set(suite.goContext, "some-value", initiateRegistrationRequest, 120).Return(errors.New("something went wrong")).Times(1)
+	suite.mockRedisStore.EXPECT().Set(suite.goContext, userUUID.String(), initiateRegistrationRequest, 120).Return(errors.New("something went wrong")).Times(1)
 	err := suite.registrationCacheService.SaveUserDetailsInCache(registrationRequest, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(&constants.IDPServiceFailureError, err)
 }
 
 func (suite *RegistrationCacheServiceTest) TestGetUserDetailsFromCache_WhenSuccess() {
+	userUUID := uuid.New()
 	var initiateRegistration request.InitiateRegistrationRequest
 	expectedRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    "dummy@gmail.com",
 		Password: "encrypted-password",
 		Username: "selected-username",
-		UUID:     "some-uuid",
+		Id:       userUUID,
 	}
 	suite.mockRedisStore.EXPECT().Get(suite.goContext, "some-hash", &initiateRegistration).Do(func(ctx context.Context, uuid string, destination *request.InitiateRegistrationRequest) {
 		destination.Email = "dummy@gmail.com"
 		destination.Password = "encrypted-password"
 		destination.Username = "selected-username"
-		destination.UUID = "some-uuid"
+		destination.Id = userUUID
 	}).Return(nil).Times(1)
 	registrationRequest, err := suite.registrationCacheService.GetUserDetailsFromCache("some-hash", suite.goContext)
 	suite.Nil(err)
@@ -133,13 +137,14 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 		Password: "dummy-encrypted-password",
 		Username: "dummy user",
 	}
-
-	suite.mockUUIDGenerator.EXPECT().Generate().Return("some-value").Times(1)
+	userUUID, err := uuid.Parse("fe538ef9-6ea8-4915-9a07-be9bb14e094b")
+	suite.Nil(err)
+	suite.mockUUIDGenerator.EXPECT().Generate().Return(userUUID).Times(1)
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
 		Username: registrationRequest.Username,
-		UUID:     "some-value",
+		Id:       userUUID,
 	}
 
 	details := models.EmailDetails{
@@ -149,8 +154,8 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 		Content: constants.NewUserActivation,
 	}
 	suite.mockEmailUtil.EXPECT().SendWithContext(suite.goContext, details, true).Return(&constants.IDPServiceFailureError).Times(1)
-	suite.mockRedisStore.EXPECT().Set(suite.goContext, "some-value", initiateRegistrationRequest, 120).Return(nil).Times(1)
-	err := suite.registrationCacheService.SaveUserDetailsInCache(registrationRequest, suite.goContext)
+	suite.mockRedisStore.EXPECT().Set(suite.goContext, userUUID.String(), initiateRegistrationRequest, 120).Return(nil).Times(1)
+	err = suite.registrationCacheService.SaveUserDetailsInCache(registrationRequest, suite.goContext)
 	suite.NotNil(err)
 	suite.Equal(&constants.IDPServiceFailureError, err)
 }

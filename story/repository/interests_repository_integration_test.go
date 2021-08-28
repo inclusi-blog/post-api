@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"post-api/dbhelper"
-	"post-api/story/repository/helper"
+	"post-api/test_helper/helper"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ type InterestsRepositoryIntegrationTest struct {
 }
 
 func (suite *InterestsRepositoryIntegrationTest) SetupTest() {
-	err := godotenv.Load("../docker-compose-test.env")
+	err := godotenv.Load("../../docker-compose-test.env")
 	connectionString := dbhelper.BuildConnectionString()
 	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {

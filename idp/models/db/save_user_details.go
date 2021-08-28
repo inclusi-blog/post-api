@@ -1,9 +1,11 @@
 package db
 
+import "github.com/google/uuid"
+
 type SaveUserDetails struct {
-	UUID     string `db:"UUID"`
-	Username string `db:"USERNAME"`
-	Email    string `db:"EMAIL"`
-	Password string `db:"PASSWD"`
-	IsActive bool   `db:"IS_ACTIVE"`
+	ID       uuid.UUID `db:"id"`
+	Username string    `db:"username"`
+	Email    string    `db:"email"`
+	Password string    `db:"password"`
+	IsActive bool      `db:"is_active"`
 }

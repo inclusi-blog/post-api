@@ -43,7 +43,7 @@ func (authHandler oauthLoginHandler) AcceptLogin(ctx *gin.Context, loginChalleng
 	acceptResponse := response.AcceptResponse{}
 
 	acceptLoginRequest := oauth.LoginAcceptRequest{
-		Subject:     profile.UserID,
+		Subject:     profile.Id.String(),
 		Remember:    false,
 		RememberFor: 0,
 		Acr:         "1",

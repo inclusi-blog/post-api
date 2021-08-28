@@ -82,7 +82,7 @@ func (service draftService) UpsertTagline(taglineRequest request.TaglineSaveRequ
 func (service draftService) GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
 
-	logger.Infof("Calling service to get draft using draft ID %s", draftUID)
+	logger.Infof("Calling service to get draft using draft Id %s", draftUID)
 
 	draft, err := service.draftRepository.GetDraft(ctx, draftUID, userUUID)
 
@@ -121,7 +121,7 @@ func (service draftService) SavePreviewImage(ctx context.Context, imageSaveReque
 func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetAllDraft")
 
-	logger.Infof("Calling service to get draft using user ID %s", allDraftReq.UserID)
+	logger.Infof("Calling service to get draft using user Id %s", allDraftReq.UserID)
 
 	var updatedDrafts []db.DraftPreview
 

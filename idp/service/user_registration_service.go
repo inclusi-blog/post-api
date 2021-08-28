@@ -101,7 +101,7 @@ func (service userRegistrationService) InitiateRegistration(request request.Init
 	// TODO : Invert the condition and move to another flow when playing existence flow
 	if !isAvailable {
 		userRegistrationDetails := db.SaveUserDetails{
-			UUID:     request.UUID,
+			ID:       request.Id,
 			Username: request.Username,
 			Email:    request.Email,
 			Password: passwordHash,
@@ -116,7 +116,7 @@ func (service userRegistrationService) InitiateRegistration(request request.Init
 			return &constants.InternalServerError
 		}
 
-		err = service.redis.Delete(ctx.Request.Context(), userRegistrationDetails.UUID)
+		err = service.redis.Delete(ctx.Request.Context(), userRegistrationDetails.ID.String())
 
 		if err != nil {
 			log.Errorf("Unable to delete activation hash in cache %v", err)

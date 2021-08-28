@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
@@ -55,7 +56,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenSuccess() {
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -82,7 +83,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_UserEmailNotAvailab
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -110,7 +111,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenUserRepositoryR
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -138,7 +139,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenUserDeciphersRe
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -189,7 +190,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenAuthenticatorRe
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -217,7 +218,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenAuthenticatorRe
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,
@@ -245,7 +246,7 @@ func (suite *LoginServiceTest) TestLoginWithEmailAndPassword_WhenAcceptLoginRetu
 	}
 
 	profile := db.UserProfile{
-		UserID:   "some-user-id",
+		Id:       uuid.New(),
 		Username: "some-user-name",
 		Email:    "dummy@gmail.com",
 		IsActive: true,

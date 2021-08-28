@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
@@ -106,7 +107,7 @@ func (suite *RegistrationControllerTest) TestActivateUser_WhenValidRequest() {
 		Email:    "dummy@gmail.com",
 		Password: "encrypted-password",
 		Username: "dummy-user",
-		UUID:     "some-uuid",
+		Id:       uuid.New(),
 	}
 
 	suite.mockUserRegistrationService.EXPECT().InitiateRegistration(requestBody, suite.context).Return(nil).Times(1)
@@ -139,7 +140,7 @@ func (suite *RegistrationControllerTest) TestActivateUser_WhenInitiateRegistrati
 		Email:    "dummy@gmail.com",
 		Password: "encrypted-password",
 		Username: "dummy-user",
-		UUID:     "some-uuid",
+		Id:       uuid.New(),
 	}
 
 	suite.mockUserRegistrationService.EXPECT().InitiateRegistration(requestBody, suite.context).Return(&constants.InternalServerError).Times(1)
