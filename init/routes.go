@@ -2,9 +2,15 @@ package init
 
 import (
 	"context"
+	cacheMiddleware "github.com/gola-glitch/gola-utils/middleware/cache_control"
+	tokenMiddleware "github.com/gola-glitch/gola-utils/middleware/introspection"
+	"github.com/gola-glitch/gola-utils/oauth"
 	"net/http"
 	"post-api/configuration"
 	"post-api/idp/middlewares"
+	commonService "post-api/service"
+	"post-api/story/constants"
+	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -16,6 +22,23 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+func globalPanicMiddleware(ctx *gin.Context) {
+	defer func() {
+		if err := recover(); err != nil {
+			logging.GetLogger(ctx).Errorf("Error occurred: %+v, \n %s", err, string(debug.Stack()))
+			serverError := constants.InternalServerError
+			constants.RespondWithGolaError(ctx, serverError)
+		}
+	}()
+	ctx.Next()
+}
+
+func tokenIntrospectionMiddleware(oauthBaseUrl string, oauthUtil oauth.Utils, data *configuration.ConfigData) gin.HandlerFunc {
+	protectedUrlService := commonService.NewProtectedUrlService(data)
+	introspectionMiddleware := tokenMiddleware.NewIntrospectionAndDecryptionMiddleware(protectedUrlService, oauthBaseUrl, oauthUtil)
+	return introspectionMiddleware.TokenValidationMiddleware()
+}
+
 func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	router.GET("api/post/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -23,14 +46,6 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		})
 	})
 
-	router.Use(middleware.SessionTracingMiddleware)
-	router.Use(request_response_trace.HttpRequestResponseTracingAllMiddlewareWithCustomHealthEndpoint("api/post/healthz"))
-
-	corsConfig := corsModel.CorsConfig{
-		AllowedOrigins: configData.AllowedOrigins,
-	}
-
-	router.Use(cors.CORSMiddleware(corsConfig))
 	golaLoggerRegistry := logging.NewLoggerEntry()
 
 	router.Use(logging.LoggingMiddleware(golaLoggerRegistry))
@@ -44,6 +59,20 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			logger.Warning("gola_logger.SetLevel failed. Default log level being used", logLevelInitErr.Error())
 		}
 	}
+
+	router.Use(middleware.SessionTracingMiddleware)
+	router.Use(request_response_trace.HttpRequestResponseTracingAllMiddlewareWithCustomHealthEndpoint("api/post/healthz"))
+
+	corsConfig := corsModel.CorsConfig{
+		AllowedOrigins: configData.AllowedOrigins,
+	}
+
+	router.Use(cors.CORSMiddleware(corsConfig))
+	router.Use(globalPanicMiddleware)
+	cacheControl := cacheMiddleware.NewCacheControlMiddleware([]string{})
+	router.Use(cacheControl.StopCaching())
+
+	oauthUtil := oauth.NewOauthUtils(configData.CryptoServiceURL)
 
 	router.GET("api/post/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -69,8 +98,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	{
 		tokenGroup.POST("/exchange", tokenController.ExchangeToken)
 	}
-
-	defaultRouterGroup := router.Group("api/post/v1")
+	defaultRouterGroup := router.Group("api/post/v1", tokenIntrospectionMiddleware(configData.Oauth.AdminUrl, oauthUtil, configData))
 
 	draftGroup := defaultRouterGroup.Group("/draft")
 	{
