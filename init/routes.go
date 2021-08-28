@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"post-api/configuration"
+	"post-api/idp/middlewares"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -45,6 +46,29 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	}
 
 	router.GET("api/post/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	registrationGroup := router.Group("api/idp/v1/user")
+	{
+		registrationGroup.POST("/register", registrationController.NewRegistration)
+		registrationGroup.GET("/activate/:activation_hash", middlewares.UserActionMiddleware(registrationCacheService), registrationController.ActivateUser)
+		registrationGroup.POST("/emailAvailable", registrationController.IsEmailAvailable)
+		registrationGroup.POST("/usernameAvailability", registrationController.IsUsernameAvailable)
+	}
+
+	loginGroup := router.Group("api/idp/v1/login")
+	{
+		loginGroup.POST("/password", loginController.LoginByEmailAndPassword)
+	}
+
+	consentGroup := router.Group("api/idp/v1/consent")
+	{
+		consentGroup.GET("", loginController.GrantConsent)
+	}
+
+	tokenGroup := router.Group("api/idp/v1/token")
+	{
+		tokenGroup.POST("/exchange", tokenController.ExchangeToken)
+	}
 
 	defaultRouterGroup := router.Group("api/post/v1")
 

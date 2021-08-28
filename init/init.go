@@ -10,6 +10,7 @@ func CreateRouter(data *configuration.ConfigData) *gin.Engine {
 	Validators()
 	Swagger()
 	db := Db(data)
+	HttpClient(data)
 	Objects(db, data)
 	RegisterRouter(router, data)
 	return router

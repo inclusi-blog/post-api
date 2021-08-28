@@ -20,5 +20,7 @@ require (
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.6.7
+	go.opencensus.io v0.22.3
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
