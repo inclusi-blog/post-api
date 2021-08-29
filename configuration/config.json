@@ -29,7 +29,7 @@
     "gateway_url": "http://localhost:8083/api/ccg/v1/email/send",
     "default_sender": "noreply@gola.xyz",
     "template_paths": {
-      "new_user_activation": "assets/email_templates/new_user_activation.html"
+      "new_user_activation": "idp/assets/email_templates/new_user_activation.html"
     }
   },
   "oauth": {

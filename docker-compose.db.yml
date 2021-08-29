@@ -44,6 +44,13 @@ services:
     networks:
       - gola-network
 
+  story-api-cache:
+    container_name: story-api-cache
+    image: redis:5.0.7
+    ports:
+      - "6379:6379"
+    command: ["redis-server"]
+
 networks:
   gola-network:
     name: gola-network
