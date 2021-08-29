@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/gola-glitch/gola-utils v0.0.0-20210302140855-693836c039e7
+	github.com/gola-glitch/gola-utils v0.0.0-20210829163106-9f47a25a9aff
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/jmoiron/sqlx v1.2.0

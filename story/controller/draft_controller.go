@@ -18,6 +18,40 @@ type DraftController struct {
 	service service.DraftService
 }
 
+func (controller DraftController) CreateDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "CreateDraft")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entered controller to upsert draft request for user %v", userUUID)
+
+	var upsertPost models.CreateDraft
+	err = ctx.ShouldBindBodyWith(&upsertPost, binding.JSON)
+	if err != nil {
+		logger.Errorf("Unable to bind upsert draft request for user %v. Error %v", userUUID, err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	upsertPost.UserID = userUUID
+	draftUUID, draftSaveErr := controller.service.CreateDraft(ctx, upsertPost)
+	if draftSaveErr != nil {
+		logger.Errorf("Error occurred in draft service while saving draft for user %v. Error %v", userUUID, draftSaveErr)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	logger.Infof("writing response to draft request for user %v", userUUID)
+	ctx.JSON(http.StatusOK, gin.H{
+		"draft_id": draftUUID.String(),
+	})
+}
+
 // SaveDraft godoc
 // @Tags draft
 // @Summary SaveDraft

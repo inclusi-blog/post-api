@@ -22,6 +22,7 @@ type ConfigData struct {
 	AllowInsecureCookies      bool                         `json:"allow_insecure_cookies"`
 	ActivationCallback        string                       `json:"activationCallback" binding:"required"`
 	TokenValidationIgnoreURLs []string                     `json:"token_validation_ignore_urls"`
+	OauthUrl                  string                       `json:"oauth_url" binding:"required"`
 }
 
 type Email struct {

@@ -98,10 +98,11 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	{
 		tokenGroup.POST("/exchange", tokenController.ExchangeToken)
 	}
-	defaultRouterGroup := router.Group("api/post/v1", tokenIntrospectionMiddleware(configData.Oauth.AdminUrl, oauthUtil, configData))
+	defaultRouterGroup := router.Group("api/post/v1", tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
 
 	draftGroup := defaultRouterGroup.Group("/draft")
 	{
+		draftGroup.POST("", draftController.CreateDraft)
 		draftGroup.PUT("", draftController.SaveDraft)
 		draftGroup.PUT("/tagline", draftController.SaveTagline)
 		draftGroup.PUT("/interests", draftController.SaveInterests)
