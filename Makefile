@@ -46,7 +46,10 @@ create-db:
 	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d gola-db && \
 	sleep 100
 
-start-db: create-db create_user run_migration run_test_migration
+start-db: create-db create_user run_migration run_test_migration run-hydra
+
+run-hydra:
+	docker-compose -f quickstart.yml -f docker-compose.db.yml --project-name $(PROJECT) up --build -d hydra-migrate hydra
 
 stop-db:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v && \
