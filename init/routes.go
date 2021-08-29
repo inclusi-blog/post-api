@@ -106,7 +106,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		draftGroup.PUT("", draftController.SaveDraft)
 		draftGroup.PUT("/tagline", draftController.SaveTagline)
 		draftGroup.PUT("/interests", draftController.SaveInterests)
-		draftGroup.GET("/draft", draftController.GetDraft)
+		draftGroup.GET("", draftController.GetDraft)
 		draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
 		draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
 	}

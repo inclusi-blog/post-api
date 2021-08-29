@@ -29,9 +29,11 @@ type DraftPreview struct {
 }
 
 func (draft *Draft) ConvertInterests() {
-	length := len(*draft.Interests)
-	sliced := (*draft.Interests)[:length-1]
-	overAll := sliced[1:]
-	interests := strings.Split(overAll, ",")
-	draft.InterestTags = interests
+	if draft.InterestTags != nil {
+		length := len(*draft.Interests)
+		sliced := (*draft.Interests)[:length-1]
+		overAll := sliced[1:]
+		interests := strings.Split(overAll, ",")
+		draft.InterestTags = interests
+	}
 }
