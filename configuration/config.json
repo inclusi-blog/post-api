@@ -18,7 +18,7 @@
     "https://api.gola.xyz"
   ],
   "redis": {
-    "host": "localhost",
+    "host": "story-api-cache",
     "port": "6379",
     "db": 0,
     "readTimeoutInSeconds": 30,

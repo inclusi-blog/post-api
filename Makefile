@@ -41,6 +41,9 @@ vet: install_deps
 clean:
 	chmod -R +w ./.gopath vendor || true
 
+start-cache:
+	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d story-api-cache
+
 create-db:
 	docker network prune -f && docker volume prune -f && \
 	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d gola-db && \
