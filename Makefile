@@ -51,8 +51,12 @@ create-db:
 
 start-db: create-db create_user run_migration run_test_migration run-hydra
 
-run-hydra:
-	docker-compose -f quickstart.yml -f docker-compose.db.yml --project-name $(PROJECT) up --build -d hydra-migrate hydra
+run-hydra: create-hydra
+	docker-compose -f quickstart.yml exec hydra hydra clients create --endpoint http://localhost:4445 --id ui-web-client --response-types code,id_token,token --grant-types implicit,refresh_token,authorization_code --scope openid,offline,offline_access,profile,email,address,phone --callbacks http://localhost:3000/callback --token-endpoint-auth-method none
+
+create-hydra:
+	docker-compose -f quickstart.yml -f docker-compose.db.yml --project-name $(PROJECT) up --build -d hydra-migrate hydra && \
+	sleep 30
 
 stop-db:
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml down -v && \
@@ -64,8 +68,8 @@ publish: docker_login
 	docker push $(ARTIFACTORY_USER)/post-api:$(REVISION); \
 	docker push $(ARTIFACTORY_USER)/post-migration:$(REVISION);
 
-start: create-db create_user run_migration run_test_migration build
-	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml up -d
+start: create-db create_user run_migration run_test_migration run-hydra build
+	docker-compose -f docker-compose.db.yml -f docker-compose.local-app.yml up -d
 
 start-with-tracer: create-db create_user run_migration run_test_migration build
 	docker-compose -f docker-compose.db.yml -f docker-compose.test.yml -f docker-compose.local-app.yml -f docker-compose-tracing.yaml up -d
