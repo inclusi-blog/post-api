@@ -47,7 +47,7 @@ start-cache:
 create-db:
 	docker network prune -f && docker volume prune -f && \
 	docker-compose -f docker-compose.db.yml --project-name $(PROJECT) up -d gola-db && \
-	sleep 100
+	sleep 20
 
 start-db: create-db create_user run_migration run_test_migration run-hydra
 
