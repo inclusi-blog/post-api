@@ -6,18 +6,19 @@ import (
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 	"post-api/story/constants"
+	"post-api/story/models/db"
 	"post-api/story/repository"
 )
 
 type InterestsService interface {
-	GetInterests(ctx context.Context) ([]string, *golaerror.Error)
+	GetInterests(ctx context.Context) ([]db.Interests, *golaerror.Error)
 }
 
 type interestsService struct {
 	repository repository.InterestsRepository
 }
 
-func (service interestsService) GetInterests(ctx context.Context) ([]string, *golaerror.Error) {
+func (service interestsService) GetInterests(ctx context.Context) ([]db.Interests, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsService").WithField("method", "GetInterests")
 
 	logger.Info("Calling repository to get all interests")

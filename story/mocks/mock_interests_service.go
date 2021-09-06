@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	db "post-api/story/models/db"
 	reflect "reflect"
 
 	golaerror "github.com/gola-glitch/gola-utils/golaerror"
@@ -36,10 +37,10 @@ func (m *MockInterestsService) EXPECT() *MockInterestsServiceMockRecorder {
 }
 
 // GetInterests mocks base method.
-func (m *MockInterestsService) GetInterests(ctx context.Context) ([]string, *golaerror.Error) {
+func (m *MockInterestsService) GetInterests(ctx context.Context) ([]db.Interests, *golaerror.Error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInterests", ctx)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]db.Interests)
 	ret1, _ := ret[1].(*golaerror.Error)
 	return ret0, ret1
 }

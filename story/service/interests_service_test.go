@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"post-api/story/constants"
 	"post-api/story/mocks"
+	"post-api/story/models/db"
 	"testing"
 )
 
@@ -34,7 +36,15 @@ func (suite *InterestsServiceTest) TearDownTest() {
 }
 
 func (suite *InterestsServiceTest) TestGetInterests_WhenRepositoryReturnsData() {
-	expectedData := []string{"Sports","Culture"}
+	expectedData := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "Sports",
+		}, {
+			ID:   uuid.New(),
+			Name: "Culture",
+		},
+	}
 	suite.mockInterestsRepository.EXPECT().GetInterests(suite.goContext).Return(expectedData, nil).Times(1)
 
 	actualInterests, err := suite.interestsService.GetInterests(suite.goContext)

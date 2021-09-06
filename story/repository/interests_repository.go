@@ -7,10 +7,11 @@ import (
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"post-api/story/models/db"
 )
 
 type InterestsRepository interface {
-	GetInterests(ctx context.Context) ([]string, error)
+	GetInterests(ctx context.Context) ([]db.Interests, error)
 	GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error)
 }
 
@@ -19,15 +20,15 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests = "select name from interests"
+	GetInterests   = "select id, name from interests"
 	GetInterestIDs = "SELECT id from interests where name in (?)"
 )
 
-func (repository interestsRepository) GetInterests(ctx context.Context) ([]string, error) {
+func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
 	logger.Info("fetching over all interests")
 
-	var interests []string
+	var interests []db.Interests
 	err := repository.db.SelectContext(ctx, &interests, GetInterests)
 	if err != nil {
 		logger.Errorf("Error occurred while fetching over all interests from repository %v", err)
@@ -56,7 +57,7 @@ func (repository interestsRepository) GetInterestIDs(ctx context.Context, intere
 		err = rows.Scan(&id)
 		interestsIDs = append(interestsIDs, id)
 	}
-	if err != nil{
+	if err != nil {
 		logger.Errorf("error occurred while binding interest ids %v", err)
 		return nil, err
 	}

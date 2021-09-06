@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"
 	"post-api/story/constants"
 	"post-api/story/mocks"
+	"post-api/story/models/db"
 	"testing"
 )
 
@@ -38,7 +40,15 @@ func TestInterestsControllerTestSuite(t *testing.T) {
 }
 
 func (suite *InterestsControllerTest) TestGetInterests_WhenSuccess() {
-	expectedInterests := []string{"some-interests"}
+	expectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "Sports",
+		}, {
+			ID:   uuid.New(),
+			Name: "Culture",
+		},
+	}
 	suite.mockInterestService.EXPECT().GetInterests(suite.context).Return(expectedInterests, nil).Times(1)
 	marshal, err := json.Marshal(expectedInterests)
 

@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	db "post-api/story/models/db"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -51,10 +52,10 @@ func (mr *MockInterestsRepositoryMockRecorder) GetInterestIDs(ctx, interestNames
 }
 
 // GetInterests mocks base method.
-func (m *MockInterestsRepository) GetInterests(ctx context.Context) ([]string, error) {
+func (m *MockInterestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInterests", ctx)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]db.Interests)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
