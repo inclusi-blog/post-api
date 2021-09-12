@@ -98,24 +98,25 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	{
 		tokenGroup.POST("/exchange", tokenController.ExchangeToken)
 	}
-	defaultRouterGroup := router.Group("api/post/v1", tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
-
-	draftGroup := defaultRouterGroup.Group("/draft")
-	{
-		draftGroup.POST("", draftController.CreateDraft)
-		draftGroup.PUT("", draftController.SaveDraft)
-		draftGroup.PUT("/tagline", draftController.SaveTagline)
-		draftGroup.PUT("/interests", draftController.SaveInterests)
-		draftGroup.GET("", draftController.GetDraft)
-		draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
-		draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
-	}
-
+	defaultRouterGroup := router.Group("api/post/v1")
 	defaultRouterGroup.GET("/interests", interestsController.GetInterests)
-
-	postGroup := defaultRouterGroup.Group("/post")
+	defaultRouterGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
 	{
-		postGroup.POST("/publish", postController.PublishPost)
-		postGroup.GET("/like", postController.Like)
+		draftGroup := defaultRouterGroup.Group("/draft")
+		{
+			draftGroup.POST("", draftController.CreateDraft)
+			draftGroup.PUT("", draftController.SaveDraft)
+			draftGroup.PUT("/tagline", draftController.SaveTagline)
+			draftGroup.PUT("/interests", draftController.SaveInterests)
+			draftGroup.GET("", draftController.GetDraft)
+			draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
+			draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
+		}
+
+		postGroup := defaultRouterGroup.Group("/post")
+		{
+			postGroup.POST("/publish", postController.PublishPost)
+			postGroup.GET("/like", postController.Like)
+		}
 	}
 }
