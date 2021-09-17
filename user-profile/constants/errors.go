@@ -7,15 +7,18 @@ import (
 )
 
 const (
-	InternalServerErrorCode string = "ERR_POST_INTERNAL_SERVER_ERROR"
+	InternalServerErrorCode    string = "ERR_PROFILE_INTERNAL_SERVER_ERROR"
+	PayloadValidationErrorCode string = "ERR_PROFILE_PAYLOAD_INVALID"
 )
 
 var (
-	InternalServerError = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
+	InternalServerError    = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
+	PayloadValidationError = golaerror.Error{ErrorCode: PayloadValidationErrorCode, ErrorMessage: "One or more of the request parameters are missing or invalid"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
-	InternalServerErrorCode: http.StatusInternalServerError,
+	InternalServerErrorCode:    http.StatusInternalServerError,
+	PayloadValidationErrorCode: http.StatusBadRequest,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

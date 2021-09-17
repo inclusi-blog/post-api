@@ -126,6 +126,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		interests := userGroup.Group("/interests")
 		{
 			interests.GET("/followed", userInterestsController.GetFollowedInterests)
+			interests.POST("", userInterestsController.FollowInterest)
 		}
 	}
 }
