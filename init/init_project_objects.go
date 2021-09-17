@@ -19,6 +19,9 @@ import (
 	"post-api/story/repository"
 	"post-api/story/service"
 	"post-api/story/utils"
+	userProfileController "post-api/user-profile/controller"
+	userProfileRepository "post-api/user-profile/repository"
+	userProfileService "post-api/user-profile/service"
 )
 
 var (
@@ -28,6 +31,7 @@ var (
 	registrationController   idpController.RegistrationController
 	loginController          idpController.LoginController
 	tokenController          idpController.TokenController
+	userInterestsController  userProfileController.UserInterestsController
 	registrationCacheService idpService.RegistrationCacheService
 )
 
@@ -66,4 +70,8 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	loginService := idpService.NewLoginService(detailsRepository, util, authenticatorService, oauthHandler)
 	loginController = idpController.NewLoginController(loginService, oauthHandler)
 	tokenController = idpController.NewTokenController(oauthHandler, configData.AllowInsecureCookies)
+
+	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
+	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)
+	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService)
 }

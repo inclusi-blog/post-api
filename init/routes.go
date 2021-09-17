@@ -119,4 +119,13 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			postGroup.GET("/like", postController.Like)
 		}
 	}
+
+	userGroup := router.Group("api/user-profile/v1")
+	userGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
+	{
+		interests := userGroup.Group("/interests")
+		{
+			interests.GET("/followed", userInterestsController.GetFollowedInterests)
+		}
+	}
 }
