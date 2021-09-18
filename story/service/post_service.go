@@ -9,15 +9,18 @@ import (
 	"post-api/helper"
 	"post-api/story/constants"
 	"post-api/story/models/db"
+	"post-api/story/models/response"
 	"post-api/story/repository"
 	"post-api/story/utils"
+	"strings"
 
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 )
 
 type PostService interface {
-	PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) *golaerror.Error
+	GetPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, *golaerror.Error)
+	PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error)
 	LikePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 }
 
@@ -30,16 +33,16 @@ type postService struct {
 	validator              utils.PostValidator
 }
 
-func (service postService) PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) *golaerror.Error {
+func (service postService) PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "PublishPost")
 	draft, err := service.draftRepository.GetDraft(ctx, draftUID, userUUID)
 	if err != nil {
 		logger.Errorf("error occurred while fetching draft from draft repository %v", err)
 		if err == sql.ErrNoRows {
 			logger.Errorf("Error occurred while getting draft data, no draft found for draft id %v .%v", draftUID, err)
-			return &constants.NoDraftFoundError
+			return "", &constants.NoDraftFoundError
 		}
-		return constants.StoryInternalServerError(err.Error())
+		return "", constants.StoryInternalServerError(err.Error())
 	}
 	apiErr := draft.ConvertInterests(func(interests []string) *golaerror.Error {
 		draft.InterestTags, err = service.interestRepository.GetInterestsForName(ctx, interests)
@@ -52,7 +55,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 
 	if apiErr != nil {
 		logger.Error("unable to get interests")
-		return apiErr
+		return "", apiErr
 	}
 
 	logger.Infof("validating draft and generated read time for post %v", draftUID)
@@ -60,7 +63,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 
 	if validationErr != nil {
 		logger.Errorf("Error occurred while validating draft of id %v .%v", draftUID, validationErr)
-		return validationErr
+		return "", validationErr
 	}
 
 	if *draft.Tagline == "" {
@@ -70,6 +73,8 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 	if draft.PreviewImage == nil || *draft.PreviewImage == "" {
 		draft.PreviewImage = &metaData.PreviewImage
 	}
+
+	url := utils.GenerateUrl(metaData.Title)
 
 	post := db.PublishPost{
 		DraftID:  draftUID,
@@ -83,7 +88,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 	if err != nil {
 		_ = txn.Rollback()
 		logger.Errorf("Error occurred while publishing post in post repository %v", err)
-		return constants.StoryInternalServerError(err.Error())
+		return "", constants.StoryInternalServerError(err.Error())
 	}
 	logger.Infof("Successfully saved story for post id %v", draftUID)
 	var interests []uuid.UUID
@@ -94,7 +99,7 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 	if err != nil {
 		_ = txn.Rollback()
 		logger.Errorf("unable to add interests to posts %v", err)
-		return constants.StoryInternalServerError(err.Error())
+		return "", constants.StoryInternalServerError(err.Error())
 	}
 	abstractPost := db.AbstractPost{
 		PostID:       postID,
@@ -108,12 +113,14 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 	if err != nil {
 		_ = txn.Rollback()
 		logger.Errorf("Error occurred while saving abstract post for post id %v .%v", abstractPost, err)
-		return constants.StoryInternalServerError(err.Error())
+		return "", constants.StoryInternalServerError(err.Error())
 	}
 	_ = txn.Commit()
 
+	finalPostUrl := strings.Join([]string{url, postID.String()}, "-")
+
 	logger.Infof("Successfully stored the preview post in preview post repository")
-	return nil
+	return finalPostUrl, nil
 }
 
 func (service postService) LikePost(ctx context.Context, postUID, userID uuid.UUID) *golaerror.Error {
@@ -128,6 +135,25 @@ func (service postService) LikePost(ctx context.Context, postUID, userID uuid.UU
 	return nil
 }
 
+func (service postService) GetPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "GetPost")
+	logger.Infof("Fetching post for post id %v", postId)
+
+	post, err := service.repository.FetchPost(ctx, postId, userId)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching post for given post id %v, Error %v", postId, err)
+		if err == sql.ErrNoRows {
+			logger.Errorf("Error No post found for given post id %v", postId)
+			return response.Post{}, &constants.PostNotFoundErr
+		}
+		return response.Post{}, constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully fetching post from post repository for given post id %v", postId)
+
+	return post, nil
+}
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
 	return postService{
 		transactionManager:     manager,

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"post-api/story/constants"
+	"post-api/story/models/request"
 	"post-api/story/service"
 	"post-api/story/utils"
 
@@ -36,7 +37,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	}
 
 	logger.Infof("Successfully bind publishPostRequest body for draft id %v", draftID)
-	publishErr := controller.postService.PublishPost(ctx, draftID, userUUID)
+	postURL, publishErr := controller.postService.PublishPost(ctx, draftID, userUUID)
 
 	if publishErr != nil {
 		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", draftID, publishErr)
@@ -47,6 +48,7 @@ func (controller PostController) PublishPost(ctx *gin.Context) {
 	logger.Infof("Successfully published draft for draft id %v", draftID)
 	ctx.JSON(http.StatusOK, gin.H{
 		"status": "published",
+		"url":    postURL,
 	})
 }
 
@@ -79,6 +81,52 @@ func (controller PostController) Like(ctx *gin.Context) {
 	logger.Infof("writing response to draft data request for user %v %s", userUUID, postID)
 
 	ctx.Status(http.StatusOK)
+}
+
+// GetPost godoc
+// @Tags post
+// @Summary GetPost
+// @Description get a post
+// @Accept json
+// @Param request body request.PostURIRequest true "Request Body"
+// @Success 200 {object} response.Post
+// @Failure 400 {object} golaerror.Error
+// @Failure 404 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/post/:post_id [get]
+func (controller PostController) GetPost(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetPost")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var postRequest request.PostURIRequest
+	if err := ctx.ShouldBindUri(&postRequest); err != nil {
+		logger.Errorf("Error occurred while binding get post request body %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	id, _ := uuid.Parse(postRequest.PostUID)
+	logger.Infof("Successfully bind get post request body for post id %v", id)
+	post, publishErr := controller.postService.GetPost(ctx, id, userUUID)
+
+	if publishErr != nil {
+		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", id, publishErr)
+		constants.RespondWithGolaError(ctx, err)
+		return
+	}
+
+	logger.Infof("Successfully fetching post for given post id %v", id)
+	ctx.JSON(http.StatusOK, post)
 }
 
 func NewPostController(postService service.PostService) PostController {
