@@ -13,6 +13,7 @@ import (
 type UserInterestsService interface {
 	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*models.JSONString, *golaerror.Error)
 	FollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) *golaerror.Error
+	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, *golaerror.Error)
 }
 
 type userInterestsService struct {
@@ -42,6 +43,18 @@ func (service userInterestsService) FollowInterest(ctx *gin.Context, interestID,
 	}
 
 	return nil
+}
+
+func (service userInterestsService) GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, *golaerror.Error) {
+	log := logging.GetLogger(ctx).WithField("class", "UserInterestsService").WithField("method", "GetExploreInterests")
+	log.Info("fetching followed interests")
+
+	followedInterests, err := service.repository.GetExploreInterests(ctx, userID)
+	if err != nil {
+		log.Errorf("unable to get explore interests %v", err)
+		return nil, &constants.InternalServerError
+	}
+	return followedInterests, nil
 }
 
 func NewUserInterestsService(repository repository.UserInterestsRepository) UserInterestsService {
