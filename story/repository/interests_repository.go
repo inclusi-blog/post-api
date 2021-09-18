@@ -13,6 +13,7 @@ import (
 type InterestsRepository interface {
 	GetInterests(ctx context.Context) ([]db.Interests, error)
 	GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error)
+	GetInterestsForName(ctx context.Context, interestNames []string) ([]db.Interests, error)
 }
 
 type interestsRepository struct {
@@ -20,8 +21,9 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests   = "select id, name from interests"
-	GetInterestIDs = "SELECT id from interests where name in (?)"
+	GetInterests         = "select id, name from interests"
+	GetInterestIDs       = "SELECT id from interests where name in (?)"
+	GetInterestsForNames = "select id, name from interests where name in (?)"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
@@ -62,6 +64,31 @@ func (repository interestsRepository) GetInterestIDs(ctx context.Context, intere
 		return nil, err
 	}
 	return interestsIDs, nil
+}
+
+func (repository interestsRepository) GetInterestsForName(ctx context.Context, interestNames []string) ([]db.Interests, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetInterests")
+	logger.Info("fetching over all interests")
+
+	var interests []db.Interests
+	query, args, err := sqlx.In(GetInterestsForNames, interestNames)
+
+	query = repository.db.Rebind(query)
+	rows, err := repository.db.Query(query, args...)
+	if err != nil {
+		logger.Errorf("unable to fetch interest ids %v", err)
+		return nil, err
+	}
+	for rows.Next() {
+		var interest db.Interests
+		err = rows.Scan(&interest.ID, &interest.Name)
+		interests = append(interests, interest)
+	}
+	if err != nil {
+		logger.Errorf("error occurred while binding interest ids %v", err)
+		return nil, err
+	}
+	return interests, nil
 }
 
 func NewInterestRepository(db *sqlx.DB) InterestsRepository {

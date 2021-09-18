@@ -47,6 +47,20 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 	userUUID := uuid.New()
 	tagline := "this is some tagline"
 	interests := "{sports,economy,poem}"
+	selectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "sports",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "economy",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "poem",
+		},
+	}
 	draft := db.Draft{
 		DraftID: draftUUID,
 		UserID:  userUUID,
@@ -55,7 +69,7 @@ func (suite *PostValidatorTest) TestValidate_ValidPost() {
 		},
 		Tagline:      &tagline,
 		Interests:    &interests,
-		InterestTags: []string{"sports", "economy", "poem"},
+		InterestTags: selectedInterests,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)
@@ -69,13 +83,27 @@ func (suite *PostValidatorTest) TestValidate_InvalidPostData() {
 	userUUID := uuid.New()
 	tagline := "this is some tagline"
 	interests := "{sports,economy,poem}"
+	selectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "sports",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "economy",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "poem",
+		},
+	}
 	draft := db.Draft{
 		DraftID:      draftUUID,
 		UserID:       userUUID,
 		Data:         models.JSONString{},
 		Tagline:      &tagline,
 		Interests:    &interests,
-		InterestTags: []string{"sports", "economy", "poem"},
+		InterestTags: selectedInterests,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -113,7 +141,20 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 	suite.configData.ContentReadTimeConfig = map[string]int{
 		"poem": 50,
 	}
-
+	selectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "sports",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "economy",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "poem",
+		},
+	}
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: draftUUID,
@@ -123,7 +164,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanConfigTime() 
 		},
 		Tagline:      &tagline,
 		Interests:    &interests,
-		InterestTags: []string{"sports", "economy", "poem"},
+		InterestTags: selectedInterests,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -140,7 +181,20 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 		"finance": 50,
 	}
 	suite.configData.MinimumPostReadTime = 50
-
+	selectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "sports",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "economy",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "poem",
+		},
+	}
 	tagline := "this is some tagline"
 	draft := db.Draft{
 		DraftID: draftUUID,
@@ -150,7 +204,7 @@ func (suite *PostValidatorTest) TestValidate_IfReadTimeIsLesserThanMinimumConfig
 		},
 		Tagline:      &tagline,
 		Interests:    &interests,
-		InterestTags: []string{"sports", "economy", "poem"},
+		InterestTags: selectedInterests,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.NotNil(err)
@@ -163,6 +217,20 @@ func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
 	draftUUID := uuid.New()
 	userUUID := uuid.New()
 	interests := "{sports,economy,poem}"
+	selectedInterests := []db.Interests{
+		{
+			ID:   uuid.New(),
+			Name: "sports",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "economy",
+		},
+		{
+			ID:   uuid.New(),
+			Name: "poem",
+		},
+	}
 	draft := db.Draft{
 		DraftID: draftUUID,
 		UserID:  userUUID,
@@ -170,7 +238,7 @@ func (suite *PostValidatorTest) TestValidate_ValidPostAndTagLine() {
 			JSONText: types.JSONText(test_helper.ContentTestData),
 		},
 		Interests:    &interests,
-		InterestTags: []string{"sports", "economy", "poem"},
+		InterestTags: selectedInterests,
 	}
 	metaData, err := suite.postValidator.ValidateAndGetReadTime(draft, suite.goContext)
 	suite.Nil(err)

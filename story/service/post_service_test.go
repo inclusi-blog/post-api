@@ -88,7 +88,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccess() {
 	interestUUIDs := []uuid.UUID{uuid.New(), uuid.New()}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -140,7 +140,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenSuccessThereIsNoPreviewImage()
 	interestUUIDs := []uuid.UUID{uuid.New(), uuid.New()}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:        "Install apps via helm in kubernetes",
 		Tagline:      "",
@@ -224,7 +224,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenValidationFails() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{}, &constants.DraftValidationFailedError).Times(1)
 
 	err := suite.postService.PublishPost(suite.goContext, draftUUID, userUUID)
@@ -257,7 +257,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenCreatePostFails() {
 	}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -299,7 +299,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenGetInterestsFails() {
 	var interestUUIDs []uuid.UUID
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -342,7 +342,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenAddInterestsFails() {
 	interestUUIDs := []uuid.UUID{uuid.New(), uuid.New()}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",
@@ -395,7 +395,7 @@ func (suite *PostServiceTest) TestPublishPost_WhenAbstractPostSaveFails() {
 	interestUUIDs := []uuid.UUID{uuid.New(), uuid.New()}
 
 	suite.mockDraftsRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(draft, nil).Times(1)
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	suite.mockPostValidator.EXPECT().ValidateAndGetReadTime(draft, suite.goContext).Return(models.MetaData{
 		Title:    "Install apps via helm in kubernetes",
 		Tagline:  "",

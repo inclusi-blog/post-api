@@ -63,7 +63,7 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 				individual := strings.Split(textString, " ")
 				*wordsCount = len(individual) + *wordsCount
 				if *titleString == "" {
-					if len(textString) > 100 {
+					if len([]rune(textString)) > 100 {
 						*titleString = string([]rune(textString)[:100])
 						continue
 					}

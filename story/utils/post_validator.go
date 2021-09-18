@@ -50,7 +50,7 @@ func (validator postValidator) ValidateAndGetReadTime(draft db.Draft, ctx contex
 	readTime = CountContentReadTime(postWordsCount)
 	CountImageReadTime(imageCount, &readTime)
 	for _, value := range draft.InterestTags {
-		configReadTime := config[value]
+		configReadTime := config[value.Name]
 		if configReadTime != 0 {
 			if readTime < configReadTime {
 				logger.Errorf("post interest doesn't meet required read time %v .%v", draftID, readTime)

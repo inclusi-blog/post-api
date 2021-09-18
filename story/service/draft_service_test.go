@@ -181,7 +181,7 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoError() 
 	suite.mockDraftRepository.EXPECT().GetDraft(suite.goContext, draftUUID, userUUID).Return(expectedDraft, nil).Times(1)
 
 	actualDraft, expectedError := suite.draftService.GetDraft(suite.goContext, draftUUID, userUUID)
-	expectedDraft.ConvertInterests()
+	expectedDraft.ConvertInterests(nil)
 	suite.Equal(expectedDraft, actualDraft)
 	suite.Nil(expectedError)
 }

@@ -342,6 +342,52 @@ func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 	return
 }
 
+// GetPreviewDraft godoc
+// @Tags draft
+// @Summary GetPreviewDraft
+// @Description get preview draft for a given draft id
+// @Accept json
+// @Param request body request.DraftURIRequest true "Request Body"
+// @Success 200
+// @Failure 400 {object} golaerror.Error
+// @Failure 406 {object} golaerror.Error
+// @Failure 500 {object} golaerror.Error
+// @Router /api/post/v1/draft/preview-draft/:draft_id [get]
+func (controller DraftController) GetPreviewDraft(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetPreviewDraft")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entered controller to upsert draft request for user %v", userUUID)
+
+
+	var draftURIRequest request.DraftURIRequest
+	if err := ctx.ShouldBindUri(&draftURIRequest); err != nil {
+		logger.Errorf("unable to bind path parameter %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	logger.Infof("Request body bind successful with get draft request for user %v", "12")
+	draftID, _ := uuid.Parse(draftURIRequest.DraftID)
+	draftData, draftGetErr := controller.service.ValidateAndGetDraft(ctx, draftID, token)
+	if draftGetErr != nil {
+		logger.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", "12", draftGetErr)
+		constants.RespondWithGolaError(ctx, draftGetErr)
+		return
+	}
+
+	logger.Infof("writing response to draft data request for user %v %s", "12", draftURIRequest.DraftID)
+
+	ctx.JSON(http.StatusOK, draftData)
+}
+
 func NewDraftController(service service.DraftService) DraftController {
 	return DraftController{
 		service: service,

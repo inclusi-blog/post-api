@@ -41,7 +41,19 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 		}
 		return constants.StoryInternalServerError(err.Error())
 	}
-	draft.ConvertInterests()
+	apiErr := draft.ConvertInterests(func(interests []string) *golaerror.Error {
+		draft.InterestTags, err = service.interestRepository.GetInterestsForName(ctx, interests)
+		if err != nil {
+			logger.Errorf("unable to get interests %v", err)
+			return constants.StoryInternalServerError("something went wrong")
+		}
+		return nil
+	})
+
+	if apiErr != nil {
+		logger.Error("unable to get interests")
+		return apiErr
+	}
 
 	logger.Infof("validating draft and generated read time for post %v", draftUID)
 	metaData, validationErr := service.validator.ValidateAndGetReadTime(draft, ctx)
@@ -74,14 +86,11 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 		return constants.StoryInternalServerError(err.Error())
 	}
 	logger.Infof("Successfully saved story for post id %v", draftUID)
-	interestIDs, err := service.interestRepository.GetInterestIDs(ctx, draft.InterestTags)
-
-	if err != nil {
-		logger.Errorf("unable to fetch interest id's %v", err)
-		_ = txn.Rollback()
-		return constants.StoryInternalServerError(err.Error())
+	var interests []uuid.UUID
+	for _, interest := range draft.InterestTags {
+		interests = append(interests, interest.ID)
 	}
-	err = service.repository.AddInterests(ctx, txn, postID, interestIDs)
+	err = service.repository.AddInterests(ctx, txn, postID, interests)
 	if err != nil {
 		_ = txn.Rollback()
 		logger.Errorf("unable to add interests to posts %v", err)

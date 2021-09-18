@@ -10,7 +10,7 @@ func TestDraftConvertInterests(t *testing.T) {
 	draft := Draft{
 		Interests: &value,
 	}
-	draft.ConvertInterests()
+	draft.ConvertInterests(nil)
 	assert.Len(t, draft.InterestTags, 2)
 	assert.Equal(t, []string{"Culture", "Technology"},draft.InterestTags)
 }

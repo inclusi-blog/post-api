@@ -111,6 +111,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			draftGroup.GET("", draftController.GetDraft)
 			draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
 			draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
+			draftGroup.GET("/preview-draft/:draft_id", draftController.GetPreviewDraft)
 		}
 
 		postGroup := defaultRouterGroup.Group("/post")

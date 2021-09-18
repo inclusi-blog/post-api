@@ -5,11 +5,13 @@ package service
 import (
 	"context"
 	"database/sql"
+	"github.com/gola-glitch/gola-utils/model"
 	"github.com/google/uuid"
 	"post-api/story/constants"
 	"post-api/story/models"
 	"post-api/story/models/db"
 	"post-api/story/models/request"
+	"post-api/story/models/response"
 	"post-api/story/repository"
 	"post-api/story/utils"
 
@@ -26,10 +28,13 @@ type DraftService interface {
 	SavePreviewImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) *golaerror.Error
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error)
 	DeleteDraft(ctx context.Context, draftID, userUUID uuid.UUID) *golaerror.Error
+	ValidateAndGetDraft(ctx context.Context, draftId uuid.UUID, user model.IdToken) (response.PreviewDraft, *golaerror.Error)
 }
 
 type draftService struct {
-	draftRepository repository.DraftRepository
+	draftRepository    repository.DraftRepository
+	interestRepository repository.InterestsRepository
+	validator          utils.PostValidator
 }
 
 func (service draftService) CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error) {
@@ -97,7 +102,19 @@ func (service draftService) GetDraft(ctx context.Context, draftUID, userUUID uui
 
 	logger.Info("Successfully stored got draft details")
 
-	draft.ConvertInterests()
+	apiErr := draft.ConvertInterests(func(interests []string) *golaerror.Error {
+		draft.InterestTags, err = service.interestRepository.GetInterestsForName(ctx, interests)
+		if err != nil {
+			logger.Errorf("unable to get interests %v", err)
+			return constants.StoryInternalServerError("something went wrong")
+		}
+		return nil
+	})
+
+	if apiErr != nil {
+		logger.Error("unable to get interests")
+		return db.Draft{}, apiErr
+	}
 
 	return draft, nil
 }
@@ -136,7 +153,19 @@ func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.
 	}
 
 	for _, draft := range drafts {
-		draft.ConvertInterests()
+		apiErr := draft.ConvertInterests(func(interests []string) *golaerror.Error {
+			draft.InterestTags, err = service.interestRepository.GetInterestsForName(ctx, interests)
+			if err != nil {
+				logger.Errorf("unable to get interests %v", err)
+				return constants.StoryInternalServerError("something went wrong")
+			}
+			return nil
+		})
+
+		if apiErr != nil {
+			logger.Error("unable to get interests")
+			return nil, apiErr
+		}
 		updatedDraft := db.DraftPreview{
 			DraftID:   draft.DraftID,
 			UserID:    draft.UserID,
@@ -182,6 +211,47 @@ func (service draftService) DeleteDraft(ctx context.Context, draftID, userUUID u
 	return nil
 }
 
+func (service draftService) ValidateAndGetDraft(ctx context.Context, draftId uuid.UUID, user model.IdToken) (response.PreviewDraft, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "ValidateAndGetDraft")
+
+	logger.Infof("Fetching draftDB for validation of draftDB id %v", draftId)
+
+	userUUID, _ := uuid.Parse(user.UserId)
+	draft, err := service.draftRepository.GetDraft(ctx, draftId, userUUID)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching draft from db %v, Error %v", draftId, err)
+		return response.PreviewDraft{}, constants.StoryInternalServerError(err.Error())
+	}
+
+	var selectedInterests []string
+	apiErr := draft.ConvertInterests(func(interests []string) *golaerror.Error {
+		selectedInterests = interests
+		draft.InterestTags, err = service.interestRepository.GetInterestsForName(ctx, interests)
+		if err != nil {
+			logger.Errorf("unable to get interests %v", err)
+			return constants.StoryInternalServerError("something went wrong")
+		}
+		return nil
+	})
+
+	if apiErr != nil {
+		logger.Error("unable to get interests")
+		return response.PreviewDraft{}, apiErr
+	}
+
+	metaData, draftValidationErr := service.validator.ValidateAndGetReadTime(draft, ctx)
+
+	if draftValidationErr != nil {
+		logger.Errorf("Error occurred while validating draft for draft id %v, Error %v", draftId, err)
+		return response.PreviewDraft{}, draftValidationErr
+	}
+
+	previewDraft := mapDraftToPreviewMetaData(draft, metaData, draftId, user.Username, selectedInterests)
+
+	return previewDraft, nil
+}
+
 func InternalServerError(err error, logger logging.GolaLoggerEntry) *golaerror.Error {
 	if err != nil {
 		logger.Errorf("Error occurred while saving draft data into draft repository %v", err)
@@ -190,8 +260,28 @@ func InternalServerError(err error, logger logging.GolaLoggerEntry) *golaerror.E
 	return nil
 }
 
-func NewDraftService(repository repository.DraftRepository) DraftService {
+func NewDraftService(repository repository.DraftRepository, interestsRepository repository.InterestsRepository, validator utils.PostValidator) DraftService {
 	return draftService{
-		draftRepository: repository,
+		draftRepository:    repository,
+		interestRepository: interestsRepository,
+		validator:          validator,
 	}
+}
+
+func mapDraftToPreviewMetaData(draftDB db.Draft, metaData models.MetaData, draftId uuid.UUID, username string, interests []string) response.PreviewDraft {
+	var previewDraft response.PreviewDraft
+
+	previewDraft.Tagline = *draftDB.Tagline
+	previewDraft.PreviewImage = *draftDB.PreviewImage
+	if *draftDB.Tagline == "" {
+		previewDraft.Tagline = metaData.Tagline
+	}
+	if *draftDB.PreviewImage == "" {
+		previewDraft.PreviewImage = metaData.PreviewImage
+	}
+	previewDraft.Interest = interests
+	previewDraft.DraftID = draftId
+	previewDraft.Title = metaData.Title
+	previewDraft.AuthorName = username
+	return previewDraft
 }

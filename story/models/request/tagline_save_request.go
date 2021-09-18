@@ -21,3 +21,7 @@ type PreviewImageSaveRequest struct {
 	DraftID         uuid.UUID `json:"-"`
 	PreviewImageUrl string    `json:"preview_image" binding:"required" db:"preview_image"`
 }
+
+type DraftURIRequest struct {
+	DraftID string `uri:"draft_id" binding:"required,validPostUID"`
+}
