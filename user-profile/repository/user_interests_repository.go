@@ -6,30 +6,31 @@ import (
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"post-api/story/models"
+	storyModels "post-api/story/models"
+	"post-api/user-profile/models"
 )
 
 const (
 	GetFollowedInterests = "select json_agg(json_build_object('id', interest_id, 'name', i.name)) as interests from user_interests inner join interests i on user_interests.interest_id = i.id where user_id = $1"
 	MapInterests         = "insert into user_interests(user_id, interest_id) values ($1, (select id from interests where id = $2))"
-	GetExploreInterests  = "select json_agg(jsonb_build_object('id', i.id, 'name', i.name, 'cover_pic', i.cover_pic, 'is_followed', i.id = ui.interest_id)) as interests from interests i left join (select * from user_interests where user_id = $1) as ui on i.id = ui.interest_id"
+	GetExploreInterests  = "select i.name as category, (select json_agg(jsonb_build_object('id', ii.id, 'name', ii.name, 'cover_pic', ii.cover_pic, 'is_followed', ii.id = ui.interest_id)) from interests ii left join (select * from user_interests where user_id = $1) as ui on ii.id = ui.interest_id where ii.id in (select interest_id from category_x_interests where category_id = cxi.category_id)) as interests from interests i inner join category_x_interests cxi on i.id = cxi.category_id group by category_id, i.name"
 )
 
 type UserInterestsRepository interface {
-	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*models.JSONString, error)
+	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*storyModels.JSONString, error)
 	FollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) error
-	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, error)
+	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) ([]models.ExploreInterest, error)
 }
 
 type userInterestsRepository struct {
 	db *sqlx.DB
 }
 
-func (repository userInterestsRepository) GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*models.JSONString, error) {
+func (repository userInterestsRepository) GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*storyModels.JSONString, error) {
 	log := logging.GetLogger(ctx).WithField("class", "UserInterestsRepository").WithField("method", "GetFollowedInterest")
 
 	type followedInterests struct {
-		Interests models.JSONString `json:"interests"`
+		Interests storyModels.JSONString `json:"interests"`
 	}
 	var interests followedInterests
 	err := repository.db.GetContext(ctx, &interests, GetFollowedInterests, userId)
@@ -63,21 +64,17 @@ func (repository userInterestsRepository) FollowInterest(ctx *gin.Context, inter
 	return errors.New("internal error occurred")
 }
 
-func (repository userInterestsRepository) GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, error) {
+func (repository userInterestsRepository) GetExploreInterests(ctx *gin.Context, userID uuid.UUID) ([]models.ExploreInterest, error) {
 	log := logging.GetLogger(ctx).WithField("class", "UserInterestsRepository").WithField("method", "GetExploreInterests")
 
-	type followedInterests struct {
-		Interests models.JSONString `json:"interests"`
-	}
-
-	var interests followedInterests
-	err := repository.db.GetContext(ctx, &interests, GetExploreInterests, userID)
+	var interests []models.ExploreInterest
+	err := repository.db.SelectContext(ctx, &interests, GetExploreInterests, userID)
 	if err != nil {
 		log.Errorf("unable to get explore interests %v", err)
 		return nil, err
 	}
 
-	return &interests.Interests, nil
+	return interests, nil
 }
 
 func NewUserInterestsRepository(db *sqlx.DB) UserInterestsRepository {

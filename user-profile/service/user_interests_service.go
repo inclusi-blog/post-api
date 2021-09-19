@@ -5,22 +5,23 @@ import (
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
-	"post-api/story/models"
+	storyModels "post-api/story/models"
 	"post-api/user-profile/constants"
+	"post-api/user-profile/models"
 	"post-api/user-profile/repository"
 )
 
 type UserInterestsService interface {
-	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*models.JSONString, *golaerror.Error)
+	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*storyModels.JSONString, *golaerror.Error)
 	FollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) *golaerror.Error
-	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, *golaerror.Error)
+	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) ([]models.ExploreInterest, *golaerror.Error)
 }
 
 type userInterestsService struct {
 	repository repository.UserInterestsRepository
 }
 
-func (service userInterestsService) GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*models.JSONString, *golaerror.Error) {
+func (service userInterestsService) GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*storyModels.JSONString, *golaerror.Error) {
 	log := logging.GetLogger(ctx).WithField("class", "UserInterestsService").WithField("method", "GetFollowedInterest")
 	log.Info("fetching followed interests")
 
@@ -45,7 +46,7 @@ func (service userInterestsService) FollowInterest(ctx *gin.Context, interestID,
 	return nil
 }
 
-func (service userInterestsService) GetExploreInterests(ctx *gin.Context, userID uuid.UUID) (*models.JSONString, *golaerror.Error) {
+func (service userInterestsService) GetExploreInterests(ctx *gin.Context, userID uuid.UUID) ([]models.ExploreInterest, *golaerror.Error) {
 	log := logging.GetLogger(ctx).WithField("class", "UserInterestsService").WithField("method", "GetExploreInterests")
 	log.Info("fetching followed interests")
 
