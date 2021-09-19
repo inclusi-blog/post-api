@@ -13,7 +13,7 @@ import (
 const (
 	GetFollowedInterests = "select json_agg(json_build_object('id', interest_id, 'name', i.name)) as interests from user_interests inner join interests i on user_interests.interest_id = i.id where user_id = $1"
 	MapInterests         = "insert into user_interests(user_id, interest_id) values ($1, (select id from interests where id = $2))"
-	GetExploreInterests  = "select i.name as category, (select json_agg(jsonb_build_object('id', ii.id, 'name', ii.name, 'cover_pic', ii.cover_pic, 'is_followed', ii.id = ui.interest_id)) from interests ii left join (select * from user_interests where user_id = $1) as ui on ii.id = ui.interest_id where ii.id in (select interest_id from category_x_interests where category_id = cxi.category_id)) as interests from interests i inner join category_x_interests cxi on i.id = cxi.category_id group by category_id, i.name"
+	GetExploreInterests  = "select i.name as category, (select json_agg(jsonb_build_object('id', ii.id, 'name', ii.name, 'cover_pic', ii.cover_pic, 'is_followed', ii.id = ui.interest_id)) from interests ii left join (select * from user_interests where user_id = $1) as ui on ii.id = ui.interest_id where ii.id in (select interest_id from category_x_interests where category_id = cxi.category_id) and ii.cover_pic is not null) as interests from interests i inner join category_x_interests cxi on i.id = cxi.category_id group by category_id, i.name"
 )
 
 type UserInterestsRepository interface {
