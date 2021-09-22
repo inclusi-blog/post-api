@@ -129,6 +129,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		{
 			interests.GET("/followed", userInterestsController.GetFollowedInterests)
 			interests.POST("", userInterestsController.FollowInterest)
+			interests.DELETE("", userInterestsController.UnFollowInterest)
 			interests.GET("/explore", userInterestsController.GetExploreInterests)
 		}
 	}

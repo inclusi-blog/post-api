@@ -15,6 +15,7 @@ type UserInterestsService interface {
 	GetFollowedInterest(ctx *gin.Context, userId uuid.UUID) (*storyModels.JSONString, *golaerror.Error)
 	FollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) *golaerror.Error
 	GetExploreInterests(ctx *gin.Context, userID uuid.UUID) ([]models.ExploreInterest, *golaerror.Error)
+	UnFollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) *golaerror.Error
 }
 
 type userInterestsService struct {
@@ -56,6 +57,19 @@ func (service userInterestsService) GetExploreInterests(ctx *gin.Context, userID
 		return nil, &constants.InternalServerError
 	}
 	return followedInterests, nil
+}
+
+func (service userInterestsService) UnFollowInterest(ctx *gin.Context, interestID, userID uuid.UUID) *golaerror.Error {
+	log := logging.GetLogger(ctx).WithField("class", "UserInterestsService").WithField("method", "GetExploreInterests")
+	log.Info("unfollowing user followed interests")
+
+	err := service.repository.UnFollowInterest(ctx, interestID, userID)
+	if err != nil {
+		log.Errorf("unable to unfollow interest %v", err)
+		return &constants.InternalServerError
+	}
+
+	return nil
 }
 
 func NewUserInterestsService(repository repository.UserInterestsRepository) UserInterestsService {
