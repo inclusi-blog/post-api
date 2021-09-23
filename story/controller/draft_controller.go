@@ -293,6 +293,7 @@ func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	}
 
 	log.Infof("Request body bind successful with get all draft request for user %v", userUUID)
+	draftRequest.UserID = userUUID
 	drafts, draftSaveErr := controller.service.GetAllDraft(ctx, draftRequest)
 	if draftSaveErr != nil {
 		log.Errorf("Error occurred in draft service while saving tagline for user %v. Error %v", userUUID, draftSaveErr)

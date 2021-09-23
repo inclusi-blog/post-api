@@ -10,8 +10,8 @@ type UpsertDraft struct {
 
 type GetAllDraftRequest struct {
 	UserID     uuid.UUID
-	StartValue int `json:"start_value" binding:"required" `
-	Limit      int `json:"limit" binding:"required" `
+	StartValue int `json:"start_value"`
+	Limit      int `json:"limit"`
 }
 
 type CreateDraft struct {

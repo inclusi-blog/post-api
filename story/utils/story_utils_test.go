@@ -28,7 +28,7 @@ func TestCountContentReadTime(t *testing.T) {
 
 func TestGetTitleFromSlateJson(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleFromSlateJson(ctx, models.JSONString{
+	titleString, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestData),
 	})
 	assert.Nil(t, err)
@@ -37,7 +37,7 @@ func TestGetTitleFromSlateJson(t *testing.T) {
 
 func TestGetTitleFromSlateJsonWhenTitleGreaterThan100Len(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleFromSlateJson(ctx, models.JSONString{
+	titleString, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestDataMoreThan100Len),
 	})
 	assert.Nil(t, err)

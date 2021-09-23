@@ -175,13 +175,16 @@ func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.
 			CreatedAt: draft.CreatedAt,
 		}
 
-		title, err := utils.GetTitleFromSlateJson(ctx, draft.Data)
+		title, tagline, err := utils.GetTitleAndTaglineFromData(ctx, draft.Data)
 		if err != nil {
 			logger.Errorf("Error occurred while converting title json to string %v .%v", draft.DraftID, err)
 			return updatedDrafts, &constants.ConvertTitleToStringError
 		}
 
 		updatedDraft.Title = title
+		if updatedDraft.Tagline == "" && tagline != "" {
+			updatedDraft.Tagline = tagline
+		}
 		updatedDrafts = append(updatedDrafts, updatedDraft)
 	}
 
