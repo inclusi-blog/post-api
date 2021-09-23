@@ -8,6 +8,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	transaction "post-api/helper"
 	"post-api/story/models"
 	"post-api/story/models/db"
 	"post-api/story/models/request"
@@ -25,17 +26,19 @@ type DraftRepository interface {
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
 	DeleteDraft(ctx context.Context, draftUID, userUUID uuid.UUID) error
+	UpdatePublishStatus(ctx context.Context, txn transaction.Transaction, draftUID, userID uuid.UUID, status bool) error
 }
 
 const (
-	CreateDraft      = "insert into drafts (id, user_id, data) values(uuid_generate_v4(), $1, $2) returning id"
-	SavePostDraft    = "update drafts set data = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
-	SaveTagline      = "update drafts set tagline = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
-	SaveInterests    = "update drafts set interests = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
-	FetchDraft       = "select id, user_id, data, preview_image, tagline, interests from drafts where id = $1 and user_id = $2"
-	SavePreviewImage = "update drafts set preview_image = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
-	FetchAllDraft    = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 order by created_at desc limit $2 offset $3"
-	DeleteDraft      = "delete from drafts where id = $1 and user_id = $2"
+	CreateDraft         = "insert into drafts (id, user_id, data) values(uuid_generate_v4(), $1, $2) returning id"
+	SavePostDraft       = "update drafts set data = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	SaveTagline         = "update drafts set tagline = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	SaveInterests       = "update drafts set interests = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	FetchDraft          = "select id, user_id, data, preview_image, tagline, interests from drafts where id = $1 and user_id = $2"
+	SavePreviewImage    = "update drafts set preview_image = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
+	FetchAllDraft       = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 order by created_at desc limit $2 offset $3"
+	DeleteDraft         = "delete from drafts where id = $1 and user_id = $2"
+	UpdatePublishStatus = "update drafts set is_published = $1 where id = $2 and user_id = $3"
 )
 
 type draftRepository struct {
@@ -220,6 +223,33 @@ func (repository draftRepository) DeleteDraft(ctx context.Context, draftUID, use
 	if affectedRows == 0 {
 		logger.Errorf("draft not found or more than on draft deleted for draft id %v", draftUID)
 		return sql.ErrNoRows
+	}
+
+	logger.Info("Successfully deleted draft")
+	return nil
+}
+
+func (repository draftRepository) UpdatePublishStatus(ctx context.Context, txn transaction.Transaction, draftUID, userID uuid.UUID, status bool) error {
+	logger := logging.GetLogger(ctx).WithField("class", "").WithField("method", "DeleteDraft")
+
+	logger.Infof("Deleting draft for the given draft uid %v", draftUID)
+
+	result, err := txn.ExecContext(ctx, UpdatePublishStatus, status, draftUID, userID)
+
+	if err != nil {
+		logger.Errorf("error occurred while deleting draft from draft repository for draft id %v", draftUID)
+		return err
+	}
+	affectedRows, err := result.RowsAffected()
+
+	if err != nil {
+		logger.Errorf("error occurred while fetchin affected rows for delete draft for draft id %v", draftUID)
+		return err
+	}
+
+	if affectedRows == 0 || affectedRows > 1 {
+		logger.Errorf("draft not found or more than on draft deleted for draft id %v", draftUID)
+		return errors.New("more than one row affected or no row affected")
 	}
 
 	logger.Info("Successfully deleted draft")

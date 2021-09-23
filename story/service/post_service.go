@@ -115,6 +115,14 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 		logger.Errorf("Error occurred while saving abstract post for post id %v .%v", abstractPost, err)
 		return "", constants.StoryInternalServerError(err.Error())
 	}
+
+	err = service.draftRepository.UpdatePublishStatus(ctx, txn, draftUID, userUUID, true)
+	if err != nil {
+		logger.Errorf("unable to update the publish status %", err)
+		_ = txn.Rollback()
+		return "", constants.StoryInternalServerError(err.Error())
+	}
+
 	_ = txn.Commit()
 
 	finalPostUrl := strings.Join([]string{url, postID.String()}, "-")
