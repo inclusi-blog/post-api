@@ -21,7 +21,7 @@ type Draft struct {
 
 type DraftPreview struct {
 	DraftID   uuid.UUID         `json:"id"`
-	UserID    uuid.UUID         `json:"user_id"`
+	UserID    uuid.UUID         `json:"-"`
 	Data      models.JSONString `json:"data"`
 	Title     string            `json:"title"`
 	Tagline   string            `json:"tagline"`

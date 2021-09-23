@@ -36,7 +36,7 @@ const (
 	SaveInterests       = "update drafts set interests = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
 	FetchDraft          = "select id, user_id, data, preview_image, tagline, interests from drafts where id = $1 and user_id = $2"
 	SavePreviewImage    = "update drafts set preview_image = $1, updated_at = current_timestamp where id = $2 and user_id = $3"
-	FetchAllDraft       = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 order by created_at desc limit $2 offset $3"
+	FetchAllDraft       = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 and is_published is false order by created_at desc limit $2 offset $3"
 	DeleteDraft         = "delete from drafts where id = $1 and user_id = $2"
 	UpdatePublishStatus = "update drafts set is_published = $1 where id = $2 and user_id = $3"
 )
