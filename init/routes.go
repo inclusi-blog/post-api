@@ -132,5 +132,9 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			interests.DELETE("", userInterestsController.UnFollowInterest)
 			interests.GET("/explore", userInterestsController.GetExploreInterests)
 		}
+		posts := userGroup.Group("posts")
+		{
+			posts.POST("", userInterestsController.GetPublishedPosts)
+		}
 	}
 }

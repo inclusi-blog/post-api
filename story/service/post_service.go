@@ -9,6 +9,7 @@ import (
 	"post-api/helper"
 	"post-api/story/constants"
 	"post-api/story/models/db"
+	"post-api/story/models/request"
 	"post-api/story/models/response"
 	"post-api/story/repository"
 	"post-api/story/utils"
@@ -22,6 +23,7 @@ type PostService interface {
 	GetPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, *golaerror.Error)
 	PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error)
 	LikePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, *golaerror.Error)
 }
 
 type postService struct {
@@ -162,6 +164,23 @@ func (service postService) GetPost(ctx context.Context, postId, userId uuid.UUID
 
 	return post, nil
 }
+
+func (service postService) GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "GetPost")
+	logger.Infof("Fetching posts for user id %v", request.UserID)
+
+	posts, err := service.repository.GetPublishedPostByUser(ctx, request)
+
+	if err != nil {
+		logger.Errorf("Error occurred while fetching posts for given user id %v, Error %v", request.UserID, err)
+		return nil, constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully fetching posts from post repository for given user id %v", request.UserID)
+
+	return posts, nil
+}
+
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
 	return postService{
 		transactionManager:     manager,

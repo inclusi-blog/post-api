@@ -73,5 +73,5 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 
 	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
 	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)
-	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService)
+	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService, postService)
 }
