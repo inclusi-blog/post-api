@@ -118,7 +118,10 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		{
 			postGroup.POST("/publish", postController.PublishPost)
 			postGroup.GET("/like", postController.Like)
+			postGroup.GET("/unlike", postController.UnLike)
 			postGroup.GET("/id/:post_id", postController.GetPost)
+			postGroup.POST("comment/:post_id", postController.Comment)
+			postGroup.GET("/id/:post_id/comments", postController.GetComments)
 		}
 	}
 

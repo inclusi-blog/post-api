@@ -24,6 +24,8 @@ type PostsRepository interface {
 	AddInterests(ctx context.Context, transaction helper.Transaction, postID uuid.UUID, interests []uuid.UUID) error
 	FetchPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, error)
 	GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, error)
+	Comment(ctx context.Context, comment request.Comment) error
+	FetchComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, error)
 }
 
 type postRepository struct {
@@ -34,9 +36,11 @@ const (
 	PublishPost       = "insert into posts (id, data, author_id, draft_id) values (uuid_generate_v4(), $1, $2, $3) returning id"
 	LikePost          = "insert into likes(post_id, liked_by)values($1, $2)"
 	UnLike            = "delete from likes where post_id = $1 and liked_by = $2"
+	CommentPost       = "insert into comments (id, data, post_id, commented_by) values (uuid_generate_v4(), $1, $2, $3, $4)"
 	AddInterests      = "insert into post_x_interests (post_id, interest_id)values %s"
 	GetPost           = "select posts.id, posts.data, count(l) as likes_count, count(c) as comments_count, json_agg(jsonb_build_object('id', interests.id, 'name', interests.name)) as interests, u.id as author_id, u.username as author_name, ap.preview_image as preview_image, posts.created_at as published_at, case when $1 in (l.post_id) then true else false end as is_viewer_liked, case when $2 = u.id then true else false end as is_viewer_is_author from posts inner join users u on u.id = posts.author_id inner join post_x_interests on posts.id = post_x_interests.post_id inner join interests on post_x_interests.interest_id = interests.id inner join abstract_post ap on posts.id = ap.post_id left join comments c on posts.id = c.post_id left join likes l on posts.id = l.post_id where posts.id = $3 group by posts.id, posts.data, u.id, u.username, preview_image, posts.created_at, is_viewer_liked, is_viewer_is_author"
 	GetPublishedPosts = "select posts.id, ap.title, ap.tagline, posts.created_at, json_agg(jsonb_build_object('id', i.id, 'name', i.name)) as interests, count(l) as likes_count, preview_image from posts inner join users on posts.author_id = users.id inner join abstract_post ap on posts.id = ap.post_id inner join post_x_interests pxi on posts.id = pxi.post_id inner join interests i on pxi.interest_id = i.id left join likes l on posts.id = l.post_id where users.id = $1 group by posts.id, posts.created_at, ap.title, ap.tagline, posts.id, preview_image order by posts.created_at limit $2 offset $3"
+	GetComments       = "select comments.id, comments.data, comments.post_id, u.username, comments.created_at from comments inner join users u on u.id = comments.commented_by where post_id = $1 limit $2 offset $3"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, tx helper.Transaction, post db.PublishPost) (uuid.UUID, error) {
@@ -142,6 +146,45 @@ func (repository postRepository) GetPublishedPostByUser(ctx context.Context, req
 	}
 
 	return posts, nil
+}
+
+func (repository postRepository) Comment(ctx context.Context, comment request.Comment) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "Comment")
+	logger.Infof("inserting comment for post %v by user id %v ", comment.PostID, comment.CommentedBy)
+
+	result, err := repository.db.ExecContext(ctx, CommentPost, comment.Data, comment.PostID, comment.CommentedBy)
+
+	if err != nil {
+		logger.Errorf("unable to comment %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Errorf("unable to fetch affected rows %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		logger.Error("user never liked the post")
+		return errors.New("unable to comment")
+	}
+
+	return nil
+}
+
+func (repository postRepository) FetchComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "Comment")
+	logger.Infof("fetching comment for post id %v ", commentsRequest.PostID)
+
+	var comments []response.Comment
+	err := repository.db.SelectContext(ctx, &comments, GetComments, commentsRequest.PostID, commentsRequest.Limit, commentsRequest.Start)
+	if err != nil {
+		logger.Errorf("unable to fetch comments %v", err)
+		return nil, err
+	}
+
+	return comments, nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {

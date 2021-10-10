@@ -23,7 +23,10 @@ type PostService interface {
 	GetPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, *golaerror.Error)
 	PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error)
 	LikePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	UnLikePost(ctx context.Context, postUID, userID uuid.UUID) *golaerror.Error
 	GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, *golaerror.Error)
+	Comment(ctx context.Context, comment request.Comment) *golaerror.Error
+	GetComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, *golaerror.Error)
 }
 
 type postService struct {
@@ -145,6 +148,18 @@ func (service postService) LikePost(ctx context.Context, postUID, userID uuid.UU
 	return nil
 }
 
+func (service postService) UnLikePost(ctx context.Context, postUID, userID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "LikePost")
+	logger.Infof("Saving post data to draft repository")
+
+	err := service.repository.UnLike(ctx, postUID, userID)
+	if err != nil {
+		logger.Errorf("Error occurred while Updating likedby in likes repository %v", err)
+		return constants.StoryInternalServerError(err.Error())
+	}
+	return nil
+}
+
 func (service postService) GetPost(ctx context.Context, postId, userId uuid.UUID) (response.Post, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "GetPost")
 	logger.Infof("Fetching post for post id %v", postId)
@@ -179,6 +194,34 @@ func (service postService) GetPublishedPostByUser(ctx context.Context, request r
 	logger.Infof("Successfully fetching posts from post repository for given user id %v", request.UserID)
 
 	return posts, nil
+}
+
+func (service postService) Comment(ctx context.Context, comment request.Comment) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "Comment")
+
+	err := service.repository.Comment(ctx, comment)
+	if err != nil {
+		logger.Infof("unable to comment %v", err)
+		return constants.StoryInternalServerError(err.Error())
+	}
+	logger.Info("comment successfully posted")
+
+	return nil
+}
+
+func (service postService) GetComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchComments")
+	logger.Infof("fetching post for post id %v", commentsRequest.PostID)
+
+	comments, err := service.repository.FetchComments(ctx, commentsRequest)
+	if err != nil {
+		logger.Errorf("unable to fetch comments from repository %v", err)
+		return nil, constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Info("successfully fetched comments")
+
+	return comments, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
