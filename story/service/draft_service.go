@@ -166,11 +166,15 @@ func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.
 			logger.Error("unable to get interests")
 			return nil, apiErr
 		}
+		oldTagline := ""
+		if draft.Tagline != nil {
+			oldTagline = *draft.Tagline
+		}
 		updatedDraft := db.DraftPreview{
 			DraftID:   draft.DraftID,
 			UserID:    draft.UserID,
 			Data:      draft.Data,
-			Tagline:   *draft.Tagline,
+			Tagline:   oldTagline,
 			Interests: draft.InterestTags,
 			CreatedAt: draft.CreatedAt,
 		}
