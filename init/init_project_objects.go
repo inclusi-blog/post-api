@@ -33,6 +33,7 @@ var (
 	tokenController          idpController.TokenController
 	userInterestsController  userProfileController.UserInterestsController
 	registrationCacheService idpService.RegistrationCacheService
+	userDetailsController    idpController.UserDetailsController
 )
 
 func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
@@ -74,4 +75,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
 	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)
 	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService, postService)
+
+	userDetailsService := idpService.NewUserDetailsService(detailsRepository, userRegistrationService)
+	userDetailsController = idpController.NewUserDetailsController(userDetailsService)
 }

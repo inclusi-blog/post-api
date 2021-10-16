@@ -124,7 +124,7 @@ func (repository postRepository) FetchPost(ctx context.Context, postId, userId u
 
 	logger.Infof("fetching post to view for user %v of post id %v", userId, postId)
 	var post response.Post
-	err := repository.db.GetContext(ctx, &post, GetPost, postId, userId, userId, postId)
+	err := repository.db.GetContext(ctx, &post, GetPost, postId, postId, userId, postId)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching post to view for user %v of post id %v, Error %v", userId, postId, err)

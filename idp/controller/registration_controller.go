@@ -122,7 +122,7 @@ func (controller RegistrationController) IsUsernameAvailable(ctx *gin.Context) {
 	}
 
 	log.Infof("Successfully bind request body %v", availabilityRequest)
-	usernameAvailabilityResponse, err := controller.userRegistrationService.IsUsernameRegistered(availabilityRequest, ctx)
+	usernameAvailabilityResponse, err := controller.userRegistrationService.IsUsernameRegistered(ctx, availabilityRequest)
 
 	if err != nil {
 		log.Errorf("Error occurred while fetching username existence from service for username %v. %v", availabilityRequest.Username, err)

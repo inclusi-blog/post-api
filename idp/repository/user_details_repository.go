@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/gola-glitch/gola-utils/mask_util"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"post-api/idp/models/db"
 )
@@ -17,6 +18,9 @@ type UserDetailsRepository interface {
 	IsUserNameAndEmailAvailable(username, email string, ctx context.Context) (bool, error)
 	GetUserProfile(email string, ctx context.Context) (db.UserProfile, error)
 	GetPassword(email string, ctx context.Context) (string, error)
+	UpdateName(ctx context.Context, name string, id uuid.UUID) error
+	UpdateUsername(ctx context.Context, username string, id uuid.UUID) error
+	UpdateAbout(ctx context.Context, about string, id uuid.UUID) error
 }
 
 type userDetailsRepository struct {
@@ -30,6 +34,9 @@ const (
 	UsernameAndEmailExistence = "select count(*) from users where username = $1 or email = $2"
 	FetchUserDetails          = "select id, username, email, is_active from users where email = $1"
 	FetchUserPassword         = "select password from users where email = $1"
+	UpdateAbout               = "update users set about = $1 where id = $2"
+	UpdateName                = "update users set name = $1 where id = $2"
+	UpdateUsername            = "update users set username = $1 where id = $2"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -161,6 +168,45 @@ func (repository userDetailsRepository) GetPassword(email string, ctx context.Co
 	logger.Infof("Successfully fetched user credentials for emai %v", maskEmail)
 
 	return plainTextPassword, nil
+}
+
+func (repository userDetailsRepository) UpdateName(ctx context.Context, name string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateUserDetails")
+	logger.Info("updating user details for user")
+
+	_, err := repository.db.ExecContext(ctx, UpdateName, name, id)
+	if err != nil {
+		logger.Error("unable to update name for user %v", id)
+		return err
+	}
+
+	return nil
+}
+
+func (repository userDetailsRepository) UpdateUsername(ctx context.Context, username string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateUserDetails")
+	logger.Info("updating user details for user")
+
+	_, err := repository.db.ExecContext(ctx, UpdateUsername, username, id)
+	if err != nil {
+		logger.Error("unable to update username for user %v", id)
+		return err
+	}
+
+	return nil
+}
+
+func (repository userDetailsRepository) UpdateAbout(ctx context.Context, about string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateUserDetails")
+	logger.Info("updating user details for user")
+
+	_, err := repository.db.ExecContext(ctx, UpdateAbout, about, id)
+	if err != nil {
+		logger.Error("unable to update about for user %v", id)
+		return err
+	}
+
+	return nil
 }
 
 func NewUserDetailsRepository(db *sqlx.DB) UserDetailsRepository {

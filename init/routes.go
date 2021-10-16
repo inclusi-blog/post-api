@@ -76,7 +76,8 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	router.GET("api/post/v1/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	registrationGroup := router.Group("api/idp/v1/user")
+	idpRoute := router.Group("api/idp/v1")
+	registrationGroup := idpRoute.Group("user")
 	{
 		registrationGroup.POST("/register", registrationController.NewRegistration)
 		registrationGroup.GET("/activate/:activation_hash", middlewares.UserActionMiddleware(registrationCacheService), registrationController.ActivateUser)
@@ -84,20 +85,26 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		registrationGroup.POST("/usernameAvailability", registrationController.IsUsernameAvailable)
 	}
 
-	loginGroup := router.Group("api/idp/v1/login")
+	loginGroup := idpRoute.Group("login")
 	{
 		loginGroup.POST("/password", loginController.LoginByEmailAndPassword)
 	}
 
-	consentGroup := router.Group("api/idp/v1/consent")
+	consentGroup := idpRoute.Group("consent")
 	{
 		consentGroup.GET("", loginController.GrantConsent)
 	}
 
-	tokenGroup := router.Group("api/idp/v1/token")
+	tokenGroup := idpRoute.Group("token")
 	{
 		tokenGroup.POST("/exchange", tokenController.ExchangeToken)
 	}
+
+	userDetailsGroup := idpRoute.Group("user-details", tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
+	{
+		userDetailsGroup.PUT("", userDetailsController.UpdateUserDetails)
+	}
+
 	defaultRouterGroup := router.Group("api/post/v1")
 	defaultRouterGroup.GET("/interests", interestsController.GetInterests)
 	defaultRouterGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))

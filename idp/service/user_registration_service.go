@@ -2,6 +2,7 @@ package service
 
 // mockgen -source=service/user_registration_service.go -destination=mocks/mock_user_registration_service.go -package=mocks
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gola-glitch/gola-utils/crypto"
 	"github.com/gola-glitch/gola-utils/golaerror"
@@ -18,7 +19,7 @@ import (
 type UserRegistrationService interface {
 	InitiateRegistration(request request.InitiateRegistrationRequest, ctx *gin.Context) *golaerror.Error
 	IsEmailRegistered(availabilityRequest request.EmailAvailabilityRequest, ctx *gin.Context) (response.EmailAvailabilityResponse, *golaerror.Error)
-	IsUsernameRegistered(availabilityRequest request.UsernameAvailabilityRequest, ctx *gin.Context) (response.UsernameAvailabilityResponse, *golaerror.Error)
+	IsUsernameRegistered(ctx context.Context, availabilityRequest request.UsernameAvailabilityRequest) (response.UsernameAvailabilityResponse, *golaerror.Error)
 }
 
 type userRegistrationService struct {
@@ -28,7 +29,7 @@ type userRegistrationService struct {
 	hashUtil    util.HashUtil
 }
 
-func (service userRegistrationService) IsUsernameRegistered(availabilityRequest request.UsernameAvailabilityRequest, ctx *gin.Context) (response.UsernameAvailabilityResponse, *golaerror.Error) {
+func (service userRegistrationService) IsUsernameRegistered(ctx context.Context, availabilityRequest request.UsernameAvailabilityRequest) (response.UsernameAvailabilityResponse, *golaerror.Error) {
 	log := logging.GetLogger(ctx).WithField("class", "UserRegistrationService").WithField("method", "IsUsernameRegistered")
 
 	username := availabilityRequest.Username
