@@ -106,7 +106,10 @@ func GetTitleAndTaglineFromData(ctx context.Context, titleJson models.JSONString
 				break
 			}
 			data := childrenData.(map[string]interface{})
-			textString := data["text"].(string)
+			textString, ok := data["text"].(string)
+			if !ok {
+				continue
+			}
 			logger.Info(textString)
 			if titleString == "" {
 				if len([]rune(textString)) > 100 {
