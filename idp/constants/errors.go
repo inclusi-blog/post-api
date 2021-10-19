@@ -21,6 +21,7 @@ const (
 	NameUpdateErrorCode         string = "ERR_IDP_USER_NAME_UPDATE"
 	AboutUpdateErrorCode        string = "ERR_IDP_USER_ABOUT_UPDATE"
 	UsernameAlreadyPresentCode  string = "ERR_USERNAME_ALREADY_PRESENT"
+	SocialURLUpdateErrorCode    string = "ERR_USER_PROFILE_SOCIAL_URL_UPDATE"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	NameUpdateError                  = golaerror.Error{ErrorCode: NameUpdateErrorCode, ErrorMessage: "unable to update name"}
 	AboutUpdateError                 = golaerror.Error{ErrorCode: AboutUpdateErrorCode, ErrorMessage: "unable to update about"}
 	UsernameAlreadyPresentError      = golaerror.Error{ErrorCode: UsernameUpdateErrorCode, ErrorMessage: "username already available"}
+	SocialUpdateError                = golaerror.Error{ErrorCode: SocialURLUpdateErrorCode, ErrorMessage: "unable to update social url"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{

@@ -54,6 +54,27 @@ func (service userDetailsService) UpdateUserDetails(ctx context.Context, userID 
 			return &constants.AboutUpdateError
 		}
 	}
+	if update.FacebookURL != "" {
+		err := service.repository.UpdateFacebookURL(ctx, update.FacebookURL, userID)
+		if err != nil {
+			logger.Error("unable to update facebook url for user %v", userID)
+			return &constants.SocialUpdateError
+		}
+	}
+	if update.LinkedInURL != "" {
+		err := service.repository.UpdateLinkedInURL(ctx, update.LinkedInURL, userID)
+		if err != nil {
+			logger.Error("unable to update linkedin url for user %v", userID)
+			return &constants.SocialUpdateError
+		}
+	}
+	if update.TwitterURL != "" {
+		err := service.repository.UpdateTwitterURL(ctx, update.TwitterURL, userID)
+		if err != nil {
+			logger.Error("unable to update twitter url for user %v", userID)
+			return &constants.SocialUpdateError
+		}
+	}
 
 	return nil
 }

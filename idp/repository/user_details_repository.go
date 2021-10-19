@@ -21,6 +21,9 @@ type UserDetailsRepository interface {
 	UpdateName(ctx context.Context, name string, id uuid.UUID) error
 	UpdateUsername(ctx context.Context, username string, id uuid.UUID) error
 	UpdateAbout(ctx context.Context, about string, id uuid.UUID) error
+	UpdateTwitterURL(ctx context.Context, twitterURL string, id uuid.UUID) error
+	UpdateLinkedInURL(ctx context.Context, linkedinURL string, id uuid.UUID) error
+	UpdateFacebookURL(ctx context.Context, facebookURL string, id uuid.UUID) error
 }
 
 type userDetailsRepository struct {
@@ -37,6 +40,9 @@ const (
 	UpdateAbout               = "update users set about = $1 where id = $2"
 	UpdateName                = "update users set name = $1 where id = $2"
 	UpdateUsername            = "update users set username = $1 where id = $2"
+	UpdateTwitter             = "insert into social_links(id, twitter, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set twitter = $3"
+	UpdateLinkedIn            = "insert into social_links(id, linkedin, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set linkedin = $3"
+	UpdateFacebook            = "insert into social_links(id, facebook, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set facebook = $3"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -209,6 +215,43 @@ func (repository userDetailsRepository) UpdateAbout(ctx context.Context, about s
 	return nil
 }
 
+func (repository userDetailsRepository) UpdateTwitterURL(ctx context.Context, twitterURL string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateTwitterURL")
+	logger.Info("updating user twitter url")
+
+	_, err := repository.db.ExecContext(ctx, UpdateTwitter, twitterURL, id, twitterURL)
+	if err != nil {
+		logger.Error("unable to update about for user %v", id)
+		return err
+	}
+
+	return nil
+}
+
+func (repository userDetailsRepository) UpdateFacebookURL(ctx context.Context, facebookURL string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateTwitterURL")
+	logger.Info("updating user twitter url")
+
+	_, err := repository.db.ExecContext(ctx, UpdateFacebook, facebookURL, id, facebookURL)
+	if err != nil {
+		logger.Error("unable to update about for user %v", id)
+		return err
+	}
+
+	return nil
+}
+func (repository userDetailsRepository) UpdateLinkedInURL(ctx context.Context, linkedinURL string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateTwitterURL")
+	logger.Info("updating user twitter url")
+
+	_, err := repository.db.ExecContext(ctx, UpdateLinkedIn, linkedinURL, id, linkedinURL)
+	if err != nil {
+		logger.Error("unable to update about for user %v", id)
+		return err
+	}
+
+	return nil
+}
 func NewUserDetailsRepository(db *sqlx.DB) UserDetailsRepository {
 	return userDetailsRepository{
 		db: db,
