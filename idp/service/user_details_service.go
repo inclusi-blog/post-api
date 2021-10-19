@@ -41,14 +41,14 @@ func (service userDetailsService) UpdateUserDetails(ctx context.Context, userID 
 		}
 	}
 	if update.Name != "" {
-		err := service.repository.UpdateName(ctx, update.Username, userID)
+		err := service.repository.UpdateName(ctx, update.Name, userID)
 		if err != nil {
 			logger.Error("unable to update username for user %v", userID)
 			return &constants.NameUpdateError
 		}
 	}
 	if update.About != "" {
-		err := service.repository.UpdateAbout(ctx, update.Username, userID)
+		err := service.repository.UpdateAbout(ctx, update.About, userID)
 		if err != nil {
 			logger.Error("unable to update username for user %v", userID)
 			return &constants.AboutUpdateError

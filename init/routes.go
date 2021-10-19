@@ -148,7 +148,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		}
 		profileGroup := userGroup.Group("profile")
 		{
-			profileGroup.GET("/:user_id", userDetailsController.GetPreSignURLForProfilePic)
+			profileGroup.GET("/presign", userDetailsController.GetPreSignURLForProfilePic)
 		}
 	}
 }
