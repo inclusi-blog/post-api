@@ -22,6 +22,7 @@ const (
 	AboutUpdateErrorCode        string = "ERR_IDP_USER_ABOUT_UPDATE"
 	UsernameAlreadyPresentCode  string = "ERR_USERNAME_ALREADY_PRESENT"
 	SocialURLUpdateErrorCode    string = "ERR_USER_PROFILE_SOCIAL_URL_UPDATE"
+	UnableToAssignPreSignURL    string = "ERR_USER_PROFILE_UNABLE_TO_ASSIGN_PRESIGN"
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	AboutUpdateError                 = golaerror.Error{ErrorCode: AboutUpdateErrorCode, ErrorMessage: "unable to update about"}
 	UsernameAlreadyPresentError      = golaerror.Error{ErrorCode: UsernameUpdateErrorCode, ErrorMessage: "username already available"}
 	SocialUpdateError                = golaerror.Error{ErrorCode: SocialURLUpdateErrorCode, ErrorMessage: "unable to update social url"}
+	UnableToAssignPreSignURLError    = golaerror.Error{ErrorCode: UnableToAssignPreSignURL, ErrorMessage: "unable to assign presign image url"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{

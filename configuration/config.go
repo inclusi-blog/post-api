@@ -23,6 +23,10 @@ type ConfigData struct {
 	ActivationCallback        string                       `json:"activationCallback" binding:"required"`
 	TokenValidationIgnoreURLs []string                     `json:"token_validation_ignore_urls"`
 	OauthUrl                  string                       `json:"oauth_url" binding:"required"`
+	AwsAccessKeyID            string                       `json:"aws_access_key_id" binding:"required"`
+	AwsSecretAccessKeyID      string                       `json:"aws_secret_access_key" binding:"required"`
+	AwsRegion                 string                       `json:"aws_region" binding:"required"`
+	AwsBucket                 string                       `json:"aws_bucket" binding:"required"`
 }
 
 type Email struct {

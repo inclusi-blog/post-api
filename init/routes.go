@@ -146,5 +146,9 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		{
 			posts.POST("", userInterestsController.GetPublishedPosts)
 		}
+		profileGroup := userGroup.Group("profile")
+		{
+			profileGroup.GET("/:user_id", userDetailsController.GetPreSignURLForProfilePic)
+		}
 	}
 }

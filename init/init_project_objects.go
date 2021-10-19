@@ -2,6 +2,7 @@ package init
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/gola-glitch/gola-utils/alert/email"
 	"github.com/gola-glitch/gola-utils/crypto"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -15,6 +16,7 @@ import (
 	idpRepository "post-api/idp/repository"
 	idpService "post-api/idp/service"
 	idpUtil "post-api/idp/utils"
+	commonService "post-api/service"
 	storyController "post-api/story/controller"
 	"post-api/story/repository"
 	"post-api/story/service"
@@ -36,12 +38,14 @@ var (
 	userDetailsController    idpController.UserDetailsController
 )
 
-func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
+func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Session) {
 	logger := logging.GetLogger(context.TODO())
 	redisClient, redisError := redis_util.NewRedisClientWith(configData.RedisStoreConfig)
 	if redisError != nil {
 		logger.Errorf("Error occurred while initializing redis cache %v", redisError)
 	}
+	awsServices := commonService.NewAwsServices(aws, configData)
+
 	postValidator := utils.NewPostValidator(configData)
 	interestsRepository := repository.NewInterestRepository(db)
 	interestsService := service.NewInterestsService(interestsRepository)
@@ -77,5 +81,5 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData) {
 	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService, postService)
 
 	userDetailsService := idpService.NewUserDetailsService(detailsRepository, userRegistrationService)
-	userDetailsController = idpController.NewUserDetailsController(userDetailsService)
+	userDetailsController = idpController.NewUserDetailsController(userDetailsService, awsServices)
 }
