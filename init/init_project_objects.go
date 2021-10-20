@@ -33,7 +33,7 @@ var (
 	registrationController   idpController.RegistrationController
 	loginController          idpController.LoginController
 	tokenController          idpController.TokenController
-	userInterestsController  userProfileController.UserInterestsController
+	profileController        userProfileController.UserProfileController
 	registrationCacheService idpService.RegistrationCacheService
 	userDetailsController    idpController.UserDetailsController
 )
@@ -76,9 +76,12 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 	loginController = idpController.NewLoginController(loginService, oauthHandler)
 	tokenController = idpController.NewTokenController(oauthHandler, configData.AllowInsecureCookies)
 
+	profileRepository := userProfileRepository.NewProfileRepository(db)
+	profileService := userProfileService.NewProfileService(profileRepository)
+
 	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
 	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)
-	userInterestsController = userProfileController.NewUserInterestsController(userInterestsService, postService)
+	profileController = userProfileController.NewUserProfileController(userInterestsService, postService, profileService, awsServices)
 
 	userDetailsService := idpService.NewUserDetailsService(detailsRepository, userRegistrationService)
 	userDetailsController = idpController.NewUserDetailsController(userDetailsService, awsServices)

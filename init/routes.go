@@ -137,18 +137,19 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	{
 		interests := userGroup.Group("/interests")
 		{
-			interests.GET("/followed", userInterestsController.GetFollowedInterests)
-			interests.POST("", userInterestsController.FollowInterest)
-			interests.DELETE("", userInterestsController.UnFollowInterest)
-			interests.GET("/explore", userInterestsController.GetExploreInterests)
+			interests.GET("/followed", profileController.GetFollowedInterests)
+			interests.POST("", profileController.FollowInterest)
+			interests.DELETE("", profileController.UnFollowInterest)
+			interests.GET("/explore", profileController.GetExploreInterests)
 		}
 		posts := userGroup.Group("posts")
 		{
-			posts.POST("", userInterestsController.GetPublishedPosts)
+			posts.POST("", profileController.GetPublishedPosts)
 		}
 		profileGroup := userGroup.Group("profile")
 		{
 			profileGroup.GET("/presign", userDetailsController.GetPreSignURLForProfilePic)
+			profileGroup.GET("", profileController.GetDetails)
 		}
 	}
 }

@@ -30,10 +30,10 @@ func (service awsServices) GetObjectInS3(key string, expiryTime time.Duration) (
 	urlStr, err := req.Presign(expiryTime)
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
-	return urlStr, err
+	return urlStr, nil
 }
 
 func (service awsServices) PutObjectInS3(key string) (string, error) {

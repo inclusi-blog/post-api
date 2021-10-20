@@ -6,19 +6,23 @@ import (
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
 	"net/http"
+	commonService "post-api/service"
 	"post-api/story/models/request"
 	storyApi "post-api/story/service"
 	"post-api/story/utils"
 	"post-api/user-profile/constants"
 	"post-api/user-profile/service"
+	"time"
 )
 
-type UserInterestsController struct {
-	service     service.UserInterestsService
-	postService storyApi.PostService
+type UserProfileController struct {
+	service            service.UserInterestsService
+	userProfileService service.ProfileService
+	postService        storyApi.PostService
+	awsServices        commonService.AwsServices
 }
 
-func (controller UserInterestsController) GetFollowedInterests(ctx *gin.Context) {
+func (controller UserProfileController) GetFollowedInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "GetFollowedInterests")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -40,7 +44,7 @@ func (controller UserInterestsController) GetFollowedInterests(ctx *gin.Context)
 	ctx.JSON(http.StatusOK, followedInterests)
 }
 
-func (controller UserInterestsController) FollowInterest(ctx *gin.Context) {
+func (controller UserProfileController) FollowInterest(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "GetFollowedInterests")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -71,7 +75,7 @@ func (controller UserInterestsController) FollowInterest(ctx *gin.Context) {
 	})
 }
 
-func (controller UserInterestsController) GetExploreInterests(ctx *gin.Context) {
+func (controller UserProfileController) GetExploreInterests(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "GetExploreInterests")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -93,7 +97,7 @@ func (controller UserInterestsController) GetExploreInterests(ctx *gin.Context) 
 	ctx.JSON(http.StatusOK, followedInterests)
 }
 
-func (controller UserInterestsController) UnFollowInterest(ctx *gin.Context) {
+func (controller UserProfileController) UnFollowInterest(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "UnFollowInterest")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -124,7 +128,7 @@ func (controller UserInterestsController) UnFollowInterest(ctx *gin.Context) {
 	})
 }
 
-func (controller UserInterestsController) GetPublishedPosts(ctx *gin.Context) {
+func (controller UserProfileController) GetPublishedPosts(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "UnFollowInterest")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -155,9 +159,41 @@ func (controller UserInterestsController) GetPublishedPosts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, posts)
 }
 
-func NewUserInterestsController(interestsService service.UserInterestsService, postService storyApi.PostService) UserInterestsController {
-	return UserInterestsController{
-		service:     interestsService,
-		postService: postService,
+func (controller UserProfileController) GetDetails(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "UnFollowInterest")
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entered controller to get drafts request for user %v", userUUID)
+
+	profile, profileErr := controller.userProfileService.GetProfile(ctx, userUUID)
+	if profileErr != nil {
+		logger.Errorf("unable to get profile %v", err)
+		constants.RespondWithGolaError(ctx, profileErr)
+		return
+	}
+
+	if profile.ProfilePic != nil {
+		profilePic, err := controller.awsServices.GetObjectInS3(*profile.ProfilePic, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to get object from s3 %v", err)
+		}
+		profile.ProfilePic = &profilePic
+	}
+
+	ctx.JSON(http.StatusOK, profile)
+}
+
+func NewUserProfileController(interestsService service.UserInterestsService, postService storyApi.PostService, profileService service.ProfileService, services commonService.AwsServices) UserProfileController {
+	return UserProfileController{
+		service:            interestsService,
+		userProfileService: profileService,
+		postService:        postService,
+		awsServices:        services,
 	}
 }
