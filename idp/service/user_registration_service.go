@@ -44,10 +44,6 @@ func (service userRegistrationService) IsUsernameRegistered(ctx context.Context,
 	availabilityResponse := response.UsernameAvailabilityResponse{
 		IsAvailable: isAvailable,
 	}
-	if isAvailable {
-		log.Infof("Username already available for username %v", username)
-		return availabilityResponse, nil
-	}
 
 	log.Infof("Username not available for username %v", username)
 	return availabilityResponse, nil

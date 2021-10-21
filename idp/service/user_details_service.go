@@ -29,7 +29,7 @@ func (service userDetailsService) UpdateUserDetails(ctx context.Context, userID 
 			logger.Error("unable to get username availability")
 			return &constants.InternalServerError
 		}
-		if !usernameAvailabilityResponse.IsAvailable {
+		if usernameAvailabilityResponse.IsAvailable {
 			logger.Error("same username already found")
 			return &constants.UsernameAlreadyPresentError
 		}
