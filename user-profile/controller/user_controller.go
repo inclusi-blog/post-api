@@ -189,6 +189,27 @@ func (controller UserProfileController) GetDetails(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, profile)
 }
 
+func (controller UserProfileController) ViewProfileAvatar(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "UserController").WithField("method", "UnFollowInterest")
+	userID := ctx.Param("user_id")
+	userUID, err := uuid.Parse(userID)
+	if err != nil {
+		logger.Errorf("unable to bind request path param %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	logger.Infof("Entered controller to get drafts request for user %v", userUID)
+
+	avatar, viewErr := controller.userProfileService.FetchProfileAvatar(ctx, userUID)
+	if viewErr != nil {
+		logger.Errorf("unable to fetch view avatar %v", viewErr)
+		constants.RespondWithGolaError(ctx, viewErr)
+		return
+	}
+
+	ctx.Redirect(http.StatusMovedPermanently, avatar)
+}
+
 func NewUserProfileController(interestsService service.UserInterestsService, postService storyApi.PostService, profileService service.ProfileService, services commonService.AwsServices) UserProfileController {
 	return UserProfileController{
 		service:            interestsService,

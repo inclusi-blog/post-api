@@ -77,7 +77,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 	tokenController = idpController.NewTokenController(oauthHandler, configData.AllowInsecureCookies)
 
 	profileRepository := userProfileRepository.NewProfileRepository(db)
-	profileService := userProfileService.NewProfileService(profileRepository)
+	profileService := userProfileService.NewProfileService(profileRepository, awsServices)
 
 	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
 	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)

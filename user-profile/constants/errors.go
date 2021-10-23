@@ -9,16 +9,19 @@ import (
 const (
 	InternalServerErrorCode    string = "ERR_PROFILE_INTERNAL_SERVER_ERROR"
 	PayloadValidationErrorCode string = "ERR_PROFILE_PAYLOAD_INVALID"
+	NoUserFoundErrorCode       string = "ERR_PROFILE_NO_USER_FOUND"
 )
 
 var (
 	InternalServerError    = golaerror.Error{ErrorCode: InternalServerErrorCode, ErrorMessage: "something went wrong"}
 	PayloadValidationError = golaerror.Error{ErrorCode: PayloadValidationErrorCode, ErrorMessage: "One or more of the request parameters are missing or invalid"}
+	NoUserFoundError       = golaerror.Error{ErrorCode: NoUserFoundErrorCode, ErrorMessage: "no user found"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InternalServerErrorCode:    http.StatusInternalServerError,
 	PayloadValidationErrorCode: http.StatusBadRequest,
+	NoUserFoundErrorCode:       http.StatusNotFound,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

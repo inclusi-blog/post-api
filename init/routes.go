@@ -133,6 +133,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 	}
 
 	userGroup := router.Group("api/user-profile/v1")
+	noAuthUserprofile := router.Group("api/user-profile/v1")
 	userGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
 	{
 		interests := userGroup.Group("/interests")
@@ -148,6 +149,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		}
 		profileGroup := userGroup.Group("profile")
 		{
+			noAuthUserprofile.GET("user/:user_id/avatar", profileController.ViewProfileAvatar)
 			profileGroup.GET("/presign", userDetailsController.GetPreSignURLForProfilePic)
 			profileGroup.GET("", profileController.GetDetails)
 			profileGroup.POST("avatar/upload", userDetailsController.UploadImageKey)
