@@ -24,6 +24,7 @@ type UserDetailsRepository interface {
 	UpdateTwitterURL(ctx context.Context, twitterURL string, id uuid.UUID) error
 	UpdateLinkedInURL(ctx context.Context, linkedinURL string, id uuid.UUID) error
 	UpdateFacebookURL(ctx context.Context, facebookURL string, id uuid.UUID) error
+	UpdateProfileImage(ctx context.Context, imageKey string, id uuid.UUID) error
 }
 
 type userDetailsRepository struct {
@@ -43,6 +44,7 @@ const (
 	UpdateTwitter             = "insert into social_links(id, twitter, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set twitter = $3"
 	UpdateLinkedIn            = "insert into social_links(id, linkedin, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set linkedin = $3"
 	UpdateFacebook            = "insert into social_links(id, facebook, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set facebook = $3"
+	UpdateImage               = "update users set avatar = $1 where id = $2"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -240,6 +242,7 @@ func (repository userDetailsRepository) UpdateFacebookURL(ctx context.Context, f
 
 	return nil
 }
+
 func (repository userDetailsRepository) UpdateLinkedInURL(ctx context.Context, linkedinURL string, id uuid.UUID) error {
 	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateTwitterURL")
 	logger.Info("updating user twitter url")
@@ -252,6 +255,20 @@ func (repository userDetailsRepository) UpdateLinkedInURL(ctx context.Context, l
 
 	return nil
 }
+
+func (repository userDetailsRepository) UpdateProfileImage(ctx context.Context, imageKey string, id uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdateTwitterURL")
+	logger.Info("updating user image url")
+
+	_, err := repository.db.ExecContext(ctx, UpdateImage, imageKey, id)
+	if err != nil {
+		logger.Error("unable to update avatar for user %v", id)
+		return err
+	}
+
+	return nil
+}
+
 func NewUserDetailsRepository(db *sqlx.DB) UserDetailsRepository {
 	return userDetailsRepository{
 		db: db,

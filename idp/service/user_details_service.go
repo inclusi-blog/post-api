@@ -12,6 +12,7 @@ import (
 
 type UserDetailsService interface {
 	UpdateUserDetails(ctx context.Context, userID uuid.UUID, update request.UserDetailsUpdate) *golaerror.Error
+	UpdateProfileImage(ctx context.Context, avatarKey string, userID uuid.UUID) *golaerror.Error
 }
 
 type userDetailsService struct {
@@ -74,6 +75,19 @@ func (service userDetailsService) UpdateUserDetails(ctx context.Context, userID 
 			logger.Error("unable to update twitter url for user %v", userID)
 			return &constants.SocialUpdateError
 		}
+	}
+
+	return nil
+}
+
+func (service userDetailsService) UpdateProfileImage(ctx context.Context, avatarKey string, userID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsService").WithField("method", "UpdateUserDetails")
+	logger.Info("updating user avatar")
+
+	err := service.repository.UpdateProfileImage(ctx, avatarKey, userID)
+	if err != nil {
+		logger.Errorf("unable to update user profile avatar %v", err)
+		return &constants.UnableToUpdateAvatarError
 	}
 
 	return nil

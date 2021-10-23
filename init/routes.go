@@ -150,6 +150,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		{
 			profileGroup.GET("/presign", userDetailsController.GetPreSignURLForProfilePic)
 			profileGroup.GET("", profileController.GetDetails)
+			profileGroup.POST("avatar/upload", userDetailsController.UploadImageKey)
 		}
 	}
 }
