@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -42,6 +43,10 @@ func (repository profileRepository) FetchProfileAvatar(ctx context.Context, id u
 	if err != nil {
 		logger.Errorf("unable to fetch user profile avatar %v", err)
 		return "", err
+	}
+
+	if avatar == nil {
+		return "", sql.ErrNoRows
 	}
 
 	return *avatar, nil
