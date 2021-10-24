@@ -27,6 +27,7 @@ type PostsRepository interface {
 	Comment(ctx context.Context, comment request.Comment) error
 	FetchComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, error)
 	MarkReadLater(ctx context.Context, postID, userID uuid.UUID) error
+	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) error
 }
 
 type postRepository struct {
@@ -43,6 +44,7 @@ const (
 	GetPublishedPosts = "select posts.id, ap.title, ap.tagline, posts.created_at, json_agg(jsonb_build_object('id', i.id, 'name', i.name)) as interests, count(l) as likes_count, preview_image from posts inner join users on posts.author_id = users.id inner join abstract_post ap on posts.id = ap.post_id inner join post_x_interests pxi on posts.id = pxi.post_id inner join interests i on pxi.interest_id = i.id left join likes l on posts.id = l.post_id where users.id = $1 group by posts.id, posts.created_at, ap.title, ap.tagline, posts.id, preview_image order by posts.created_at limit $2 offset $3"
 	GetComments       = "select comments.id, comments.data, comments.post_id, u.username, comments.created_at from comments inner join users u on u.id = comments.commented_by where post_id = $1 order by comments.created_at desc limit $2 offset $3"
 	MarkReadLater     = "insert into read_later (post_id, user_id) values ($1, $2)"
+	MarkAsViewed      = "insert into post_views (post_id, user_id) values ($1, $2)"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, tx helper.Transaction, post db.PublishPost) (uuid.UUID, error) {
@@ -195,6 +197,18 @@ func (repository postRepository) MarkReadLater(ctx context.Context, postID, user
 	_, err := repository.db.ExecContext(ctx, MarkReadLater, postID, userID)
 	if err != nil {
 		logger.Errorf("unable to mark post as read later %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (repository postRepository) MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "Comment")
+
+	_, err := repository.db.ExecContext(ctx, MarkAsViewed, postID, userID)
+	if err != nil {
+		logger.Errorf("unable to mark post as viewed %v", err)
 		return err
 	}
 
