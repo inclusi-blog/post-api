@@ -27,6 +27,7 @@ type PostService interface {
 	GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, *golaerror.Error)
 	Comment(ctx context.Context, comment request.Comment) *golaerror.Error
 	GetComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, *golaerror.Error)
+	MarkReadLater(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 }
 
 type postService struct {
@@ -222,6 +223,20 @@ func (service postService) GetComments(ctx context.Context, commentsRequest requ
 	logger.Info("successfully fetched comments")
 
 	return comments, nil
+}
+
+func (service postService) MarkReadLater(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchComments")
+	logger.Info("marking post as read later")
+
+	err := service.repository.MarkReadLater(ctx, postID, userID)
+	if err != nil {
+		logger.Errorf("unable to mark post as read later %v", err)
+		return &constants.InternalServerError
+	}
+	logger.Info("successfully marked post as read later")
+
+	return nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
