@@ -29,6 +29,7 @@ type PostsRepository interface {
 	BookmarkPost(ctx context.Context, postID, userID uuid.UUID) error
 	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) error
 	FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
+	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
 }
 
 type postRepository struct {
@@ -223,6 +224,20 @@ func (repository postRepository) FetchReadLater(ctx context.Context, postRequest
 	err := repository.db.SelectContext(ctx, &posts, FetchSavedPosts, userID, userID, userID, userID, postRequest.Limit, postRequest.Start)
 	if err != nil {
 		logger.Errorf("unable to fetch read later post %v", err)
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func (repository postRepository) FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "FetchViewedPosts")
+	userID := postRequest.UserID
+	var posts []response.PostView
+	err := repository.db.SelectContext(ctx, &posts, FetchViewedPosts, userID, userID, userID, userID, userID, userID,
+	postRequest.Limit, postRequest.Start)
+	if err != nil {
+		logger.Errorf("unable to fetch viewed posts %v", err)
 		return nil, err
 	}
 

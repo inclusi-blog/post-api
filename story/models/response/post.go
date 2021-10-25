@@ -44,4 +44,5 @@ type PostView struct {
 	PublishedAt      time.Time         `json:"published_at" db:"published_at"`
 	IsViewerLiked    bool              `json:"is_viewer_liked" db:"is_viewer_liked"`
 	IsViewerIsAuthor bool              `json:"is_viewer_is_author" db:"is_viewer_is_author"`
+	IsBookmarked     bool              `json:"is_bookmarked" db:"is_bookmarked"`
 }

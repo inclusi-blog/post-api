@@ -29,7 +29,8 @@ type PostService interface {
 	GetComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, *golaerror.Error)
 	SavePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
-	FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
+	FetchSavedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
+	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 }
 
 type postService struct {
@@ -255,12 +256,24 @@ func (service postService) MarkAsViewed(ctx context.Context, postID, userID uuid
 	return nil
 }
 
-func (service postService) FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error) {
+func (service postService) FetchSavedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchSavedPosts")
 
 	posts, err := service.repository.FetchReadLater(ctx, postRequest)
 	if err != nil {
 		logger.Errorf("unable to fetch read later posts %v", err)
+		return nil, &constants.InternalServerError
+	}
+
+	return posts, nil
+}
+
+func (service postService) FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchViewedPosts")
+
+	posts, err := service.repository.FetchViewedPosts(ctx, postRequest)
+	if err != nil {
+		logger.Errorf("unable to fetch viewed posts %v", err)
 		return nil, &constants.InternalServerError
 	}
 

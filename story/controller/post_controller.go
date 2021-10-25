@@ -318,7 +318,40 @@ func (controller PostController) GetReadLaterPosts(ctx *gin.Context) {
 	postRequest.UserID = userUUID
 	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
 
-	posts, fetchErr := controller.postService.FetchReadLater(ctx, postRequest)
+	posts, fetchErr := controller.postService.FetchSavedPosts(ctx, postRequest)
+	if fetchErr != nil {
+		logger.Errorf("unable to get read later posts %v", fetchErr)
+		constants.RespondWithGolaError(ctx, fetchErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, posts)
+}
+
+func (controller PostController) GetReadPosts(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetReadPosts")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var postRequest request.PostRequest
+	if err := ctx.ShouldBindQuery(&postRequest); err != nil {
+		logger.Errorf("unable to bind request %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	postRequest.UserID = userUUID
+	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
+
+	posts, fetchErr := controller.postService.FetchViewedPosts(ctx, postRequest)
 	if fetchErr != nil {
 		logger.Errorf("unable to get read later posts %v", fetchErr)
 		constants.RespondWithGolaError(ctx, fetchErr)
