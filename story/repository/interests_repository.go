@@ -8,12 +8,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"post-api/story/models/db"
+	"post-api/story/models/response"
 )
 
 type InterestsRepository interface {
 	GetInterests(ctx context.Context) ([]db.Interests, error)
 	GetInterestIDs(ctx context.Context, interestNames []string) ([]uuid.UUID, error)
 	GetInterestsForName(ctx context.Context, interestNames []string) ([]db.Interests, error)
+	GetFollowCount(ctx context.Context, interestID, userID uuid.UUID) (response.InterestCountDetails, error)
 }
 
 type interestsRepository struct {
@@ -21,9 +23,10 @@ type interestsRepository struct {
 }
 
 const (
-	GetInterests         = "select id, name from interests"
-	GetInterestIDs       = "SELECT id from interests where name in (?)"
-	GetInterestsForNames = "select id, name from interests where name in (?)"
+	GetInterests            = "select id, name from interests"
+	GetInterestIDs          = "SELECT id from interests where name in (?)"
+	GetInterestsForNames    = "select id, name from interests where name in (?)"
+	GetInterestsFollowCount = "select count(*) as followers_count, $1 in (user_id) as is_followed from user_interests where interest_id = $2 group by user_interests.user_id"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
@@ -89,6 +92,20 @@ func (repository interestsRepository) GetInterestsForName(ctx context.Context, i
 		return nil, err
 	}
 	return interests, nil
+}
+
+func (repository interestsRepository) GetFollowCount(ctx context.Context, interestID, userID uuid.UUID) (response.InterestCountDetails, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "InterestsRepository").WithField("method", "GetFollowCount")
+	logger.Info("fetching over all interests")
+
+	var interestDetails response.InterestCountDetails
+	err := repository.db.GetContext(ctx, &interestDetails, GetInterestsFollowCount, userID, interestID)
+	if err != nil {
+		logger.Errorf("unable to fetch interest details %v", err)
+		return response.InterestCountDetails{}, err
+	}
+
+	return interestDetails, nil
 }
 
 func NewInterestRepository(db *sqlx.DB) InterestsRepository {

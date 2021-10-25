@@ -136,6 +136,11 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		}
 	}
 
+	interestGroup := defaultRouterGroup.Group("interests")
+	{
+		interestGroup.GET("/:interest_id", interestsController.GetInterestDetails)
+	}
+
 	userGroup := router.Group("api/user-profile/v1")
 	noAuthUserprofile := router.Group("api/user-profile/v1")
 	userGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
