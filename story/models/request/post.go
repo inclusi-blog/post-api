@@ -15,3 +15,9 @@ type GetPublishedPostRequest struct {
 	StartValue int `json:"start_value"`
 	Limit      int `json:"limit"`
 }
+
+type PostRequest struct {
+	UserID uuid.UUID
+	Start  int `form:"start"`
+	Limit  int `form:"limit" binding:"required"`
+}

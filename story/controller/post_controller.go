@@ -191,7 +191,7 @@ func (controller PostController) GetComments(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, comments)
 }
 
-func (controller PostController) MarkReadLater(ctx *gin.Context) {
+func (controller PostController) SavePost(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetComments")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
@@ -210,7 +210,7 @@ func (controller PostController) MarkReadLater(ctx *gin.Context) {
 	}
 	id, _ := uuid.Parse(postRequest.PostUID)
 
-	markErr := controller.postService.MarkReadLater(ctx, id, userUUID)
+	markErr := controller.postService.SavePost(ctx, id, userUUID)
 	if markErr != nil {
 		logger.Errorf("unable to mark post as read later %v", err)
 		constants.RespondWithGolaError(ctx, markErr)
@@ -293,6 +293,39 @@ func (controller PostController) GetPost(ctx *gin.Context) {
 
 	logger.Infof("Successfully fetching post for given post id %v", id)
 	ctx.JSON(http.StatusOK, post)
+}
+
+func (controller PostController) GetReadLaterPosts(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetPost")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var postRequest request.PostRequest
+	if err := ctx.ShouldBindQuery(&postRequest); err != nil {
+		logger.Errorf("unable to bind request %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	postRequest.UserID = userUUID
+	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
+
+	posts, fetchErr := controller.postService.FetchReadLater(ctx, postRequest)
+	if fetchErr != nil {
+		logger.Errorf("unable to get read later posts %v", fetchErr)
+		constants.RespondWithGolaError(ctx, fetchErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, posts)
 }
 
 func NewPostController(postService service.PostService) PostController {

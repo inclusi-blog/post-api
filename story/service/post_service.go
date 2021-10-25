@@ -27,8 +27,9 @@ type PostService interface {
 	GetPublishedPostByUser(ctx context.Context, request request.GetPublishedPostRequest) ([]response.PublishedPost, *golaerror.Error)
 	Comment(ctx context.Context, comment request.Comment) *golaerror.Error
 	GetComments(ctx context.Context, commentsRequest request.FetchComments) ([]response.Comment, *golaerror.Error)
-	MarkReadLater(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	SavePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 }
 
 type postService struct {
@@ -226,16 +227,16 @@ func (service postService) GetComments(ctx context.Context, commentsRequest requ
 	return comments, nil
 }
 
-func (service postService) MarkReadLater(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
+func (service postService) SavePost(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchComments")
 	logger.Info("marking post as read later")
 
-	err := service.repository.MarkReadLater(ctx, postID, userID)
+	err := service.repository.BookmarkPost(ctx, postID, userID)
 	if err != nil {
 		logger.Errorf("unable to mark post as read later %v", err)
 		return &constants.InternalServerError
 	}
-	logger.Info("successfully marked post as read later")
+	logger.Info("successfully marked post as saved")
 
 	return nil
 }
@@ -252,6 +253,18 @@ func (service postService) MarkAsViewed(ctx context.Context, postID, userID uuid
 	logger.Info("successfully marked post as viewed")
 
 	return nil
+}
+
+func (service postService) FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "FetchSavedPosts")
+
+	posts, err := service.repository.FetchReadLater(ctx, postRequest)
+	if err != nil {
+		logger.Errorf("unable to fetch read later posts %v", err)
+		return nil, &constants.InternalServerError
+	}
+
+	return posts, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
