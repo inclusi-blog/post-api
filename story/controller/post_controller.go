@@ -361,6 +361,47 @@ func (controller PostController) GetReadPosts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, posts)
 }
 
+func (controller PostController) GetPostsByInterests(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetReadPosts")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var interestRequest request.InterestRequest
+	if err := ctx.ShouldBindQuery(&interestRequest); err != nil {
+		logger.Errorf("unable to bind request %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
+
+	var interestURIRequest request.InterestURIRequest
+	if err := ctx.ShouldBindUri(&interestURIRequest); err != nil {
+		logger.Errorf("unable to bind request %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
+	interestRequest.InterestUID, _  = uuid.Parse(interestURIRequest.InterestUID)
+
+	posts, fetchErr := controller.postService.FetchPostsByInterests(ctx, interestRequest, userUUID)
+	if fetchErr != nil {
+		logger.Errorf("unable to get posts by interests %v", fetchErr)
+		constants.RespondWithGolaError(ctx, fetchErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, posts)
+}
+
 func NewPostController(postService service.PostService) PostController {
 	return PostController{postService: postService}
 }

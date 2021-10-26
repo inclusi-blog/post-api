@@ -30,6 +30,7 @@ type PostsRepository interface {
 	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) error
 	FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
+	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, error)
 }
 
 type postRepository struct {
@@ -235,9 +236,21 @@ func (repository postRepository) FetchViewedPosts(ctx context.Context, postReque
 	userID := postRequest.UserID
 	var posts []response.PostView
 	err := repository.db.SelectContext(ctx, &posts, FetchViewedPosts, userID, userID, userID, userID, userID, userID,
-	postRequest.Limit, postRequest.Start)
+		postRequest.Limit, postRequest.Start)
 	if err != nil {
 		logger.Errorf("unable to fetch viewed posts %v", err)
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func (repository postRepository) FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "FetchPostsByInterests")
+	var posts []response.PostView
+	err := repository.db.SelectContext(ctx, &posts, FetchPostByInterests, userID, userID, userID, interestRequest.InterestUID, interestRequest.Limit, interestRequest.Start)
+	if err != nil {
+		logger.Errorf("unable to fetch posts for interest %v", err)
 		return nil, err
 	}
 

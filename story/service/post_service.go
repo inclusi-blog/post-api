@@ -31,6 +31,7 @@ type PostService interface {
 	MarkAsViewed(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 	FetchSavedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
+	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error)
 }
 
 type postService struct {
@@ -278,6 +279,18 @@ func (service postService) FetchViewedPosts(ctx context.Context, postRequest req
 	}
 
 	return posts, nil
+}
+
+func (service postService) FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "FetchPostsByInterests")
+	interests, err := service.repository.FetchPostsByInterests(ctx, interestRequest, userID)
+	if err != nil {
+		logger.Errorf("unable to fetch posts %v", err)
+		return nil, &constants.InternalServerError
+	}
+	logger.Info("successfully fetched posts for interest")
+
+	return interests, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
