@@ -15,7 +15,7 @@ import (
 
 type InterestsService interface {
 	GetInterests(ctx context.Context) ([]db.Interests, *golaerror.Error)
-	GetFollowCount(ctx context.Context, interestID, userID uuid.UUID) (response.InterestCountDetails, *golaerror.Error)
+	GetFollowCount(ctx context.Context, interestName string, userID uuid.UUID) (response.InterestCountDetails, *golaerror.Error)
 }
 
 type interestsService struct {
@@ -41,11 +41,11 @@ func (service interestsService) GetInterests(ctx context.Context) ([]db.Interest
 	return interests, nil
 }
 
-func (service interestsService) GetFollowCount(ctx context.Context, interestID, userID uuid.UUID) (response.InterestCountDetails, *golaerror.Error) {
+func (service interestsService) GetFollowCount(ctx context.Context, interestName string, userID uuid.UUID) (response.InterestCountDetails, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "InterestsService").WithField("method", "GetFollowCount")
 	logger.Info("Calling repository to get all interests")
 
-	details, err := service.repository.GetFollowCount(ctx, interestID, userID)
+	details, err := service.repository.GetFollowCount(ctx, interestName, userID)
 	if err != nil {
 		logger.Errorf("unable to fetch interest details %v", err)
 		if err == sql.ErrNoRows {

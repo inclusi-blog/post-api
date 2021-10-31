@@ -138,10 +138,10 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	interestGroup := defaultRouterGroup.Group("interests")
 	{
-		interestGroup.GET("/:interest_id", interestsController.GetInterestDetails)
+		interestGroup.GET("/details/:name", interestsController.GetInterestDetails)
 		interestGroup.Use(tokenIntrospectionMiddleware(configData.OauthUrl, oauthUtil, configData))
 		{
-			interestGroup.GET("/:interest_id/posts", postController.GetPostsByInterests)
+			interestGroup.GET("/posts/:interest_id", postController.GetPostsByInterests)
 		}
 	}
 

@@ -11,3 +11,7 @@ type InterestRequest struct {
 	Start       int `form:"start"`
 	Limit       int `form:"limit" binding:"required"`
 }
+
+type InterestNameURIRequest struct {
+	Name string `uri:"name" binding:"required"`
+}
