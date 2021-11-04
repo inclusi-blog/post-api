@@ -31,6 +31,7 @@ type PostsRepository interface {
 	FetchReadLater(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, error)
+	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) error
 }
 
 type postRepository struct {
@@ -38,16 +39,17 @@ type postRepository struct {
 }
 
 const (
-	PublishPost       = "insert into posts (id, data, author_id, draft_id) values (uuid_generate_v4(), $1, $2, $3) returning id"
-	LikePost          = "insert into likes(post_id, liked_by)values($1, $2)"
-	UnLike            = "delete from likes where post_id = $1 and liked_by = $2"
-	CommentPost       = "insert into comments (id, data, post_id, commented_by) values (uuid_generate_v4(), $1, $2, $3)"
-	AddInterests      = "insert into post_x_interests (post_id, interest_id)values %s"
-	GetPost           = "with post_interests as (select jsonb_agg(jsonb_build_object('id', interests.id, 'name', interests.name)) as interests, post_id from posts inner join post_x_interests on posts.id = post_x_interests.post_id inner join interests on post_x_interests.interest_id = interests.id where posts.id = $1 group by post_x_interests.post_id) select posts.id, posts.data, count(distinct l.liked_by) as likes_count, count(distinct c.id) as comments_count, post_interests.interests, u.id as author_id, u.username as author_name, ap.preview_image as preview_image, posts.created_at as published_at, case when $2 in (l.post_id) then true else false end as is_viewer_liked, case when $3 = u.id then true else false end as is_viewer_is_author from posts inner join post_interests on posts.id = post_interests.post_id inner join post_x_interests on posts.id = post_x_interests.post_id inner join interests on post_x_interests.interest_id = interests.id inner join users u on u.id = posts.author_id inner join abstract_post ap on posts.id = ap.post_id left join likes l on l.post_id = posts.id left join comments c on c.post_id = posts.id where posts.id = $4 group by posts.id, u.id, ap.preview_image, l.post_id, post_interests.interests"
-	GetPublishedPosts = "select posts.id, ap.title, ap.tagline, posts.created_at, json_agg(jsonb_build_object('id', i.id, 'name', i.name)) as interests, count(l) as likes_count, preview_image from posts inner join users on posts.author_id = users.id inner join abstract_post ap on posts.id = ap.post_id inner join post_x_interests pxi on posts.id = pxi.post_id inner join interests i on pxi.interest_id = i.id left join likes l on posts.id = l.post_id where users.id = $1 group by posts.id, posts.created_at, ap.title, ap.tagline, posts.id, preview_image order by posts.created_at limit $2 offset $3"
-	GetComments       = "select comments.id, comments.data, comments.post_id, u.username, comments.created_at from comments inner join users u on u.id = comments.commented_by where post_id = $1 order by comments.created_at desc limit $2 offset $3"
-	BookmarkPost      = "insert into saved_posts (post_id, user_id) values ($1, $2)"
-	MarkAsViewed      = "insert into post_views (post_id, user_id) values ($1, $2)"
+	PublishPost        = "insert into posts (id, data, author_id, draft_id) values (uuid_generate_v4(), $1, $2, $3) returning id"
+	LikePost           = "insert into likes(post_id, liked_by)values($1, $2)"
+	UnLike             = "delete from likes where post_id = $1 and liked_by = $2"
+	CommentPost        = "insert into comments (id, data, post_id, commented_by) values (uuid_generate_v4(), $1, $2, $3)"
+	AddInterests       = "insert into post_x_interests (post_id, interest_id)values %s"
+	GetPost            = "with post_interests as (select jsonb_agg(jsonb_build_object('id', interests.id, 'name', interests.name)) as interests, post_id from posts inner join post_x_interests on posts.id = post_x_interests.post_id inner join interests on post_x_interests.interest_id = interests.id where posts.id = $1 group by post_x_interests.post_id) select posts.id, posts.data, count(distinct l.liked_by) as likes_count, count(distinct c.id) as comments_count, post_interests.interests, u.id as author_id, u.username as author_name, ap.preview_image as preview_image, posts.created_at as published_at, case when $2 in (l.post_id) then true else false end as is_viewer_liked, case when $3 = u.id then true else false end as is_viewer_is_author from posts inner join post_interests on posts.id = post_interests.post_id inner join post_x_interests on posts.id = post_x_interests.post_id inner join interests on post_x_interests.interest_id = interests.id inner join users u on u.id = posts.author_id inner join abstract_post ap on posts.id = ap.post_id left join likes l on l.post_id = posts.id left join comments c on c.post_id = posts.id where posts.id = $4 group by posts.id, u.id, ap.preview_image, l.post_id, post_interests.interests"
+	GetPublishedPosts  = "select posts.id, ap.title, ap.tagline, posts.created_at, json_agg(jsonb_build_object('id', i.id, 'name', i.name)) as interests, count(l) as likes_count, preview_image from posts inner join users on posts.author_id = users.id inner join abstract_post ap on posts.id = ap.post_id inner join post_x_interests pxi on posts.id = pxi.post_id inner join interests i on pxi.interest_id = i.id left join likes l on posts.id = l.post_id where users.id = $1 group by posts.id, posts.created_at, ap.title, ap.tagline, posts.id, preview_image order by posts.created_at limit $2 offset $3"
+	GetComments        = "select comments.id, comments.data, comments.post_id, u.username, comments.created_at from comments inner join users u on u.id = comments.commented_by where post_id = $1 order by comments.created_at desc limit $2 offset $3"
+	BookmarkPost       = "insert into saved_posts (post_id, user_id) values ($1, $2)"
+	RemovePostBookmark = "delete from saved_posts where post_id = $1 and user_id = $2"
+	MarkAsViewed       = "insert into post_views (post_id, user_id) values ($1, $2)"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, tx helper.Transaction, post db.PublishPost) (uuid.UUID, error) {
@@ -198,6 +200,18 @@ func (repository postRepository) BookmarkPost(ctx context.Context, postID, userI
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "BookmarkPost")
 
 	_, err := repository.db.ExecContext(ctx, BookmarkPost, postID, userID)
+	if err != nil {
+		logger.Errorf("unable to mark post as read later %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (repository postRepository) RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "BookmarkPost")
+
+	_, err := repository.db.ExecContext(ctx, RemovePostBookmark, postID, userID)
 	if err != nil {
 		logger.Errorf("unable to mark post as read later %v", err)
 		return err

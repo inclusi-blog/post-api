@@ -32,6 +32,7 @@ type PostService interface {
 	FetchSavedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error)
+	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 }
 
 type postService struct {
@@ -291,6 +292,19 @@ func (service postService) FetchPostsByInterests(ctx context.Context, interestRe
 	logger.Info("successfully fetched posts for interest")
 
 	return interests, nil
+}
+
+func (service postService) RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "RemovePostBookmark")
+
+	err := service.repository.RemovePostBookmark(ctx, postID, userID)
+	if err != nil {
+		logger.Errorf("unable to remove post from bookmark %v", err)
+		return &constants.InternalServerError
+	}
+	logger.Info("successfully removed post from bookmark")
+
+	return nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {

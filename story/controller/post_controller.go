@@ -212,8 +212,37 @@ func (controller PostController) SavePost(ctx *gin.Context) {
 
 	markErr := controller.postService.SavePost(ctx, id, userUUID)
 	if markErr != nil {
-		logger.Errorf("unable to mark post as read later %v", err)
+		logger.Errorf("unable to mark post as read later %v", markErr)
 		constants.RespondWithGolaError(ctx, markErr)
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func (controller PostController) RemoveBookmark(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "RemoveBookmark")
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entered controller to update likes request for user %v", userUUID)
+
+	var postRequest request.PostURIRequest
+	if err := ctx.ShouldBindUri(&postRequest); err != nil {
+		logger.Errorf("Error occurred while binding get post request body %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+	id, _ := uuid.Parse(postRequest.PostUID)
+
+	bookmarkErr := controller.postService.RemovePostBookmark(ctx, id, userUUID)
+	if bookmarkErr != nil {
+		logger.Errorf("unable to mark post as read later %v", bookmarkErr)
+		constants.RespondWithGolaError(ctx, bookmarkErr)
 		return
 	}
 

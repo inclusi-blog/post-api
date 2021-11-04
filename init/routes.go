@@ -130,6 +130,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			postGroup.POST("comment/:post_id", postController.Comment)
 			postGroup.GET("/id/:post_id/comments", postController.GetComments)
 			postGroup.GET("/id/:post_id/save", postController.SavePost)
+			postGroup.GET("/id/:post_id/remove", postController.RemoveBookmark)
 			postGroup.GET("/id/:post_id/viewed", postController.MarkAsViewed)
 			postGroup.GET("/saved", postController.GetReadLaterPosts)
 			postGroup.GET("/viewed", postController.GetReadPosts)
