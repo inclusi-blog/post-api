@@ -119,6 +119,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
 			draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
 			draftGroup.GET("/preview-draft/:draft_id", draftController.GetPreviewDraft)
+			draftGroup.DELETE("id/:draft_id", draftController.DeleteDraft)
 		}
 
 		postGroup := defaultRouterGroup.Group("/post")
@@ -127,6 +128,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			postGroup.GET("/like", postController.Like)
 			postGroup.GET("/unlike", postController.UnLike)
 			postGroup.GET("/id/:post_id", postController.GetPost)
+			postGroup.DELETE("/id/:post_id", postController.Delete)
 			postGroup.POST("comment/:post_id", postController.Comment)
 			postGroup.GET("/id/:post_id/comments", postController.GetComments)
 			postGroup.GET("/id/:post_id/save", postController.SavePost)

@@ -431,6 +431,41 @@ func (controller PostController) GetPostsByInterests(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, posts)
 }
 
+func (controller PostController) Delete(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "Delete")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var postRequest request.PostURIRequest
+	if err := ctx.ShouldBindUri(&postRequest); err != nil {
+		logger.Errorf("Error occurred while binding get post request body %v", err)
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	id, _ := uuid.Parse(postRequest.PostUID)
+	logger.Infof("Successfully bind get post request body for post id %v", id)
+	deleteErr := controller.postService.Delete(ctx, id, userUUID)
+
+	if deleteErr != nil {
+		logger.Errorf("Error occurred while publishing draft for draft id %v .%v", id, deleteErr)
+		constants.RespondWithGolaError(ctx, err)
+		return
+	}
+
+	logger.Infof("Successfully fetching post for given post id %v", id)
+	ctx.Status(http.StatusOK)
+}
+
 func NewPostController(postService service.PostService) PostController {
 	return PostController{postService: postService}
 }

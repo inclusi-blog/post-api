@@ -320,7 +320,7 @@ func (controller DraftController) DeleteDraft(ctx *gin.Context) {
 	userUUID, _ := uuid.Parse(token.UserId)
 	logger.Infof("Entered controller to get draft request for user %v", userUUID)
 
-	draftUUID := ctx.Query("draft")
+	draftUUID := ctx.Param("draft_id")
 	draftID, err := uuid.Parse(draftUUID)
 	if err != nil {
 		logger.Errorf("invalid draft id request for user %v. Error %v", userUUID, err)

@@ -33,6 +33,7 @@ type PostService interface {
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, *golaerror.Error)
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error)
 	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	Delete(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 }
 
 type postService struct {
@@ -303,6 +304,20 @@ func (service postService) RemovePostBookmark(ctx context.Context, postID, userI
 		return &constants.InternalServerError
 	}
 	logger.Info("successfully removed post from bookmark")
+
+	return nil
+}
+
+func (service postService) Delete(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "Delete")
+	logger.Info("updating post to delete status")
+	err := service.repository.Delete(ctx, postID, userID)
+
+	if err != nil {
+		logger.Errorf("unable to update post delete status %v", err)
+		return &constants.InternalServerError
+	}
+	logger.Infof("successfully deleted post for post id %v", postID)
 
 	return nil
 }

@@ -32,6 +32,7 @@ type PostsRepository interface {
 	FetchViewedPosts(ctx context.Context, postRequest request.PostRequest) ([]response.PostView, error)
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, error)
 	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) error
+	Delete(ctx context.Context, postID, userID uuid.UUID) error
 }
 
 type postRepository struct {
@@ -50,6 +51,7 @@ const (
 	BookmarkPost       = "insert into saved_posts (post_id, user_id) values ($1, $2)"
 	RemovePostBookmark = "delete from saved_posts where post_id = $1 and user_id = $2"
 	MarkAsViewed       = "insert into post_views (post_id, user_id) values ($1, $2)"
+	Delete             = "update posts set deleted_at = current_timestamp where id = $1 and author_id = $2"
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, tx helper.Transaction, post db.PublishPost) (uuid.UUID, error) {
@@ -269,6 +271,20 @@ func (repository postRepository) FetchPostsByInterests(ctx context.Context, inte
 	}
 
 	return posts, nil
+}
+
+func (repository postRepository) Delete(ctx context.Context, postID, userID uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "PostRepository").WithField("method", "Delete")
+	logger.Infof("deleting post for post id %v and author id %v", postID, userID)
+
+	_, err := repository.db.ExecContext(ctx, Delete, postID, userID)
+	if err != nil {
+		logger.Errorf("unable to delete post for post id %v. Error %v", postID, err)
+		return err
+	}
+
+	logger.Infof("successfully deleted post for post id %v", postID)
+	return nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {
