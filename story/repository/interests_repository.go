@@ -26,7 +26,7 @@ const (
 	GetInterests            = "select id, name from interests"
 	GetInterestIDs          = "SELECT id from interests where name in (?)"
 	GetInterestsForNames    = "select id, name from interests where name in (?)"
-	GetInterestsFollowCount = "select (select count(*) from user_interests inner join interests ii on user_interests.interest_id = ii.id where lower(ii.name) = lower($1)) as followers_count, interests.id as interest_id, (select case when $2 in (user_id) then true else false end as is_followed from user_interests ui2 inner join interests iii on ui2.interest_id = iii.id where lower(iii.name) = lower($3) and ui2.user_id = $4) from interests left join user_interests ui on interests.id = ui.interest_id where lower(interests.name) = lower($5) group by id"
+	GetInterestsFollowCount = "select (select count(*) from user_interests inner join interests ii on user_interests.interest_id = ii.id where lower(ii.name) = lower($1)) as followers_count, interests.id as interest_id, (select case when count(*) = 0 then false else true end as is_followed from user_interests ui2 inner join interests iii on ui2.interest_id = iii.id where lower(iii.name) = lower($3) and ui2.user_id = $4) from interests left join user_interests ui on interests.id = ui.interest_id where lower(interests.name) = lower($5) group by id"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
