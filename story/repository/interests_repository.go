@@ -26,7 +26,7 @@ const (
 	GetInterests            = "select id, name from interests"
 	GetInterestIDs          = "SELECT id from interests where name in (?)"
 	GetInterestsForNames    = "select id, name from interests where name in (?)"
-	GetInterestsFollowCount = "select (select count(*) from user_interests inner join interests ii on user_interests.interest_id = ii.id where lower(ii.name) = lower($1)) as followers_count, interests.id as interest_id, (select case when count(*) = 0 then false else true end as is_followed from user_interests ui2 inner join interests iii on ui2.interest_id = iii.id where lower(iii.name) = lower($3) and ui2.user_id = $4) from interests left join user_interests ui on interests.id = ui.interest_id where lower(interests.name) = lower($5) group by id"
+	GetInterestsFollowCount = "select (select count(*) from user_interests inner join interests ii on user_interests.interest_id = ii.id where lower(ii.name) = lower($1)) as followers_count, interests.id as interest_id, interests.name as name, (select case when count(*) = 0 then false else true end as is_followed from user_interests ui2 inner join interests iii on ui2.interest_id = iii.id where lower(iii.name) = lower($2) and ui2.user_id = $3) from interests left join user_interests ui on interests.id = ui.interest_id where lower(interests.name) = lower($4) group by id"
 )
 
 func (repository interestsRepository) GetInterests(ctx context.Context) ([]db.Interests, error) {
@@ -99,7 +99,7 @@ func (repository interestsRepository) GetFollowCount(ctx context.Context, intere
 	logger.Info("fetching over all interests")
 
 	var interestDetails response.InterestCountDetails
-	err := repository.db.GetContext(ctx, &interestDetails, GetInterestsFollowCount, interestName, userID, interestName, userID, interestName)
+	err := repository.db.GetContext(ctx, &interestDetails, GetInterestsFollowCount, interestName, interestName, userID, interestName)
 	if err != nil {
 		logger.Errorf("unable to fetch interest details %v", err)
 		return response.InterestCountDetails{}, err
