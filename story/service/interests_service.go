@@ -50,10 +50,7 @@ func (service interestsService) GetFollowCount(ctx context.Context, interestName
 		logger.Errorf("unable to fetch interest details %v", err)
 		if err == sql.ErrNoRows {
 			logger.Error("no interest found")
-			return response.InterestCountDetails{
-				FollowersCount: 0,
-				IsFollowed:     false,
-			}, nil
+			return response.InterestCountDetails{}, &constants.NoInterestsFoundError
 		}
 		return response.InterestCountDetails{}, &constants.InternalServerError
 	}

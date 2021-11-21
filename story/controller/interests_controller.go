@@ -45,13 +45,13 @@ func (controller InterestsController) GetInterestDetails(ctx *gin.Context) {
 	userUUID, _ := uuid.Parse(token.UserId)
 	logger.Infof("Entering post controller to publish post")
 
-	var interestURIRequest request.InterestNameURIRequest
-	if err := ctx.ShouldBindUri(&interestURIRequest); err != nil {
+	var nameRequest request.InterestNameRequest
+	if err := ctx.ShouldBindJSON(&nameRequest); err != nil {
 		logger.Errorf("unable to bind request %v", err)
 		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
 		return
 	}
-	details, fetchErr := controller.service.GetFollowCount(ctx, interestURIRequest.Name, userUUID)
+	details, fetchErr := controller.service.GetFollowCount(ctx, nameRequest.Name, userUUID)
 	if fetchErr != nil {
 		logger.Errorf("unable to fetch interest details %v", err)
 		constants.RespondWithGolaError(ctx, fetchErr)
