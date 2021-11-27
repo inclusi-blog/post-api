@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/mitchellh/mapstructure"
 	"post-api/story/models"
 	"regexp"
 	"strings"
@@ -37,45 +38,51 @@ func CountContentReadTime(contentWordsCount int) int {
 
 func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Context, imageCount *int, extractedTagline, titleString, previewImage *string) error {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
-	var postData []interface{}
-	err := content.Unmarshal(&postData)
-
+	var editor models.Editor
+	err := content.Unmarshal(&editor)
 	if err != nil {
-		logger.Errorf("something went wrong %v", err)
+		logger.Errorf("unable to marshal post %v", err)
 		return err
 	}
 
-	for _, data := range postData {
-		singleData := data.(map[string]interface{})
-		value := singleData["type"]
-		if value != nil {
-			if value == "image" {
-				if singleData["url"] != "" && *previewImage == "" {
-					*previewImage = singleData["url"].(string)
-				}
-				*imageCount = *imageCount + 1
+	for _, data := range editor.Blocks {
+		value := data.Type
+		if value.IsEqual(models.Image) {
+			var image models.ImageElement
+			err := mapstructure.Decode(data.Data, &image)
+			if err != nil {
+				logger.Errorf("unable to unmarshal image element %v", err)
+				return err
 			}
+			if image.File.Url != "" && *previewImage == "" {
+				*previewImage = image.File.Url
+			}
+			*imageCount = *imageCount + 1
+			continue
 		}
-		singleChildren := singleData["children"].([]interface{})
-		for _, childrenData := range singleChildren {
-			data := childrenData.(map[string]interface{})
-			textString := data["text"].(string)
-			if textString != "" {
-				individual := strings.Split(textString, " ")
+
+		if value.IsEqual(models.Header) || value.IsEqual(models.Paragraph) {
+			text, err := data.GetText()
+			if err != nil {
+				logger.Errorf("unable to unmarshal %v data. Error %v", data.Type, err)
+				return err
+			}
+			if text != "" {
+				individual := strings.Split(text, " ")
 				*wordsCount = len(individual) + *wordsCount
 				if *titleString == "" {
-					if len([]rune(textString)) > 100 {
-						*titleString = string([]rune(textString)[:100])
+					if len([]rune(text)) > 100 {
+						*titleString = string([]rune(text)[:100])
 						continue
 					}
-					*titleString = textString
+					*titleString = text
 				} else if *extractedTagline == "" {
-					if len(textString) > 100 {
-						tamilRunes := string([]rune(textString))
+					if len(text) > 100 {
+						tamilRunes := string([]rune(text))
 						*extractedTagline = tamilRunes[:100]
 						continue
 					}
-					*extractedTagline = textString
+					*extractedTagline = text
 				}
 			}
 		}
@@ -85,46 +92,40 @@ func GetNumberOfWords(content models.JSONString, wordsCount *int, ctx context.Co
 
 func GetTitleAndTaglineFromData(ctx context.Context, titleJson models.JSONString) (string, string, error) {
 	logger := logging.GetLogger(ctx).WithField("class", "StoryUtils").WithField("method", "GetNumberOfWords")
-	var postData []interface{}
-	err := titleJson.Unmarshal(&postData)
-
+	var editor models.Editor
+	err := titleJson.Unmarshal(&editor)
 	if err != nil {
-		logger.Errorf("Error occurred while unmarshalling title text from slate json %v", err)
+		logger.Errorf("unable to marshal post %v", err)
 		return "", "", err
 	}
 
 	var tagline string
 	var titleString string
-	for _, data := range postData {
+	for _, data := range editor.Blocks {
 		if tagline != "" && titleString != "" {
 			break
 		}
-		singleData := data.(map[string]interface{})
-		singleChildren := singleData["children"].([]interface{})
-		for _, childrenData := range singleChildren {
-			if tagline != "" && titleString != "" {
-				break
+		if data.Type.IsEqual(models.Header) || data.Type.IsEqual(models.Paragraph) {
+			text, err := data.GetText()
+			if err != nil {
+				logger.Errorf("unable to unmarshal %v type. Error %v", data.Type, err)
+				return "", "", err
 			}
-			data := childrenData.(map[string]interface{})
-			textString, ok := data["text"].(string)
-			if !ok {
-				continue
-			}
-			logger.Info(textString)
+			logger.Info(text)
 			if titleString == "" {
-				if len([]rune(textString)) > 100 {
-					titleString = string([]rune(textString)[:100])
+				if len([]rune(text)) > 100 {
+					titleString = string([]rune(text)[:100])
 					continue
 				}
-				titleString = textString
+				titleString = text
 				continue
 			}
 			if tagline == "" {
-				if len([]rune(textString)) > 100 {
-					tagline = string([]rune(textString)[:100])
+				if len([]rune(text)) > 100 {
+					tagline = string([]rune(text)[:100])
 					continue
 				}
-				tagline = textString
+				tagline = text
 				continue
 			}
 		}

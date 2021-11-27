@@ -4,11 +4,14 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/gola-glitch/gola-utils/mask_util"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"post-api/idp/models/db"
+	"post-api/utils"
+	"strings"
 )
 
 type UserDetailsRepository interface {
@@ -16,6 +19,7 @@ type UserDetailsRepository interface {
 	IsEmailAvailable(email string, ctx context.Context) (bool, error)
 	IsUserNameAvailable(username string, ctx context.Context) (bool, error)
 	IsUserNameAndEmailAvailable(username, email string, ctx context.Context) (bool, error)
+	GenerateUsername(ctx context.Context, email string) (string, error)
 	GetUserProfile(email string, ctx context.Context) (db.UserProfile, error)
 	GetPassword(email string, ctx context.Context) (string, error)
 	UpdateName(ctx context.Context, name string, id uuid.UUID) error
@@ -45,6 +49,7 @@ const (
 	UpdateLinkedIn            = "insert into social_links(id, linkedin, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set linkedin = $3"
 	UpdateFacebook            = "insert into social_links(id, facebook, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set facebook = $3"
 	UpdateImage               = "update users set avatar = $1 where id = $2"
+	UsernameCount             = "select count(*) as count from users where user = $1"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -267,6 +272,17 @@ func (repository userDetailsRepository) UpdateProfileImage(ctx context.Context, 
 	}
 
 	return nil
+}
+
+func (repository userDetailsRepository) GenerateUsername(ctx context.Context, email string) (string, error) {
+	emailSlug := strings.Split(email, "@")[0]
+	var counter int64
+	err := repository.db.GetContext(ctx, &counter, UsernameCount, emailSlug)
+	if err != nil {
+		return "", err
+	}
+	num := utils.GenRandNum(100, 999)
+	return fmt.Sprintf("%s%d%d", emailSlug, num, counter+1), nil
 }
 
 func NewUserDetailsRepository(db *sqlx.DB) UserDetailsRepository {

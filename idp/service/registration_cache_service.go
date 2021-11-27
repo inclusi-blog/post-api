@@ -48,7 +48,6 @@ func (service registrationCacheService) SaveUserDetailsInCache(newRequest reques
 	registrationRequest := request.InitiateRegistrationRequest{
 		Email:    newRequest.Email,
 		Password: newRequest.Password,
-		Username: newRequest.Username,
 		Id:       generatedUUID,
 	}
 	log.Infof("Saving new user registration request in cache %v for userEmail and user uuid %v", newRequest.Email, generatedUUID)

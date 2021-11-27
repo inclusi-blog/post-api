@@ -28,20 +28,22 @@ func TestCountContentReadTime(t *testing.T) {
 
 func TestGetTitleFromSlateJson(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
+	titleString, tagline, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestData),
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Install apps via helm in kubernetes", titleString)
+	assert.Equal(t, "", tagline)
 }
 
 func TestGetTitleFromSlateJsonWhenTitleGreaterThan100Len(t *testing.T) {
 	ctx := context.TODO()
-	titleString, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
+	titleString, tagline, err := GetTitleAndTaglineFromData(ctx, models.JSONString{
 		JSONText: types.JSONText(test_helper.TitleTestDataMoreThan100Len),
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, "Install apps via helm in kubernetes Install apps via helm in kubernetes Install apps via helm in kub", titleString)
+	assert.Equal(t, "", tagline)
 }
 
 func TestGetNumberOfWords(t *testing.T) {
@@ -52,6 +54,6 @@ func TestGetNumberOfWords(t *testing.T) {
 	titleString := ""
 	previewImage := ""
 	err := GetNumberOfWords(models.JSONString{JSONText: types.JSONText(test_helper.LargeTextData)}, &readTime, ctx, &imageCount, &extractedTagline, &titleString, &previewImage)
-	assert.Equal(t, 892, readTime)
+	assert.Equal(t, 711, readTime)
 	assert.Nil(t, err)
 }

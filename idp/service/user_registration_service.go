@@ -81,7 +81,13 @@ func (service userRegistrationService) InitiateRegistration(request request.Init
 	log.Infof("User password deciphered for user email %v", email)
 	log.Infof("Calling user details to check user existence for user email %v", email)
 
-	isAvailable, err := service.repository.IsUserNameAndEmailAvailable(request.Username, email, ctx)
+	username, err := service.repository.GenerateUsername(ctx, email)
+	if err != nil {
+		log.Errorf("unable to generate username %v", err)
+		return &constants.InternalServerError
+	}
+
+	isAvailable, err := service.repository.IsUserNameAndEmailAvailable(username, email, ctx)
 
 	if err != nil {
 		log.Infof("Error occurred while fetching user existence for email %v .%v", email, err)
@@ -99,7 +105,7 @@ func (service userRegistrationService) InitiateRegistration(request request.Init
 	if !isAvailable {
 		userRegistrationDetails := db.SaveUserDetails{
 			ID:       request.Id,
-			Username: request.Username,
+			Username: username,
 			Email:    request.Email,
 			Password: passwordHash,
 			IsActive: true,
