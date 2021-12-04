@@ -43,6 +43,12 @@ func (controller LoginController) LoginByEmailAndPassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (controller LoginController) AcceptChallenge(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx)
+	logger.Info("LoginController.AcceptChallenge: success")
+	ctx.JSON(http.StatusOK, nil)
+}
+
 func (controller LoginController) GrantConsent(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx).WithField("class", "LoginController").WithField("method", "GrantConsent")
 	logger.Info("Grant consent initiated")

@@ -87,7 +87,8 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 
 	loginGroup := idpRoute.Group("login")
 	{
-		loginGroup.POST("/password", loginController.LoginByEmailAndPassword)
+		loginGroup.POST("password", loginController.LoginByEmailAndPassword)
+		loginGroup.GET("accept", loginController.AcceptChallenge)
 	}
 
 	consentGroup := idpRoute.Group("consent")
