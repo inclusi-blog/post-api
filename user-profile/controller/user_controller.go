@@ -210,6 +210,32 @@ func (controller UserProfileController) ViewProfileAvatar(ctx *gin.Context) {
 	ctx.Redirect(http.StatusMovedPermanently, avatar)
 }
 
+func (controller UserProfileController) FollowUser(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "UserProfileController").WithField("method", "FollowUser")
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+	userUID, _ := uuid.Parse(token.UserId)
+	userID := ctx.Param("user_id")
+	followingUID, err := uuid.Parse(userID)
+	if err != nil {
+		logger.Errorf("unable to bind request path param %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	followErr := controller.userProfileService.FollowUser(ctx, userUID, followingUID)
+	if followErr != nil {
+		logger.Errorf("unable to follow user %v", followErr)
+		constants.RespondWithGolaError(ctx, followErr)
+		return
+	}
+	ctx.Status(200)
+}
+
 func NewUserProfileController(interestsService service.UserInterestsService, postService storyApi.PostService, profileService service.ProfileService, services commonService.AwsServices) UserProfileController {
 	return UserProfileController{
 		service:            interestsService,

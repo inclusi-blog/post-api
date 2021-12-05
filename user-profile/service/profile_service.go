@@ -21,6 +21,7 @@ type profileService struct {
 type ProfileService interface {
 	GetProfile(ctx context.Context, userID uuid.UUID) (models.Profile, *golaerror.Error)
 	FetchProfileAvatar(ctx context.Context, id uuid.UUID) (string, *golaerror.Error)
+	FollowUser(ctx context.Context, userID, followingID uuid.UUID) *golaerror.Error
 }
 
 func (service profileService) GetProfile(ctx context.Context, userID uuid.UUID) (models.Profile, *golaerror.Error) {
@@ -51,6 +52,17 @@ func (service profileService) FetchProfileAvatar(ctx context.Context, id uuid.UU
 	}
 
 	return url, nil
+}
+
+func (service profileService) FollowUser(ctx context.Context, userID, followingID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "ProfileService").WithField("method", "FollowUser")
+	err := service.repository.FollowUser(ctx, userID, followingID)
+	if err != nil {
+		logger.Errorf("unable to follow user %v", err)
+		return &constants.InternalServerError
+	}
+	logger.Info("successfully followed")
+	return nil
 }
 
 func NewProfileService(repository repository.ProfileRepository, services service.AwsServices) ProfileService {
