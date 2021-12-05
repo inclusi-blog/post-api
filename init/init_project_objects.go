@@ -80,7 +80,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 	profileService := userProfileService.NewProfileService(profileRepository, awsServices)
 
 	userInterestsRepository := userProfileRepository.NewUserInterestsRepository(db)
-	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository)
+	userInterestsService := userProfileService.NewUserInterestsService(userInterestsRepository, awsServices)
 	profileController = userProfileController.NewUserProfileController(userInterestsService, postService, profileService, awsServices)
 
 	userDetailsService := idpService.NewUserDetailsService(detailsRepository, userRegistrationService)
