@@ -216,9 +216,9 @@ func (suite *DraftServiceTest) TestGetDraft_WhenDraftRepositoryReturnsNoRowError
 
 func (suite *DraftServiceTest) TestSavePreviewImage_WhenSuccess() {
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          uuid.New(),
-		DraftID:         uuid.New(),
-		PreviewImageUrl: "https://some-url",
+		UserID:   uuid.New(),
+		DraftID:  uuid.New(),
+		UploadID: "https://some-url",
 	}
 
 	suite.mockDraftRepository.EXPECT().UpsertPreviewImage(suite.goContext, imageSaveRequest).Return(nil).Times(1)
@@ -229,9 +229,9 @@ func (suite *DraftServiceTest) TestSavePreviewImage_WhenSuccess() {
 
 func (suite *DraftServiceTest) TestSavePreviewImage_WhenDbReturnsError() {
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          uuid.New(),
-		DraftID:         uuid.New(),
-		PreviewImageUrl: "https://some-url",
+		UserID:   uuid.New(),
+		DraftID:  uuid.New(),
+		UploadID: "https://some-url",
 	}
 
 	suite.mockDraftRepository.EXPECT().UpsertPreviewImage(suite.goContext, imageSaveRequest).Return(errors.New("something went wrong")).Times(1)

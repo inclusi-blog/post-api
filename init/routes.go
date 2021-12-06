@@ -118,9 +118,10 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 			draftGroup.PUT("/interests", draftController.SaveInterests)
 			draftGroup.GET("", draftController.GetDraft)
 			draftGroup.POST("/get-all-draft", draftController.GetAllDraft)
-			draftGroup.PUT("/preview-image", draftController.SavePreviewImage)
 			draftGroup.GET("/preview-draft/:draft_id", draftController.GetPreviewDraft)
 			draftGroup.DELETE("id/:draft_id", draftController.DeleteDraft)
+			draftGroup.GET("pre-sign/:draft_id", draftController.GetPreSignURLForDraftPreview)
+			draftGroup.POST("preview/:draft_id/upload", draftController.UploadImageKey)
 		}
 
 		postGroup := defaultRouterGroup.Group("/post")

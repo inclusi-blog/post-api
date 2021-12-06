@@ -203,9 +203,9 @@ func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSu
 	suite.Nil(err)
 
 	saveRequest := request.PreviewImageSaveRequest{
-		UserID:          userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "https://some-url",
+		UserID:   userUUID,
+		DraftID:  draftUUID,
+		UploadID: "https://some-url",
 	}
 
 	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, saveRequest)
@@ -214,9 +214,9 @@ func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenUpsertSu
 
 func (suite *DraftRepositoryIntegrationTest) TestUpsertPreviewImage_WhenNoDraft() {
 	previewImageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          uuid.New(),
-		DraftID:         uuid.New(),
-		PreviewImageUrl: "https://some-url",
+		UserID:   uuid.New(),
+		DraftID:  uuid.New(),
+		UploadID: "https://some-url",
 	}
 
 	err := suite.draftRepository.UpsertPreviewImage(suite.goContext, previewImageSaveRequest)
@@ -260,9 +260,9 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 	suite.Nil(err)
 
 	err = suite.draftRepository.UpsertPreviewImage(suite.goContext, request.PreviewImageSaveRequest{
-		UserID:          userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "https://www.some-url.com",
+		UserID:   userUUID,
+		DraftID:  draftUUID,
+		UploadID: "https://www.some-url.com",
 	})
 	suite.Nil(err)
 

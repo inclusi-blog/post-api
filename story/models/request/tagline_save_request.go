@@ -17,9 +17,9 @@ type InterestsSaveRequest struct {
 }
 
 type PreviewImageSaveRequest struct {
-	UserID          uuid.UUID `json:"-"`
-	DraftID         uuid.UUID `json:"-"`
-	PreviewImageUrl string    `json:"preview_image" binding:"required" db:"preview_image"`
+	UserID   uuid.UUID `json:"-"`
+	DraftID  uuid.UUID `json:"-"`
+	UploadID string    `json:"upload_id" binding:"required" db:"preview_image"`
 }
 
 type DraftURIRequest struct {

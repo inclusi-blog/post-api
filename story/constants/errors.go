@@ -18,6 +18,10 @@ const (
 	ReadTimeNotMeetCode             string = "ERR_DRAFT_READ_TIME_NOT_MEET"
 	InterestDoesNotMeetReadTimeCode string = "ERR_DRAFT_INTEREST_NOT_MEET_READ_TIME"
 	PostNotFoundCode                string = "ERR_POST_NOT_FOUND"
+	UnableToAssignPreSignURL        string = "ERR_POST_UNABLE_TO_ASSIGN_PRESIGN"
+	UnableToFetchObjectErrorCode    string = "ERR_POST_UNABLE_TO_FETCH_OBJECT"
+	ObjectNotFoundErrorCode         string = "ERR_POST_OBJECT_NOT_FOUND"
+	UnableToUpdatePreviewImageCode  string = "ERR_POST_UNABLE_TO_UPDATE_PREVIEW"
 )
 
 var (
@@ -31,7 +35,11 @@ var (
 	DraftInterestParseError        = golaerror.Error{ErrorCode: InterestParseErrorCode, ErrorMessage: "please reenter the interests", AdditionalData: "Please re enter the interest for draft"}
 	ReadTimeNotMeetError           = golaerror.Error{ErrorCode: ReadTimeNotMeetCode, ErrorMessage: "read time requirement not meet", AdditionalData: "Please Enter some more content to the draft before publishing"}
 	InterestReadTimeDoesNotMeetErr = golaerror.Error{ErrorCode: InterestDoesNotMeetReadTimeCode, ErrorMessage: "selected interest doesn't meet required read time", AdditionalData: "Increase the content for the draft"}
+	UnableToAssignPreSignURLError  = golaerror.Error{ErrorCode: UnableToAssignPreSignURL, ErrorMessage: "unable to assign presign image url for draft preview"}
+	UnableToFetchObjectError       = golaerror.Error{ErrorCode: UnableToFetchObjectErrorCode, ErrorMessage: "unable to fetch object"}
 	PostNotFoundErr                = golaerror.Error{ErrorCode: PostNotFoundCode, ErrorMessage: "no post found for the given post uid"}
+	ObjectNotFoundError            = golaerror.Error{ErrorCode: ObjectNotFoundErrorCode, ErrorMessage: "image object not found"}
+	UnableToUpdatePreviewError      = golaerror.Error{ErrorCode: UnableToUpdatePreviewImageCode, ErrorMessage: "unable to upload avatar"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{

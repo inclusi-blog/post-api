@@ -10,6 +10,7 @@ import (
 	"post-api/idp/constants"
 	"post-api/idp/models/request"
 	"post-api/idp/service"
+	commonModels "post-api/models"
 	commonService "post-api/service"
 	"post-api/story/utils"
 	"strings"
@@ -63,7 +64,7 @@ func (controller UserDetailsController) GetPreSignURLForProfilePic(ctx *gin.Cont
 
 	logger.Infof("Entered controller to get draft request for user %v", token.UserId)
 
-	var p request.CoverPreSign
+	var p commonModels.CoverPreSign
 	p.Extension = "jpg"
 	if err := ctx.ShouldBindQuery(&p); err != nil {
 		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
@@ -96,7 +97,7 @@ func (controller UserDetailsController) UploadImageKey(ctx *gin.Context) {
 	userUUID, _ := uuid.Parse(token.UserId)
 
 	logger.Infof("Entered controller to update avatar key for user %v", token.UserId)
-	var upload request.UploadImage
+	var upload commonModels.UploadImage
 	if err := ctx.ShouldBindJSON(&upload); err != nil {
 		logger.Errorf("unable to bind request body %v", err)
 		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)

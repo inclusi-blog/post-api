@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"github.com/gola-glitch/gola-utils/model"
 	"github.com/google/uuid"
+	"post-api/service"
 	"post-api/story/constants"
 	"post-api/story/models"
 	"post-api/story/models/db"
@@ -14,6 +15,7 @@ import (
 	"post-api/story/models/response"
 	"post-api/story/repository"
 	"post-api/story/utils"
+	"time"
 
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -35,6 +37,7 @@ type draftService struct {
 	draftRepository    repository.DraftRepository
 	interestRepository repository.InterestsRepository
 	validator          utils.PostValidator
+	awsServices        service.AwsServices
 }
 
 func (service draftService) CreateDraft(ctx context.Context, draft models.CreateDraft) (uuid.UUID, error) {
@@ -114,6 +117,14 @@ func (service draftService) GetDraft(ctx context.Context, draftUID, userUUID uui
 	if apiErr != nil {
 		logger.Error("unable to get interests")
 		return db.Draft{}, apiErr
+	}
+
+	if draft.PreviewImage != nil {
+		*draft.PreviewImage, err = service.awsServices.GetObjectInS3(*draft.PreviewImage, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to fetch preview image from s3 %v", err)
+			return db.Draft{}, &constants.InternalServerError
+		}
 	}
 
 	return draft, nil
@@ -255,7 +266,13 @@ func (service draftService) ValidateAndGetDraft(ctx context.Context, draftId uui
 	}
 
 	previewDraft := mapDraftToPreviewMetaData(draft, metaData, draftId, user.Username, selectedInterests)
-
+	if previewDraft.PreviewImage != "" {
+		previewDraft.PreviewImage, err = service.awsServices.GetObjectInS3(previewDraft.PreviewImage, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to fetch preview image from s3 %v", err)
+			return response.PreviewDraft{}, &constants.InternalServerError
+		}
+	}
 	return previewDraft, nil
 }
 
@@ -267,11 +284,12 @@ func InternalServerError(err error, logger logging.GolaLoggerEntry) *golaerror.E
 	return nil
 }
 
-func NewDraftService(repository repository.DraftRepository, interestsRepository repository.InterestsRepository, validator utils.PostValidator) DraftService {
+func NewDraftService(repository repository.DraftRepository, interestsRepository repository.InterestsRepository, validator utils.PostValidator, awsServices service.AwsServices) DraftService {
 	return draftService{
 		draftRepository:    repository,
 		interestRepository: interestsRepository,
 		validator:          validator,
+		awsServices:        awsServices,
 	}
 }
 
@@ -280,10 +298,10 @@ func mapDraftToPreviewMetaData(draftDB db.Draft, metaData models.MetaData, draft
 
 	previewDraft.Tagline = *draftDB.Tagline
 	previewDraft.PreviewImage = *draftDB.PreviewImage
-	if *draftDB.Tagline == "" {
+	if draftDB.Tagline == nil  {
 		previewDraft.Tagline = metaData.Tagline
 	}
-	if *draftDB.PreviewImage == "" {
+	if draftDB.PreviewImage == nil {
 		previewDraft.PreviewImage = metaData.PreviewImage
 	}
 	previewDraft.Interest = interests

@@ -61,7 +61,7 @@ func (repository draftRepository) UpsertPreviewImage(ctx context.Context, saveRe
 
 	logger.Infof("Storing preview image for draft id %v", saveRequest.DraftID)
 
-	result, err := repository.db.ExecContext(ctx, SavePreviewImage, saveRequest.PreviewImageUrl, saveRequest.DraftID, saveRequest.UserID)
+	result, err := repository.db.ExecContext(ctx, SavePreviewImage, saveRequest.UploadID, saveRequest.DraftID, saveRequest.UserID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while saving preview image of draft %v", saveRequest.DraftID)

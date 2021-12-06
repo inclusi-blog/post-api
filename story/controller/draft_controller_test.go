@@ -371,9 +371,9 @@ func (suite *DraftControllerTest) TestGetDraft_WhenServiceFails() {
 func (suite *DraftControllerTest) TestSavePreviewImage_WhenAPISuccess() {
 	draftUUID := uuid.New()
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          suite.userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "http://www.some-url.com",
+		UserID:   suite.userUUID,
+		DraftID:  draftUUID,
+		UploadID: "http://www.some-url.com",
 	}
 	suite.mockDraftService.EXPECT().SavePreviewImage(suite.context, imageSaveRequest).Return(nil).Times(1)
 	requestBytes, err := json.Marshal(imageSaveRequest)
@@ -390,9 +390,9 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenAPISuccess() {
 func (suite *DraftControllerTest) TestSavePreviewImage_WhenInvalidRequest() {
 	draftUUID := uuid.New()
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          suite.userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "http://www.some-url.com",
+		UserID:   suite.userUUID,
+		DraftID:  draftUUID,
+		UploadID: "http://www.some-url.com",
 	}
 	suite.mockDraftService.EXPECT().SavePreviewImage(suite.context, imageSaveRequest).Return(nil).Times(0)
 	suite.context.Request, _ = http.NewRequest(http.MethodPut, "api/v1/draft/preview-image?draft"+draftUUID.String(), nil)
@@ -420,9 +420,9 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenInvalidRequestBody() 
 func (suite *DraftControllerTest) TestSavePreviewImage_WhenIDTokenNotPresent() {
 	draftUUID := uuid.New()
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          suite.userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "http://www.some-url.com",
+		UserID:   suite.userUUID,
+		DraftID:  draftUUID,
+		UploadID: "http://www.some-url.com",
 	}
 	suite.mockDraftService.EXPECT().SavePreviewImage(suite.emptyContext, imageSaveRequest).Return(nil).Times(0)
 	suite.emptyContext.Request, _ = http.NewRequest(http.MethodPut, "api/v1/draft/preview-image?draft"+draftUUID.String(), nil)
@@ -435,9 +435,9 @@ func (suite *DraftControllerTest) TestSavePreviewImage_WhenIDTokenNotPresent() {
 func (suite *DraftControllerTest) TestSavePreviewImage_WhenServiceFails() {
 	draftUUID := uuid.New()
 	imageSaveRequest := request.PreviewImageSaveRequest{
-		UserID:          suite.userUUID,
-		DraftID:         draftUUID,
-		PreviewImageUrl: "http://www.some-url.com",
+		UserID:   suite.userUUID,
+		DraftID:  draftUUID,
+		UploadID: "http://www.some-url.com",
 	}
 	requestBytes, err := json.Marshal(imageSaveRequest)
 	suite.Nil(err)

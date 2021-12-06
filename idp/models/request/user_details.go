@@ -8,11 +8,3 @@ type UserDetailsUpdate struct {
 	LinkedInURL string `json:"linked_in_url" binding:"omitempty"`
 	TwitterURL  string `json:"twitter_url" binding:"omitempty"`
 }
-
-type CoverPreSign struct {
-	Extension string `form:"extension" binding:"oneof=png jpg jpeg webp svg"`
-}
-
-type UploadImage struct {
-	UploadID string `json:"upload_id" validate:"required"`
-}

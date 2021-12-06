@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"post-api/helper"
+	"post-api/service"
 	"post-api/story/constants"
 	"post-api/story/models/db"
 	"post-api/story/models/request"
@@ -14,6 +15,7 @@ import (
 	"post-api/story/repository"
 	"post-api/story/utils"
 	"strings"
+	"time"
 
 	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/gola-glitch/gola-utils/logging"
@@ -43,6 +45,7 @@ type postService struct {
 	draftRepository        repository.DraftRepository
 	abstractPostRepository repository.AbstractPostRepository
 	validator              utils.PostValidator
+	awsServices             service.AwsServices
 }
 
 func (service postService) PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error) {
@@ -182,6 +185,11 @@ func (service postService) GetPost(ctx context.Context, postId, userId uuid.UUID
 		return response.Post{}, constants.StoryInternalServerError(err.Error())
 	}
 
+	post.PreviewImage, err = service.awsServices.GetObjectInS3(post.PreviewImage, time.Hour*time.Duration(6))
+	if err != nil {
+		logger.Errorf("unable to fetch preview image from s3 %v", err)
+		return response.Post{}, &constants.InternalServerError
+	}
 	logger.Infof("Successfully fetching post from post repository for given post id %v", postId)
 
 	return post, nil
@@ -322,7 +330,7 @@ func (service postService) Delete(ctx context.Context, postID, userID uuid.UUID)
 	return nil
 }
 
-func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager) PostService {
+func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager, services service.AwsServices) PostService {
 	return postService{
 		transactionManager:     manager,
 		repository:             postsRepository,
@@ -330,5 +338,6 @@ func NewPostService(postsRepository repository.PostsRepository, draftRepository 
 		draftRepository:        draftRepository,
 		abstractPostRepository: previewPostsRepository,
 		validator:              validator,
+		awsServices:            services,
 	}
 }
