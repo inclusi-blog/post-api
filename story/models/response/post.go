@@ -29,6 +29,7 @@ type PublishedPost struct {
 	PreviewImage string            `json:"preview_image" db:"preview_image"`
 	CreatedAt    time.Time         `json:"published_at" db:"created_at"`
 	Interests    models.JSONString `json:"interests" db:"interests"`
+	Username     string            `json:"username" db:"username"`
 }
 
 type PostView struct {
