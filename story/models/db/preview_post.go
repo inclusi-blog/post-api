@@ -9,4 +9,5 @@ type AbstractPost struct {
 	Tagline      string    `json:"tagline" db:"tagline"`
 	PreviewImage string    `json:"preview_image" db:"preview_image"`
 	ViewTime     int64     `json:"view_time" db:"view_time"`
+	URL          string    `json:"url" db:"url"`
 }

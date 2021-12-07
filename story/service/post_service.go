@@ -116,12 +116,15 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 		logger.Errorf("unable to add interests to posts %v", err)
 		return "", constants.StoryInternalServerError(err.Error())
 	}
+
+	finalPostUrl := strings.Join([]string{url, postID.String()}, "-")
 	abstractPost := db.AbstractPost{
 		PostID:       postID,
 		Title:        metaData.Title,
 		Tagline:      *draft.Tagline,
 		PreviewImage: *draft.PreviewImage,
 		ViewTime:     int64(metaData.ReadTime),
+		URL:          finalPostUrl,
 	}
 
 	_, err = service.abstractPostRepository.Save(ctx, txn, abstractPost)
@@ -139,9 +142,6 @@ func (service postService) PublishPost(ctx context.Context, draftUID, userUUID u
 	}
 
 	_ = txn.Commit()
-
-	finalPostUrl := strings.Join([]string{url, postID.String()}, "-")
-
 	logger.Infof("Successfully stored the preview post in preview post repository")
 	return finalPostUrl, nil
 }

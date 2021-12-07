@@ -16,6 +16,7 @@ type Post struct {
 	AuthorName             string            `json:"author_name" db:"author_name"`
 	PreviewImage           string            `json:"preview_image" db:"preview_image"`
 	PublishedAt            time.Time         `json:"published_at" db:"published_at"`
+	URL                    string            `json:"url" db:"url"`
 	IsViewerLiked          bool              `json:"is_viewer_liked" db:"is_viewer_liked"`
 	IsViewerIsAuthor       bool              `json:"is_viewer_is_author" db:"is_viewer_is_author"`
 	IsViewerFollowedAuthor bool              `json:"is_viewer_followed_author"`
@@ -30,6 +31,7 @@ type PublishedPost struct {
 	CreatedAt    time.Time         `json:"published_at" db:"created_at"`
 	Interests    models.JSONString `json:"interests" db:"interests"`
 	Username     string            `json:"username" db:"username"`
+	URL          string            `json:"url" db:"url"`
 }
 
 type PostView struct {
@@ -46,4 +48,5 @@ type PostView struct {
 	IsViewerLiked    bool              `json:"is_viewer_liked" db:"is_viewer_liked"`
 	IsViewerIsAuthor bool              `json:"is_viewer_is_author" db:"is_viewer_is_author"`
 	IsBookmarked     bool              `json:"is_bookmarked" db:"is_bookmarked"`
+	URL              string            `json:"url" db:"url"`
 }

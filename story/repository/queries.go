@@ -13,6 +13,7 @@ const FetchSavedPosts = "with post_interests as (select jsonb_agg(jsonb_build_ob
 	"count(distinct l.liked_by)                                                                as likes_count, " +
 	"count(distinct c.id)                                                                      as comments_count, " +
 	"post_interests.interests, " +
+	"ap.url, " +
 	"u.id                                                                                      as author_id, " +
 	"u.username                                                                                as author_name, " +
 	"ap.preview_image                                                                          as preview_image, " +
@@ -29,7 +30,7 @@ const FetchSavedPosts = "with post_interests as (select jsonb_agg(jsonb_build_ob
 	"inner join abstract_post ap on posts.id = ap.post_id " +
 	"left join likes l on l.post_id = posts.id " +
 	"left join comments c on c.post_id = posts.id " +
-	"where posts.deleted_at is null group by posts.id, u.id, ap.preview_image, l.liked_by, post_interests.interests, ap.title, ap.tagline limit $5 offset $6"
+	"where posts.deleted_at is null group by posts.id, ap.url, u.id, ap.preview_image, l.liked_by, post_interests.interests, ap.title, ap.tagline limit $5 offset $6"
 
 const FetchViewedPosts = "with post_interests as (select jsonb_agg(jsonb_build_object('id', interests.id, 'name', interests.name)) as interests, " +
 	"post_x_interests.post_id " +
@@ -46,6 +47,7 @@ const FetchViewedPosts = "with post_interests as (select jsonb_agg(jsonb_build_o
 	"count(distinct c.id)                                                                      as comments_count, " +
 	"post_interests.interests, " +
 	"u.id                                                                                      as author_id, " +
+	"ap.url, " +
 	"u.username                                                                                as author_name, " +
 	"ap.preview_image                                                                          as preview_image, " +
 	"posts.created_at                                                                          as published_at, " +
@@ -63,7 +65,7 @@ const FetchViewedPosts = "with post_interests as (select jsonb_agg(jsonb_build_o
 	"left join likes l on l.post_id = posts.id " +
 	"left join comments c on c.post_id = posts.id " +
 	"where posts.deleted_at is null " +
-	"group by posts.id, u.id, ap.preview_image, l.liked_by, post_interests.interests, ap.title, ap.tagline, sp.user_id " +
+	"group by posts.id, u.id, ap.preview_image,ap.url, l.liked_by, post_interests.interests, ap.title, ap.tagline, sp.user_id " +
 	"limit $7 offset $8"
 
 const FetchPostByInterests = "with ins as ( " +
@@ -75,6 +77,7 @@ const FetchPostByInterests = "with ins as ( " +
 	")" +
 	"select ins.post_id                                                                               as id, " +
 	"ap.title, " +
+	"ap.url, " +
 	"ap.tagline, " +
 	"posts.author_id, " +
 	"count(distinct l.liked_by)                                                                as likes_count, " +
@@ -95,5 +98,5 @@ const FetchPostByInterests = "with ins as ( " +
 	"left join comments c on posts.id = c.post_id " +
 	"left join saved_posts sp on posts.id = sp.post_id " +
 	"where interest_id = $4 " +
-	"group by ap.title, ins.post_id, ap.tagline, posts.author_id, ins.interests, username, preview_image, liked_by, users.id, " +
+	"group by ap.title, ins.post_id, ap.tagline, ap.url, posts.author_id, ins.interests, username, preview_image, liked_by, users.id, " +
 	"sp.user_id, posts.created_at order by posts.created_at limit $5 offset $6"
