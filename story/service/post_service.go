@@ -45,7 +45,7 @@ type postService struct {
 	draftRepository        repository.DraftRepository
 	abstractPostRepository repository.AbstractPostRepository
 	validator              utils.PostValidator
-	awsServices             service.AwsServices
+	awsServices            service.AwsServices
 }
 
 func (service postService) PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error) {
@@ -204,6 +204,14 @@ func (service postService) GetPublishedPostByUser(ctx context.Context, request r
 	if err != nil {
 		logger.Errorf("Error occurred while fetching posts for given user id %v, Error %v", request.UserID, err)
 		return nil, constants.StoryInternalServerError(err.Error())
+	}
+
+	for i, _ := range posts {
+		posts[i].PreviewImage, err = service.awsServices.GetObjectInS3(posts[i].PreviewImage, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to fetch preview image from s3 %v", err)
+			return nil, &constants.InternalServerError
+		}
 	}
 
 	logger.Infof("Successfully fetching posts from post repository for given user id %v", request.UserID)

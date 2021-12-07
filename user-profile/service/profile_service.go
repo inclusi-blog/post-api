@@ -47,9 +47,12 @@ func (service profileService) FetchProfileAvatar(ctx context.Context, id uuid.UU
 		return "", &constants.InternalServerError
 	}
 
-	url, err := service.awsServices.GetObjectInS3(avatar, time.Hour*time.Duration(6))
-	if err != nil {
-		return "", &constants.InternalServerError
+	var url string
+	if avatar != "" {
+		url, err = service.awsServices.GetObjectInS3(avatar, time.Hour*time.Duration(6))
+		if err != nil {
+			return "", &constants.InternalServerError
+		}
 	}
 
 	return url, nil
