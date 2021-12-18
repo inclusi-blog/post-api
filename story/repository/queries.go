@@ -94,9 +94,10 @@ const FetchPostByInterests = "with ins as ( " +
 	"inner join abstract_post ap on posts.id = ap.post_id " +
 	"inner join users on posts.author_id = users.id " +
 	"inner join ins on ins.post_id = post_x_interests.post_id " +
+	"left join user_blocks ub on ub.blocked_by = users.id " +
 	"left join likes l on posts.id = l.post_id " +
 	"left join comments c on posts.id = c.post_id " +
 	"left join saved_posts sp on posts.id = sp.post_id " +
-	"where interest_id = $4 " +
+	"where interest_id = $4 and author_id not in (ub.blocked_id) " +
 	"group by ap.title, ins.post_id, ap.tagline, ap.url, posts.author_id, ins.interests, username, preview_image, liked_by, users.id, " +
 	"sp.user_id, posts.created_at order by posts.created_at limit $5 offset $6"
