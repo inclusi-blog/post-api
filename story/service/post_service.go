@@ -301,14 +301,21 @@ func (service postService) FetchViewedPosts(ctx context.Context, postRequest req
 
 func (service postService) FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "FetchPostsByInterests")
-	interests, err := service.repository.FetchPostsByInterests(ctx, interestRequest, userID)
+	posts, err := service.repository.FetchPostsByInterests(ctx, interestRequest, userID)
 	if err != nil {
 		logger.Errorf("unable to fetch posts %v", err)
 		return nil, &constants.InternalServerError
 	}
+	for i, _ := range posts {
+		posts[i].PreviewImage, err = service.awsServices.GetObjectInS3(posts[i].PreviewImage, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to fetch preview image from s3 %v", err)
+			return nil, &constants.InternalServerError
+		}
+	}
 	logger.Info("successfully fetched posts for interest")
 
-	return interests, nil
+	return posts, nil
 }
 
 func (service postService) RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error {
