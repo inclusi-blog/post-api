@@ -262,6 +262,32 @@ func (controller UserProfileController) UnFollowUser(ctx *gin.Context) {
 	ctx.Status(200)
 }
 
+func (controller UserProfileController) BlockUser(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "UserProfileController").WithField("method", "BlockUser")
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+	userUID, _ := uuid.Parse(token.UserId)
+	userID := ctx.Param("user_id")
+	toBlockUserID, err := uuid.Parse(userID)
+	if err != nil {
+		logger.Errorf("unable to bind request path param %v", err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	blockErr := controller.userProfileService.BlockUser(ctx, userUID, toBlockUserID)
+	if blockErr != nil {
+		logger.Errorf("unable to follow user %v", blockErr)
+		constants.RespondWithGolaError(ctx, blockErr)
+		return
+	}
+	ctx.Status(200)
+}
+
 func NewUserProfileController(interestsService service.UserInterestsService, postService storyApi.PostService, profileService service.ProfileService, services commonService.AwsServices) UserProfileController {
 	return UserProfileController{
 		service:            interestsService,

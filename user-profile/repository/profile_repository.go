@@ -18,6 +18,7 @@ type ProfileRepository interface {
 	FetchProfileAvatar(ctx context.Context, id uuid.UUID) (string, error)
 	FollowUser(ctx context.Context, userID, followingID uuid.UUID) error
 	UnFollowUser(ctx context.Context, userID, followingID uuid.UUID) error
+	BlockUser(ctx context.Context, userID, toBlockID uuid.UUID) error
 }
 
 const (
@@ -25,6 +26,7 @@ const (
 	GetAvatar    = "select avatar from users where id = $1"
 	FollowUser   = "insert into followings(follower_id, following_id)values($1, $2)"
 	UnfollowUser = "delete from followings where follower_id = $1 and following_id = $2"
+	BlockUser    = "insert into user_blocks(blocked_id, blocked_by) values ($1, $2)"
 )
 
 func (repository profileRepository) GetDetails(ctx context.Context, id uuid.UUID) (models.Profile, error) {
@@ -74,6 +76,17 @@ func (repository profileRepository) UnFollowUser(ctx context.Context, userID, fo
 	_, err := repository.db.ExecContext(ctx, UnfollowUser, userID, followingID)
 	if err != nil {
 		logger.Errorf("unable to unfollow user %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (repository profileRepository) BlockUser(ctx context.Context, userID, toBlockID uuid.UUID) error {
+	logger := logging.GetLogger(ctx).WithField("class", "ProfileRepository").WithField("method", "BlockUser")
+	_, err := repository.db.ExecContext(ctx, BlockUser, toBlockID, userID)
+	if err != nil {
+		logger.Errorf("unable to block %v author by author %v. Error %v", toBlockID, userID, err)
 		return err
 	}
 

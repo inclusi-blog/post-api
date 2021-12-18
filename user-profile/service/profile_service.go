@@ -23,6 +23,7 @@ type ProfileService interface {
 	FetchProfileAvatar(ctx context.Context, id uuid.UUID) (string, *golaerror.Error)
 	FollowUser(ctx context.Context, userID, followingID uuid.UUID) *golaerror.Error
 	UnFollowUser(ctx context.Context, userID, followingID uuid.UUID) *golaerror.Error
+	BlockUser(ctx context.Context, userID, toBlockID uuid.UUID) *golaerror.Error
 }
 
 func (service profileService) GetProfile(ctx context.Context, userID uuid.UUID) (models.Profile, *golaerror.Error) {
@@ -77,6 +78,18 @@ func (service profileService) UnFollowUser(ctx context.Context, userID, followin
 		return &constants.InternalServerError
 	}
 	logger.Info("successfully followed")
+	return nil
+}
+
+func (service profileService) BlockUser(ctx context.Context, userID, toBlockID uuid.UUID) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "ProfileService").WithField("method", "BlockUser")
+	err := service.repository.BlockUser(ctx, userID, toBlockID)
+	if err != nil {
+		logger.Errorf("unable to block author %v", err)
+		return &constants.InternalServerError
+	}
+	logger.Info("successfully blocked user")
+
 	return nil
 }
 

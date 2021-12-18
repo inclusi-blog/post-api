@@ -165,6 +165,7 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		{
 			userBehaviourGroup.GET(":user_id/follow", profileController.FollowUser)
 			userBehaviourGroup.GET(":user_id/unfollow", profileController.UnFollowUser)
+			userBehaviourGroup.GET(":user_id/block", profileController.BlockUser)
 		}
 		posts := userGroup.Group("posts")
 		{
