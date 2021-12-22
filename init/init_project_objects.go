@@ -36,6 +36,7 @@ var (
 	profileController        userProfileController.UserProfileController
 	registrationCacheService idpService.RegistrationCacheService
 	userDetailsController    idpController.UserDetailsController
+	reportController         storyController.ReportController
 )
 
 func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Session) {
@@ -85,4 +86,8 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 
 	userDetailsService := idpService.NewUserDetailsService(detailsRepository, userRegistrationService)
 	userDetailsController = idpController.NewUserDetailsController(userDetailsService, awsServices)
+
+	reportRepository := repository.NewReportRepository(db)
+	reportService := service.NewReportService(reportRepository)
+	reportController = storyController.NewReportController(reportService)
 }
