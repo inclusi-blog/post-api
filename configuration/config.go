@@ -21,6 +21,7 @@ type ConfigData struct {
 	RequestTimeOut            int                          `json:"request_time_out" binding:"required"`
 	AllowInsecureCookies      bool                         `json:"allow_insecure_cookies"`
 	ActivationCallback        string                       `json:"activationCallback" binding:"required"`
+	PasswordResetCallback     string                       `json:"password_reset_callback" binding:"required"`
 	TokenValidationIgnoreURLs []string                     `json:"token_validation_ignore_urls"`
 	OauthUrl                  string                       `json:"oauth_url" binding:"required"`
 	AwsAccessKeyID            string                       `json:"aws_access_key_id" binding:"required"`
@@ -45,6 +46,7 @@ type OAuth struct {
 }
 type TemplatesPaths struct {
 	NewUserActivation string `json:"new_user_activation"`
+	ForgetPassword    string `json:"forget_password"`
 }
 
 func (configData *ConfigData) GetDBConnectionPoolConfig() model.DBConnectionPoolConfig {

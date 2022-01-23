@@ -73,7 +73,7 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 
 	authenticatorService := idpService.NewAuthenticatorService(hashUtil, detailsRepository)
 	oauthHandler := login.NewOauthLoginHandler(requestBuilder, configData, oauthUtils, clockUtil)
-	loginService := idpService.NewLoginService(detailsRepository, util, authenticatorService, oauthHandler)
+	loginService := idpService.NewLoginService(detailsRepository, util, authenticatorService, oauthHandler, emailUtil, configData, redisClient)
 	loginController = idpController.NewLoginController(loginService, oauthHandler)
 	tokenController = idpController.NewTokenController(oauthHandler, configData.AllowInsecureCookies)
 

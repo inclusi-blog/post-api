@@ -71,7 +71,7 @@ func (service registrationCacheService) SaveUserDetailsInCache(newRequest reques
 	emailDetails := models.EmailDetails{
 		From:    service.configData.Email.DefaultSender,
 		To:      []string{userEmail},
-		Subject: constants.VERIFY_EMAIL,
+		Subject: constants.VerifyEmail,
 		Content: emailContent,
 	}
 

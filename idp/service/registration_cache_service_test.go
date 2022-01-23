@@ -73,7 +73,7 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenSucces
 	details := models.EmailDetails{
 		From:    "noreply@gola.xyz",
 		To:      []string{"dummy@email.com"},
-		Subject: constants.VERIFY_EMAIL,
+		Subject: constants.VerifyEmail,
 		Content: constants.NewUserActivation,
 	}
 	suite.mockEmailUtil.EXPECT().SendWithContext(suite.goContext, details, true).Return(nil).Times(1)
@@ -150,7 +150,7 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 	details := models.EmailDetails{
 		From:    "noreply@gola.xyz",
 		To:      []string{"dummy@email.com"},
-		Subject: constants.VERIFY_EMAIL,
+		Subject: constants.VerifyEmail,
 		Content: constants.NewUserActivation,
 	}
 	suite.mockEmailUtil.EXPECT().SendWithContext(suite.goContext, details, true).Return(&constants.IDPServiceFailureError).Times(1)

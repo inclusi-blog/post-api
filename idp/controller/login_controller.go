@@ -65,6 +65,29 @@ func (controller LoginController) GrantConsent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (controller LoginController) ForgetPassword(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "LoginController").WithField("method", "ForgetPassword")
+	logger.Info("Forget password initiated")
+	forgetPassword := new(request.ForgetPassword)
+	err := ctx.ShouldBindJSON(forgetPassword)
+	if err != nil {
+		logger.Errorf("unable to bind request body for forget password %v", err)
+		constants.RespondWithGolaError(ctx, constants.PayloadValidationError)
+		return
+	}
+
+	forgetPasswordErr := controller.service.ForgetPassword(ctx, *forgetPassword)
+	if forgetPasswordErr != nil {
+		logger.Errorf("unable to do action forget password %v", forgetPasswordErr)
+		constants.RespondWithGolaError(ctx, forgetPasswordErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+	})
+}
+
 func NewLoginController(loginService service.LoginService, handler login.OauthLoginHandler) LoginController {
 	return LoginController{
 		service:     loginService,

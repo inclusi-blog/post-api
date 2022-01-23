@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: infrastructure/Dockerfile
+    platform: linux/386
     depends_on:
       - gola-db
     ports:

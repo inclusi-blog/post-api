@@ -1,6 +1,7 @@
 package constants
 
 const (
-	FILE_NAME    = "configuration/config.json"
-	VERIFY_EMAIL = "Verify your email address"
+	FileName       = "configuration/config.json"
+	VerifyEmail    = "Verify your email address"
+	ForgetPassword = "Password reset"
 )
