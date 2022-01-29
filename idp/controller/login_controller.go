@@ -88,6 +88,58 @@ func (controller LoginController) ForgetPassword(ctx *gin.Context) {
 	})
 }
 
+func (controller LoginController) CanResetPassword(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "LoginController").WithField("method", "ForgetPassword")
+	logger.Info("Forget password check")
+
+	resetKey := ctx.Param("uniqueID")
+	if resetKey == "" {
+		logger.Error("unable to bind request body for forget password check")
+		constants.RespondWithGolaError(ctx, constants.PayloadValidationError)
+		return
+	}
+
+	uniqueID, canResetErr := controller.service.CanResetPassword(ctx, resetKey)
+	if canResetErr != nil {
+		logger.Errorf("unable to do action forget password reset %v", canResetErr)
+		constants.RespondWithGolaError(ctx, canResetErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"verifier": uniqueID,
+	})
+}
+
+func (controller LoginController) ResetPassword(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "LoginController").WithField("method", "ForgetPassword")
+	logger.Info("Forget password check")
+
+	resetKey := ctx.Param("uniqueID")
+	if resetKey == "" {
+		logger.Error("unable to bind request body for forget password check")
+		constants.RespondWithGolaError(ctx, constants.PayloadValidationError)
+		return
+	}
+	resetPassword := new(request.ResetPassword)
+	if err := ctx.ShouldBindJSON(resetPassword); err != nil {
+		logger.Errorf("unable to bind request body %v", err)
+		constants.RespondWithGolaError(ctx, constants.PayloadValidationError)
+		return
+	}
+
+	resetErr := controller.service.ResetPassword(ctx, resetPassword.Password, resetKey)
+	if resetErr != nil {
+		logger.Errorf("unable to reset password %v", resetErr)
+		constants.RespondWithGolaError(ctx, resetErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+	})
+}
+
 func NewLoginController(loginService service.LoginService, handler login.OauthLoginHandler) LoginController {
 	return LoginController{
 		service:     loginService,

@@ -112,6 +112,8 @@ github.com/go-sql-driver/mysql v1.4.0 h1:7LxgVwFb2hIQtMm87NdgAVfXjnt4OePseqT1tKx
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/gola-glitch/gola-utils v0.0.0-20210829163106-9f47a25a9aff h1:eIdd44VVT3U3L5R5eb5MVMHKrqGR98/W2DlYc9TfbFU=
 github.com/gola-glitch/gola-utils v0.0.0-20210829163106-9f47a25a9aff/go.mod h1:Lp8roH0aS1FKpChpAS2azjHAssWAiaCt6UX5pLpVBXw=
+github.com/gola-glitch/gola-utils v0.0.0-20220126121802-e985d4a748fb h1:/BW8+IJ0lO46VwJUrgd93jLmCkUJnUc+HQzI9fmRkO0=
+github.com/gola-glitch/gola-utils v0.0.0-20220126121802-e985d4a748fb/go.mod h1:Lp8roH0aS1FKpChpAS2azjHAssWAiaCt6UX5pLpVBXw=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=

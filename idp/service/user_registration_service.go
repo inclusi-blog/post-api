@@ -24,7 +24,7 @@ type UserRegistrationService interface {
 
 type userRegistrationService struct {
 	repository  repository.UserDetailsRepository
-	cryptoUtils crypto.CryptoUtil
+	cryptoUtils crypto.Util
 	redis       redis_util.RedisStore
 	hashUtil    util.HashUtil
 }
@@ -130,7 +130,7 @@ func (service userRegistrationService) InitiateRegistration(request request.Init
 	return nil
 }
 
-func NewUserRegistrationService(detailsRepository repository.UserDetailsRepository, util crypto.CryptoUtil, store redis_util.RedisStore, hashUtil util.HashUtil) UserRegistrationService {
+func NewUserRegistrationService(detailsRepository repository.UserDetailsRepository, util crypto.Util, store redis_util.RedisStore, hashUtil util.HashUtil) UserRegistrationService {
 	return userRegistrationService{
 		repository:  detailsRepository,
 		cryptoUtils: util,

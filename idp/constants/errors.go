@@ -7,25 +7,27 @@ import (
 )
 
 const (
-	PayloadValidationErrorCode    string = "ERR_IDP_PAYLOAD_INVALID"
-	InternalServerErrorCode       string = "ERR_IDP_INTERNAL_SERVER_ERROR"
-	IDPServiceFailureCode         string = "ERR_IDP_SERVICE_FAILURE"
-	UserAlreadyExistsCode         string = "ERR_IDP_USER_ALREADY_EXISTS"
-	RetryRegistrationCode         string = "ERR_IDP_RETRY_REGISTRATION"
-	ActivationLinkExpiredCode     string = "ERR_IDP_ACTIVATION_LINK_EXPIRED"
-	UserNotFoundCode              string = "ERR_IDP_USER_NOT_FOUND"
-	InvalidCredentialsCode        string = "ERR_IDP_INVALID_CREDENTIALS"
-	InvalidLoginChallengeCode     string = "ERR_IDP_INVALID_LOGIN_CHALLENGE"
-	InvalidConsentChallengeCode   string = "ERR_IDP_INVALID_CONSENT_CHALLENGE"
-	UsernameUpdateErrorCode       string = "ERR_IDP_USER_USERNAME_UPDATE"
-	NameUpdateErrorCode           string = "ERR_IDP_USER_NAME_UPDATE"
-	AboutUpdateErrorCode          string = "ERR_IDP_USER_ABOUT_UPDATE"
-	UsernameAlreadyPresentCode    string = "ERR_USERNAME_ALREADY_PRESENT"
-	SocialURLUpdateErrorCode      string = "ERR_USER_PROFILE_SOCIAL_URL_UPDATE"
-	UnableToAssignPreSignURL      string = "ERR_USER_PROFILE_UNABLE_TO_ASSIGN_PRESIGN"
-	ObjectNotFoundErrorCode       string = "ERR_USER_PROFILE_OBJECT_NOT_FOUND"
-	UnableToFetchObjectErrorCode  string = "ERR_USER_PROFILE_UNABLE_TO_FETCH_OBJECT"
-	UnableToUpdateAvatarErrorCode string = "ERR_IDP_UNABLE_TO_UPDATE_AVATAR"
+	PayloadValidationErrorCode     string = "ERR_IDP_PAYLOAD_INVALID"
+	InternalServerErrorCode        string = "ERR_IDP_INTERNAL_SERVER_ERROR"
+	IDPServiceFailureCode          string = "ERR_IDP_SERVICE_FAILURE"
+	UserAlreadyExistsCode          string = "ERR_IDP_USER_ALREADY_EXISTS"
+	RetryRegistrationCode          string = "ERR_IDP_RETRY_REGISTRATION"
+	ActivationLinkExpiredCode      string = "ERR_IDP_ACTIVATION_LINK_EXPIRED"
+	UnauthorisedRequestCode        string = "ERR_IDP_UNAUTHORIZED"
+	UserNotFoundCode               string = "ERR_IDP_USER_NOT_FOUND"
+	InvalidCredentialsCode         string = "ERR_IDP_INVALID_CREDENTIALS"
+	InvalidLoginChallengeCode      string = "ERR_IDP_INVALID_LOGIN_CHALLENGE"
+	InvalidConsentChallengeCode    string = "ERR_IDP_INVALID_CONSENT_CHALLENGE"
+	UsernameUpdateErrorCode        string = "ERR_IDP_USER_USERNAME_UPDATE"
+	NameUpdateErrorCode            string = "ERR_IDP_USER_NAME_UPDATE"
+	AboutUpdateErrorCode           string = "ERR_IDP_USER_ABOUT_UPDATE"
+	UsernameAlreadyPresentCode     string = "ERR_USERNAME_ALREADY_PRESENT"
+	SocialURLUpdateErrorCode       string = "ERR_USER_PROFILE_SOCIAL_URL_UPDATE"
+	UnableToAssignPreSignURL       string = "ERR_USER_PROFILE_UNABLE_TO_ASSIGN_PRESIGN"
+	ObjectNotFoundErrorCode        string = "ERR_USER_PROFILE_OBJECT_NOT_FOUND"
+	UnableToFetchObjectErrorCode   string = "ERR_USER_PROFILE_UNABLE_TO_FETCH_OBJECT"
+	UnableToUpdateAvatarErrorCode  string = "ERR_IDP_UNABLE_TO_UPDATE_AVATAR"
+	UnableToResetPasswordErrorCode string = "ERR_IDP_UNABLE_TO_RESET_PASSWORD"
 )
 
 var (
@@ -48,23 +50,27 @@ var (
 	UnableToFetchObjectError         = golaerror.Error{ErrorCode: UnableToFetchObjectErrorCode, ErrorMessage: "unable to fetch object"}
 	ObjectNotFoundError              = golaerror.Error{ErrorCode: ObjectNotFoundErrorCode, ErrorMessage: "image object not found"}
 	UnableToUpdateAvatarError        = golaerror.Error{ErrorCode: UnableToUpdateAvatarErrorCode, ErrorMessage: "unable to upload avatar"}
+	UnauthorisedRequestError         = golaerror.Error{ErrorCode: UnauthorisedRequestCode, ErrorMessage: "unauthorized request"}
+	UnableToResetPasswordError       = golaerror.Error{ErrorCode: UnableToResetPasswordErrorCode, ErrorMessage: "unable to reset user password"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
-	PayloadValidationErrorCode:  http.StatusBadRequest,
-	InternalServerErrorCode:     http.StatusInternalServerError,
-	IDPServiceFailureCode:       http.StatusInternalServerError,
-	UserAlreadyExistsCode:       http.StatusFound,
-	RetryRegistrationCode:       http.StatusInternalServerError,
-	ActivationLinkExpiredCode:   http.StatusUnauthorized,
-	UserNotFoundCode:            http.StatusNotFound,
-	InvalidCredentialsCode:      http.StatusUnauthorized,
-	InvalidLoginChallengeCode:   http.StatusUnauthorized,
-	InvalidConsentChallengeCode: http.StatusUnauthorized,
-	UsernameUpdateErrorCode:     http.StatusInternalServerError,
-	NameUpdateErrorCode:         http.StatusInternalServerError,
-	UsernameAlreadyPresentCode:  http.StatusConflict,
-	ObjectNotFoundErrorCode:     http.StatusNotFound,
+	PayloadValidationErrorCode:     http.StatusBadRequest,
+	InternalServerErrorCode:        http.StatusInternalServerError,
+	IDPServiceFailureCode:          http.StatusInternalServerError,
+	UserAlreadyExistsCode:          http.StatusFound,
+	RetryRegistrationCode:          http.StatusInternalServerError,
+	ActivationLinkExpiredCode:      http.StatusUnauthorized,
+	UserNotFoundCode:               http.StatusNotFound,
+	InvalidCredentialsCode:         http.StatusUnauthorized,
+	InvalidLoginChallengeCode:      http.StatusUnauthorized,
+	InvalidConsentChallengeCode:    http.StatusUnauthorized,
+	UsernameUpdateErrorCode:        http.StatusInternalServerError,
+	NameUpdateErrorCode:            http.StatusInternalServerError,
+	UsernameAlreadyPresentCode:     http.StatusConflict,
+	ObjectNotFoundErrorCode:        http.StatusNotFound,
+	UnauthorisedRequestCode:        http.StatusUnauthorized,
+	UnableToResetPasswordErrorCode: http.StatusInternalServerError,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

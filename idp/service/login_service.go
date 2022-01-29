@@ -22,17 +22,21 @@ import (
 
 type LoginService interface {
 	LoginWithEmailAndPassword(request request.UserLoginRequest, ctx *gin.Context) (interface{}, *golaerror.Error)
-	ForgetPassword(ctx context.Context, forgetPasswordRequest request.ForgetPassword) error
+	ForgetPassword(ctx context.Context, forgetPasswordRequest request.ForgetPassword) *golaerror.Error
+	CanResetPassword(ctx context.Context, uniqueID string) (string, *golaerror.Error)
+	ResetPassword(ctx context.Context, encryptedPassword, uniqueUUID string) *golaerror.Error
 }
 
 type loginService struct {
 	userDetailsRepository repository.UserDetailsRepository
-	cryptoUtils           crypto.CryptoUtil
+	cryptoUtils           crypto.Util
 	authenticator         AuthenticatorService
 	loginHandler          login.OauthLoginHandler
+	uuid                  idputil.UUIDGenerator
 	emailUtil             email.Util
 	configData            *configuration.ConfigData
 	store                 redis_util.RedisStore
+	hashUtil              idputil.HashUtil
 }
 
 func (service loginService) LoginWithEmailAndPassword(request request.UserLoginRequest, ctx *gin.Context) (interface{}, *golaerror.Error) {
@@ -83,7 +87,7 @@ func (service loginService) LoginWithEmailAndPassword(request request.UserLoginR
 	return loginResponse, nil
 }
 
-func (service loginService) ForgetPassword(ctx context.Context, forgetPasswordRequest request.ForgetPassword) error {
+func (service loginService) ForgetPassword(ctx context.Context, forgetPasswordRequest request.ForgetPassword) *golaerror.Error {
 	logger := logging.GetLogger(ctx).WithField("class", "LoginService").WithField("method", "ForgetPassword")
 
 	userEmail := forgetPasswordRequest.Email
@@ -141,14 +145,108 @@ func (service loginService) ForgetPassword(ctx context.Context, forgetPasswordRe
 	return nil
 }
 
-func NewLoginService(detailsRepository repository.UserDetailsRepository, util crypto.CryptoUtil, authService AuthenticatorService, handler login.OauthLoginHandler, emailUtil email.Util, data *configuration.ConfigData, store redis_util.RedisStore) LoginService {
+func (service loginService) CanResetPassword(ctx context.Context, uniqueID string) (string, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "LoginService").WithField("method", "CanResetPassword")
+	var userEmail string
+	err := service.store.Get(ctx, uniqueID, &userEmail)
+	if err != nil {
+		logger.Errorf("unable to find key %v", err)
+		return "", &constants.UnauthorisedRequestError
+	}
+
+	isEmailAvailable, err := service.userDetailsRepository.IsEmailAvailable(userEmail, ctx)
+	if err != nil {
+		logger.Errorf("unable to find user email %v", err)
+		return "", &constants.UnauthorisedRequestError
+	}
+
+	maskedEmail := mask_util.MaskEmail(ctx, userEmail)
+	if !isEmailAvailable {
+		logger.Infof("User not found in gola for maskedEmail %v", maskedEmail)
+		return "", &constants.UnauthorisedRequestError
+	}
+
+	generatedUUID := service.uuid.Generate()
+	uniqueUUID := generatedUUID.String()
+	err = service.store.Set(ctx, uniqueUUID, &userEmail, 15)
+	if err != nil {
+		logger.Errorf("unable to set unique generated id %v", err)
+		return "", &constants.UnableToResetPasswordError
+	}
+
+	go func(routineCtx context.Context) {
+		err := service.store.Delete(routineCtx, uniqueID)
+		if err != nil {
+			logger.Errorf("unable to delete old identifier %v", err)
+		}
+	}(ctx)
+
+	return uniqueUUID, nil
+}
+
+func (service loginService) ResetPassword(ctx context.Context, encryptedPassword, uniqueUUID string) *golaerror.Error {
+	logger := logging.GetLogger(ctx).WithField("class", "LoginService").WithField("method", "CanResetPassword")
+	var userEmail string
+	err := service.store.Get(ctx, uniqueUUID, &userEmail)
+	if err != nil {
+		logger.Errorf("unable to find identifier %v", err)
+		return &constants.UnauthorisedRequestError
+	}
+	go func(verifier string) {
+		err := service.store.Delete(ctx, verifier)
+		if err != nil {
+			logger.Errorf("unable to delete verifier %v", err)
+		}
+	}(uniqueUUID)
+
+	isEmailAvailable, err := service.userDetailsRepository.IsEmailAvailable(userEmail, ctx)
+	if err != nil {
+		logger.Errorf("unable to find user email %v", err)
+		return &constants.UnauthorisedRequestError
+	}
+
+	maskedEmail := mask_util.MaskEmail(ctx, userEmail)
+	if !isEmailAvailable {
+		logger.Infof("User not found in gola for maskedEmail %v", maskedEmail)
+		return &constants.UnauthorisedRequestError
+	}
+
+	decryptedPassword, err := service.cryptoUtils.Decipher(ctx, encryptedPassword)
+
+	if err != nil {
+		logger.Errorf("Unable to encrypt password while registering user  %v .%v", userEmail, err)
+		return &constants.InternalServerError
+	}
+
+	logger.Infof("Successfully deciphered the password for user email %v", userEmail)
+	logger.Infof("User password deciphered for user email %v", userEmail)
+
+	passwordHash, err := service.hashUtil.GenerateBcryptHash(decryptedPassword)
+
+	if err != nil {
+		logger.Errorf("Unable to hash decrypted password %v", err)
+		return &constants.InternalServerError
+	}
+
+	err = service.userDetailsRepository.UpdatePassword(ctx, passwordHash, userEmail)
+	if err != nil {
+		logger.Errorf("unable to update password %v", err)
+		return &constants.UnableToResetPasswordError
+	}
+
+	return nil
+}
+
+func NewLoginService(detailsRepository repository.UserDetailsRepository, util crypto.Util, authService AuthenticatorService, handler login.OauthLoginHandler, emailUtil email.Util, data *configuration.ConfigData, store redis_util.RedisStore, generator idputil.UUIDGenerator, hashUtil idputil.HashUtil) LoginService {
 	return loginService{
 		userDetailsRepository: detailsRepository,
 		cryptoUtils:           util,
 		authenticator:         authService,
 		loginHandler:          handler,
+		uuid:                  generator,
 		emailUtil:             emailUtil,
 		configData:            data,
 		store:                 store,
+		hashUtil:              hashUtil,
 	}
 }

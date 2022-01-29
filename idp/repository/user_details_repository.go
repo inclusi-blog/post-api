@@ -29,6 +29,7 @@ type UserDetailsRepository interface {
 	UpdateLinkedInURL(ctx context.Context, linkedinURL string, id uuid.UUID) error
 	UpdateFacebookURL(ctx context.Context, facebookURL string, id uuid.UUID) error
 	UpdateProfileImage(ctx context.Context, imageKey string, id uuid.UUID) error
+	UpdatePassword(ctx context.Context, hashedPassword, email string) error
 }
 
 type userDetailsRepository struct {
@@ -50,6 +51,7 @@ const (
 	UpdateFacebook            = "insert into social_links(id, facebook, user_id)values (uuid_generate_v4(), $1, $2) on conflict (user_id) do update set facebook = $3"
 	UpdateImage               = "update users set avatar = $1 where id = $2"
 	UsernameCount             = "select count(*) as count from users where user = $1"
+	UpdatePassword            = "update users set password = $1 where email = $2"
 )
 
 func (repository userDetailsRepository) SaveUserDetails(details db.SaveUserDetails, context context.Context) error {
@@ -283,6 +285,18 @@ func (repository userDetailsRepository) GenerateUsername(ctx context.Context, em
 	}
 	num := utils.GenRandNum(100, 999)
 	return fmt.Sprintf("%s%d%d", emailSlug, num, counter+1), nil
+}
+
+func (repository userDetailsRepository) UpdatePassword(ctx context.Context, hashedPassword string, email string) error {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsRepository").WithField("method", "UpdatePassword")
+	_, err := repository.db.ExecContext(ctx, UpdatePassword, hashedPassword, email)
+	if err != nil {
+		maskEmail := mask_util.MaskEmail(ctx, email)
+		logger.Errorf("unable to update password for user %v .Error %v", maskEmail, err)
+		return err
+	}
+
+	return nil
 }
 
 func NewUserDetailsRepository(db *sqlx.DB) UserDetailsRepository {

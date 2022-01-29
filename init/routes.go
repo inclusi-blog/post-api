@@ -90,6 +90,8 @@ func RegisterRouter(router *gin.Engine, configData *configuration.ConfigData) {
 		loginGroup.POST("password", loginController.LoginByEmailAndPassword)
 		loginGroup.GET("accept", loginController.AcceptChallenge)
 		loginGroup.POST("reset-password", loginController.ForgetPassword)
+		loginGroup.GET("can-reset/:uniqueID", loginController.CanResetPassword)
+		loginGroup.POST("reset/:uniqueID", loginController.ResetPassword)
 	}
 
 	consentGroup := idpRoute.Group("consent")
