@@ -23,7 +23,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    needs: install_deps
+
     steps:
     - uses: actions/checkout@v2
 
@@ -36,7 +36,7 @@ jobs:
   publish:
 
     runs-on: ubuntu-latest
-    needs: build
+
     steps:
     - uses: actions/checkout@v2
 
