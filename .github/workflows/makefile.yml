@@ -39,6 +39,7 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
   dev_deploy:
+    needs: build-and-publish
     runs-on: ubuntu-latest
 
     steps:
