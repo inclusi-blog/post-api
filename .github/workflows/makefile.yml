@@ -49,6 +49,7 @@ jobs:
       with:
         image: gola05/gola-ansible:latest
         run: project=${{ secrets.PROJECT }} action=${{ secrets.ACTION }} inventory=${{ secrets.INVENTORY }} ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }} ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}
+        shell: bash
         registry: registry.hub.docker.com
         username: ${{ secrets.ARTIFACTORY_USER }}
         password: ${{ secrets.ARTIFACTORY_PASSWORD }}
