@@ -34,3 +34,7 @@ jobs:
 
     - name: Run publish
       run: make publish
+      env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
