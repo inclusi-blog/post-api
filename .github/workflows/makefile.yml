@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  install_deps:
+  build:
 
     runs-on: ubuntu-latest
 
@@ -20,26 +20,12 @@ jobs:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
       
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
     - name: Run build
       run: make build
       env:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-
-  publish:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
+      
     - name: Run dockerize
       run: make dockerize
       env:
@@ -51,3 +37,4 @@ jobs:
       env:
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
