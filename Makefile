@@ -141,3 +141,6 @@ uninstall_hooks: ## Dev: Uninstall pre-commit and pre-push hooks
 	rm ${WORK_DIR}/.git/hooks/pre-push;
 	if [ -f ${WORK_DIR}/.git/hooks/old-pre-commit ]; then mv ${WORK_DIR}/.git/hooks/old-pre-commit ${WORK_DIR}/.git/hooks/pre-commit; fi
 	if [ -f ${WORK_DIR}/.git/hooks/old-pre-push ]; then mv ${WORK_DIR}/.git/hooks/old-pre-push ${WORK_DIR}/.git/hooks/pre-push; fi
+
+deploy_dev: docker_login
+	docker run --rm --name deploy -d gola-ansible project=$(PROJECT) action=$(ACTION) inventory=$(INVENTORY) ssh_public_key=$(SSH_PUBLIC_KEY) ssh_private_key=$(SSH_PRIVATE_KEY)
