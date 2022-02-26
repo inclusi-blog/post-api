@@ -39,17 +39,19 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
   dev_deploy:
-
+    needs: build-and-publish
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Docker Run Action
-      uses: addnab/docker-run-action@v3
-      with:
-        image: gola05/gola-ansible:latest
-        run: project=${{ secrets.PROJECT }} action=${{ secrets.ACTION }} inventory=${{ secrets.INVENTORY }} ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }} ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}
-        shell: bash
-        registry: registry.hub.docker.com
-        username: ${{ secrets.ARTIFACTORY_USER }}
-        password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+    - name: Deploy to dev
+      run: make deploy_dev
+      env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ACTION: ${{ secrets.ACTION }}
+          INVENTORY: ${{ secrets.INVENTORY }}
+          PROJECT: ${{ secrets.PROJECT }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
