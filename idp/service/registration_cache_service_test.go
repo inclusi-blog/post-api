@@ -59,14 +59,12 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenSucces
 	registrationRequest := request.NewRegistrationRequest{
 		Email:    "dummy@email.com",
 		Password: "dummy-encrypted-password",
-		Username: "dummy user",
 	}
 
 	suite.mockUUIDGenerator.EXPECT().Generate().Return(userUUID).Times(1)
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
-		Username: registrationRequest.Username,
 		Id:       userUUID,
 	}
 
@@ -86,14 +84,12 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 	registrationRequest := request.NewRegistrationRequest{
 		Email:    "dummy@email.com",
 		Password: "dummy-encrypted-password",
-		Username: "dummy user",
 	}
 	userUUID := uuid.New()
 	suite.mockUUIDGenerator.EXPECT().Generate().Return(userUUID).Times(1)
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
-		Username: registrationRequest.Username,
 		Id:       userUUID,
 	}
 	suite.mockRedisStore.EXPECT().Set(suite.goContext, userUUID.String(), initiateRegistrationRequest, 120).Return(errors.New("something went wrong")).Times(1)
@@ -108,13 +104,11 @@ func (suite *RegistrationCacheServiceTest) TestGetUserDetailsFromCache_WhenSucce
 	expectedRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    "dummy@gmail.com",
 		Password: "encrypted-password",
-		Username: "selected-username",
 		Id:       userUUID,
 	}
 	suite.mockRedisStore.EXPECT().Get(suite.goContext, "some-hash", &initiateRegistration).Do(func(ctx context.Context, uuid string, destination *request.InitiateRegistrationRequest) {
 		destination.Email = "dummy@gmail.com"
 		destination.Password = "encrypted-password"
-		destination.Username = "selected-username"
 		destination.Id = userUUID
 	}).Return(nil).Times(1)
 	registrationRequest, err := suite.registrationCacheService.GetUserDetailsFromCache("some-hash", suite.goContext)
@@ -135,7 +129,6 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 	registrationRequest := request.NewRegistrationRequest{
 		Email:    "dummy@email.com",
 		Password: "dummy-encrypted-password",
-		Username: "dummy user",
 	}
 	userUUID, err := uuid.Parse("fe538ef9-6ea8-4915-9a07-be9bb14e094b")
 	suite.Nil(err)
@@ -143,7 +136,6 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 	initiateRegistrationRequest := request.InitiateRegistrationRequest{
 		Email:    registrationRequest.Email,
 		Password: registrationRequest.Password,
-		Username: registrationRequest.Username,
 		Id:       userUUID,
 	}
 
