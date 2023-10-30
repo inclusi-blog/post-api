@@ -11,7 +11,7 @@ spec:
   template:
     spec:
       imagePullSecrets:
-        - name: {{ .Values.custom.dockerRegSecret }}
+        - name: {{ .Values.imagePullSecrets.name }}
       containers:
         - name: {{ include "common.names.fullname" . }}-rbac
           image: gola05/story-migrate:latest
