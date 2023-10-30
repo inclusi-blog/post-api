@@ -10,7 +10,7 @@ image:
   pullPolicy: Always
 
 imagePullSecrets:
-  - name: artifactory-registry
+  name: artifactory-registry
 
 service:
   port: 8080
