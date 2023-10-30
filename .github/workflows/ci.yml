@@ -109,7 +109,7 @@ jobs:
           tags: gola05/post-api:latest
 
   docker-migrate:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 #     if: github.ref == 'refs/heads/dev'
     steps:
       - name: Set up QEMU
