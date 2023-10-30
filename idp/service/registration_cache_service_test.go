@@ -37,7 +37,7 @@ func (suite *RegistrationCacheServiceTest) SetupTest() {
 	suite.configData = &configuration.ConfigData{
 		Email: configuration.Email{
 			GatewayURL:    "http://localhost:8083/api/ccg/v1/email/send",
-			DefaultSender: "noreply@gola.xyz",
+			DefaultSender: "noreply@narratenet.com",
 			TemplatePaths: configuration.TemplatesPaths{
 				NewUserActivation: "../assets/email_templates/new_user_activation.html",
 			},
@@ -69,7 +69,7 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenSucces
 	}
 
 	details := models.EmailDetails{
-		From:    "noreply@gola.xyz",
+		From:    "noreply@narratenet.com",
 		To:      []string{"dummy@email.com"},
 		Subject: constants.VerifyEmail,
 		Content: constants.NewUserActivation,
@@ -140,7 +140,7 @@ func (suite *RegistrationCacheServiceTest) TestSaveUserDetailsInCache_WhenUnable
 	}
 
 	details := models.EmailDetails{
-		From:    "noreply@gola.xyz",
+		From:    "noreply@narratenet.com",
 		To:      []string{"dummy@email.com"},
 		Subject: constants.VerifyEmail,
 		Content: constants.NewUserActivation,

@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "gola-api.name" . }}
+  annotations:
+    "helm.sh/hook-weight": "100"
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.custom.dockerRegSecret }}
+      containers:
+        - name: {{ include "common.names.fullname" . }}-rbac
+          image: gola05/story-migrate:latest
+          env:
+            - name: ENV
+              value: {{ .Values.global.env }}
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gola-api.name" .}}-secret
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "gola-api.name" .}}-secret
+                  key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: DB_PORT
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: DB_HOST
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: AWS_DEFAULT_REGION
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secret }}
+                  key: DB_AWS_SECRET_KEY
+          command: [ "/home/gola/migrate.sh" ]
+      restartPolicy: Never

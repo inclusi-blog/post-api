@@ -1,0 +1,182 @@
+name: post-api
+on: [push]
+permissions:
+  contents: read
+jobs:
+  golang-ci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
+      - name: Granting private modules access
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          CI_SERVER_HOST: github.com
+          GONOPROXY: github.com/inclusi-blog
+          GOPRIVATE: github.com/inclusi-blog
+        run: git config --global url."https://root:${GITHUB_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com"
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.52.0
+  semgrep:
+    name: semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - uses: actions/checkout@v3
+      - run: semgrep --config=auto .
+  unit-test:
+    name: unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      - name: Granting private modules access
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          CI_SERVER_HOST: github.com
+          GONOPROXY: github.com/inclusi-blog
+          GOPRIVATE: github.com/inclusi-blog
+        run: git config --global url."https://root:${GITHUB_ACCESS_TOKEN}@github.com/".insteadOf "https://github.com"
+      - name: Run test
+        env:
+          TEST_COVERAGE: ${{ vars.TEST_COVERAGE }}
+        run: |
+          sudo apt update && sudo apt-get install bc
+          go test -p=1 -count=1 -cover  ./... -coverprofile=/tmp/coverage.out -v
+          test_coverage=$(go tool cover -func=/tmp/coverage.out | tail -1 |awk '{print $3}'| tr -d '%') # gives pure coverage value
+          echo "Code coverage is ${test_coverage}"
+          if [[ 1 -eq $(echo ${TEST_COVERAGE}'<'$test_coverage  | bc -l) ]];
+          then echo "Pass tests and coverage is over ${TEST_COVERAGE}%";
+          else echo "Pass tests but coverage is under ${TEST_COVERAGE}%"; exit 1;
+          fi
+          echo "Download coverage.out and execute `go tool cover -html=coverage.out`"
+  go-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      - name: build
+        env:
+          CI_COMMIT_SHA: ${{ github.sha }}
+          CI_COMMIT_TAG: ${{ github.ref }}
+          EXEC_NAME: post-api
+          GITHUB_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: make build
+      - name: Step 3 - Use the Upload Artifact GitHub Action
+        uses: actions/upload-artifact@v3
+        with:
+          name: executable
+          path: bin
+  docker:
+    needs: [go-build, semgrep, unit-test]
+    runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      - name: Download a single artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: executable
+      - name: move executable to bin folder
+        run: mkdir bin && mv post-api ./bin/post-api
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: infrastructure/Dockerfile
+          push: true
+          tags: gola05/post-api:latest
+
+  docker-migrate:
+    runs-on: self-hosted
+#     if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: infrastructure/Migrate.Dockerfile
+          push: true
+          tags: gola05/story-migrate:latest
+
+  dev-deploy:
+    needs: [docker]
+    environment: dev
+    runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Kubernetes environment
+        run: |
+          sudo curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+          sudo apt-get install apt-transport-https --yes
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+          sudo apt-get update
+          sudo apt-get install helm
+          sudo apt-get update
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          kubectl version --client
+      - name: Run helm commands
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+          CI_PROJECT_DIR: ${{ github.repository }}
+          RELEASE_NAME: post-api
+          NAMESPACE: microservices
+          CHART_NAME: post-api
+          ENV: dev
+          DB_NAME: ${{ secrets.DEV_DB_USER }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+        run: |
+          sudo mkdir ~/.kube
+          sudo chown -R runner:runner /home/runner/.kube
+          sudo chmod -R 777 /home/runner/.kube
+          echo "${KUBE_CONFIG}" > ~/.kube/config
+          helm list
+          kubectl get node # Verify that kubernetes cluster is connected
+          cd helm/${CHART_NAME}/
+          helm package .
+          helm lint .
+          sudo apt-get install gettext -y
+          envsubst < values.yaml > ci-values.yaml
+          cat ci-values.yaml
+          export VERSION="$(grep 'version:' Chart.yaml | awk '{ print $2}')"
+          helm upgrade -f ci-values.yaml --install ${RELEASE_NAME} ${CHART_NAME}-${VERSION}.tgz --namespace=${NAMESPACE} --timeout 10m30s
+          kubectl delete pods --selector=app=${CHART_NAME} -n ${NAMESPACE} # Restart pods to make sure new version is deployed

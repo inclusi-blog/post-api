@@ -2,18 +2,20 @@ version: '3.7'
 services:
 
   build-env:
-    image: gola05/golang_alpine:latest
+    image: golang:1.18.8-alpine3.16
     environment:
       - GO111MODULE=on
       - GOSUMDB=off
-      - GOPRIVATE=github.com/gola-glitch
+      - GOPRIVATE=github.com/inclusi-blog
+    platform: linux/amd64
     volumes:
       - type: volume
         source: post_dep
         target: /go
       - type: bind
         source: ../
-        target: /home/gola/post-api
-    working_dir: /home/gola/post-api
+        target: /post-api
+    working_dir: /post-api
+
 volumes:
   post_dep:

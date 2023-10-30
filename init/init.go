@@ -8,11 +8,11 @@ import (
 
 func CreateRouter(data *configuration.ConfigData) *gin.Engine {
 	router := gin.Default()
+	aws := utils.ConnectAws()
 	Validators()
 	Swagger()
-	db := Db(data)
 	HttpClient(data)
-	aws := utils.ConnectAws(data)
+	db := Db(data, aws)
 	Objects(db, data, aws)
 	RegisterRouter(router, data)
 	return router

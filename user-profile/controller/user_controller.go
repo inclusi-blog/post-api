@@ -143,7 +143,7 @@ func (controller UserProfileController) GetPublishedPosts(ctx *gin.Context) {
 	var postRequest request.GetPublishedPostRequest
 	err = ctx.ShouldBindBodyWith(&postRequest, binding.JSON)
 	if err != nil {
-		logger.Errorf("Unable to bind all draft request for user %v. Error %v", err)
+		logger.Errorf("Unable to bind all draft request for user. Error %v", err)
 		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
 		return
 	}

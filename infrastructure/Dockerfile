@@ -1,8 +1,10 @@
-FROM gola05/golang_alpine:latest
+FROM golang:1.18.8-alpine3.16
 
-COPY ./idp/assets/ /home/gola/assets/
-COPY ./bin/post-api /home/gola/post-api
+COPY ./idp/assets/ /assets
+COPY ./bin/post-api /post-api
 
-WORKDIR /home/gola
+WORKDIR /
 
-CMD ["/home/gola/post-api"]
+RUN chmod +x post-api
+
+CMD ["/post-api"]

@@ -1,7 +1,7 @@
 {
   "tracing_service_name": "POST-API",
-  "environment": "local",
-  "tracing_oc_agent_host": "localhost:55678",
+  "ENVIRONMENT": "dev",
+  "tracing_oc_agent_host": "oc-collector:55678",
   "dbConnectionPool": {
     "maxOpenConnections": 0,
     "maxIdleConnections": 0,
@@ -18,7 +18,7 @@
     "https://api.narratenet.com"
   ],
   "redis": {
-    "host": "story-api-cache",
+    "host": "redis-master",
     "port": "6379",
     "db": 0,
     "readTimeoutInSeconds": 30,
@@ -30,8 +30,7 @@
     "gateway_url": "http://ccg-api:8083/api/ccg/v1/email/send",
     "default_sender": "noreply@narratenet.com",
     "template_paths": {
-      "new_user_activation": "assets/email_templates/new_user_activation.html",
-      "forget_password": "assets/email_templates/forget_password.html"
+      "new_user_activation": "assets/email_templates/new_user_activation.html"
     }
   },
   "oauth": {
@@ -46,7 +45,9 @@
   "request_time_out": 60,
   "allow_insecure_cookies": true,
   "activationCallback": "http://localhost:3000/m/callback/email",
-  "password_reset_callback": "http://localhost:3000/m/callback/reset/",
   "token_validation_ignore_urls": [],
+  "aws_access_key_id": "",
+  "aws_secret_access_key": "",
+  "aws_region": "",
   "aws_bucket": ""
 }

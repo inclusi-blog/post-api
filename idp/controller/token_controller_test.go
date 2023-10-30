@@ -22,10 +22,10 @@ var userId = "userId"
 
 type TokenControllerTestSuite struct {
 	suite.Suite
-	mockCtrl                 *gomock.Controller
-	recorder                 *httptest.ResponseRecorder
-	context                  *gin.Context
-	oauthService             *mocks.MockOauthLoginHandler
+	mockCtrl     *gomock.Controller
+	recorder     *httptest.ResponseRecorder
+	context      *gin.Context
+	oauthService *mocks.MockOauthLoginHandler
 }
 
 func TestTokenControllerTestSuite(t *testing.T) {

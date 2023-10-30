@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "gola-api.name" . }}-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Content-Type-Options nosniff;
+      add_header "X-XSS-Protection" "1;mode=block";
+      if ($http_origin ~* (^https?://([^/]+\.)*({{ .Values.ingress.allowedOrigins }}))) {
+        add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+        add_header "Access-Control-Allow-Headers" "content-type, content-length, accept-encoding, x-csrf-token, authorization, accept, origin, cache-control, x-requested-with, access-control-allow-credentials, session-tracing-id, x-b3-spanid, x-b3-traceid, x-b3-sampled, tracing-api-key, enc-id-token, x-mfa-authorize-token, businessaccountfilter, businessdepositfilter, source, primaryaccounts, intent, x-mfa-action-id, inward-currency, if-none-match, content-disposition, more-transactions, x-mfa-transaction-id, x-mfa-transaction-type, x-mfa-otp, x-mfa-otp-ref-id" always;
+        add_header "Access-Control-Allow-Credentials" "true" always;
+        add_header "Access-Control-Allow-Methods" "POST, OPTIONS, GET, PUT, DELETE" always;
+      }
+      if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS, GET, PUT, DELETE' always;
+        add_header 'Access-Control-Allow-Headers' 'content-type, content-length, accept-encoding, x-csrf-token, authorization, accept, origin, cache-control, x-requested-with, access-control-allow-credentials, session-tracing-id, x-b3-spanid, x-b3-traceid, x-b3-sampled, tracing-api-key, enc-id-token, x-mfa-authorize-token, businessaccountfilter, businessdepositfilter, source, primaryaccounts, intent, x-mfa-action-id, inward-currency, if-none-match, content-disposition, more-transactions, x-mfa-transaction-id, x-mfa-transaction-type, x-mfa-otp, x-mfa-otp-ref-id' always;
+        add_header 'Access-Control-Max-Age' 600;
+        return 204;
+      }
+spec:
+  rules:
+      {{- $values := .Values }}
+      {{- $apiName := include "gola-api.name" . }}
+      {{- range .Values.ingress.appFqdns }}
+      - host: {{ . | quote }}
+        http:
+          paths:
+            - path: {{ $values.ingress.path }}
+              pathType: Prefix
+              backend:
+                service:
+                  name: {{ $apiName }}-svc
+                  port:
+                    number: {{ $values.service.port }}
+      {{- end }}
+  tls:
+    - hosts:
+        {{- range .Values.ingress.appFqdns }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: narratenet-tls

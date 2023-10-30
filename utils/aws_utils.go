@@ -4,19 +4,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"post-api/configuration"
+	"os"
 )
 
-func ConnectAws(config *configuration.ConfigData) *session.Session {
-	AccessKeyID := config.AwsAccessKeyID
-	SecretAccessKey := config.AwsSecretAccessKeyID
-	MyRegion := config.AwsRegion
+func ConnectAws() *session.Session {
+	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	MyRegion := os.Getenv("AWS_DEFAULT_REGION")
 	sess, err := session.NewSession(
 		&aws.Config{
 			Region: aws.String(MyRegion),
 			Credentials: credentials.NewStaticCredentials(
-				AccessKeyID,
-				SecretAccessKey,
+				accessKeyID,
+				secretAccessKey,
 				"", // a token will be created when the session it's used.
 			),
 		})
