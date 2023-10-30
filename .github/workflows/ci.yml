@@ -77,7 +77,7 @@ jobs:
           name: executable
           path: bin
   docker:
-    needs: [go-build, semgrep, unit-test]
+    needs: [go-build, semgrep]
     runs-on: ubuntu-latest
 #     if: github.ref == 'refs/heads/dev'
     steps:
