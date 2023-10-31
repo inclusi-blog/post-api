@@ -176,7 +176,6 @@ jobs:
           helm lint .
           sudo apt-get install gettext -y
           envsubst < values.yaml > ci-values.yaml
-          cat ci-values.yaml
           export VERSION="$(grep 'version:' Chart.yaml | awk '{ print $2}')"
           helm upgrade -f ci-values.yaml --install ${RELEASE_NAME} ${CHART_NAME}-${VERSION}.tgz --namespace=${NAMESPACE} --timeout 10m30s
           kubectl delete pods --selector=app=${CHART_NAME} -n ${NAMESPACE} # Restart pods to make sure new version is deployed
