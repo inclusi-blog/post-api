@@ -61,4 +61,5 @@ database:
 
 global:
   Pipeline: "$ENV"
+  secret: "global-secret"
 
