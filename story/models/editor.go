@@ -70,3 +70,15 @@ type HeaderElement struct {
 	Text  string `json:"text"`
 	Level int    `json:"level"`
 }
+
+func (e *Editor) WithImageElement(element ImageElement) {
+	e.Blocks = append(e.Blocks, Block{Type: Image})
+}
+
+func (e *Editor) WithParagraphElement(element Block) {
+	e.Blocks = append(e.Blocks, Block{Type: Paragraph})
+}
+
+func (e *Editor) WithListElement(element Block) {
+	e.Blocks = append(e.Blocks, Block{Type: List})
+}
