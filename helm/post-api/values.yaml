@@ -42,7 +42,8 @@ annotations:
 configMountPath: "/configuration/config.json"
 
 ingress:
-    path: "/api/post"
+    postPath: "/api/post"
+    idpPath: "/api/idp"
     appFqdns:
       - "api.narratenet.com"
     allowedOrigins: app.narratenet.com|www.narratenet.com|narratenet.com|localhost:3000|localhost3001

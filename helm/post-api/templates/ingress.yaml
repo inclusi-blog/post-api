@@ -29,7 +29,14 @@ spec:
       - host: {{ . | quote }}
         http:
           paths:
-            - path: {{ $values.ingress.path }}
+            - path: {{ $values.ingress.postPath }}
+              pathType: Prefix
+              backend:
+                service:
+                  name: {{ $apiName }}-svc
+                  port:
+                    number: {{ $values.service.port }}
+            - path: {{ $values.ingress.idpPath }}
               pathType: Prefix
               backend:
                 service:
