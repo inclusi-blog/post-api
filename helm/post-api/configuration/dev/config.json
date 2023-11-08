@@ -11,7 +11,7 @@
     "poem": 60
   },
   "minimum_post_read_time": 180,
-  "oauth_url": "http://localhost:4445",
+  "oauth_url": "http://hydra-admin:4445",
   "allowed_origins": [
     "https://app.narratenet.com",
     "http://localhost:3000",
@@ -27,24 +27,24 @@
     "mode": "standalone"
   },
   "email": {
-    "gateway_url": "http://ccg-api:8083/api/ccg/v1/email/send",
+    "gateway_url": "http://ccg-api:8080/api/ccg/v1/email/send",
     "default_sender": "noreply@narratenet.com",
     "template_paths": {
       "new_user_activation": "assets/email_templates/new_user_activation.html"
     }
   },
   "oauth": {
-    "adminBaseUrl": "http://localhost:4445/",
-    "public_url": "http://localhost:4444/",
+    "adminBaseUrl": "http://hydra-admin:4445/",
+    "public_url": "http://hydra-public:4444/",
     "accept_login_request_url": "oauth2/auth/requests/login/accept",
     "get_consent_request_url": "oauth2/auth/requests/consent",
     "accept_consent_request_url": "oauth2/auth/requests/consent/accept",
     "get_token_url": "oauth2/token"
   },
-  "crypto_service_url": "http://crypto-service-svc:8082",
+  "crypto_service_url": "http://crypto-service-svc:8080",
   "request_time_out": 60,
   "allow_insecure_cookies": true,
-  "activationCallback": "http://localhost:3000/m/callback/email",
+  "activationCallback": "https://www.narratenet.com/m/callback/email",
   "token_validation_ignore_urls": [],
   "aws_access_key_id": "",
   "aws_secret_access_key": "",
