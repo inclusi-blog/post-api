@@ -6,8 +6,8 @@ package mocks
 
 import (
 	gin "github.com/gin-gonic/gin"
-	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
+	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	request "post-api/idp/models/request"
 	reflect "reflect"
 )

@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
+	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 )
 
 // MockPostService is a mock of PostService interface.

@@ -9,8 +9,8 @@ import (
 	db "post-api/story/models/db"
 	reflect "reflect"
 
-	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
+	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 )
 
 // MockInterestsService is a mock of InterestsService interface.
