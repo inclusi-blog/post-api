@@ -48,5 +48,6 @@
   "activationCallback": "http://localhost:3000/m/callback/email",
   "password_reset_callback": "http://localhost:3000/m/callback/reset/",
   "token_validation_ignore_urls": [],
-  "aws_bucket": ""
+  "aws_bucket": "",
+  "redis_password_key": "DEV_REDIS_DB_PASSWORD"
 }

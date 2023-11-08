@@ -2,13 +2,17 @@ package init
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/inclusi-blog/gola-utils/alert/email"
 	"github.com/inclusi-blog/gola-utils/crypto"
 	"github.com/inclusi-blog/gola-utils/logging"
 	oauth2 "github.com/inclusi-blog/gola-utils/oauth"
 	"github.com/inclusi-blog/gola-utils/redis_util"
 	"github.com/jmoiron/sqlx"
+	"log"
 	"post-api/configuration"
 	"post-api/helper"
 	idpController "post-api/idp/controller"
@@ -24,6 +28,7 @@ import (
 	userProfileController "post-api/user-profile/controller"
 	userProfileRepository "post-api/user-profile/repository"
 	userProfileService "post-api/user-profile/service"
+	"strings"
 )
 
 var (
@@ -41,6 +46,11 @@ var (
 
 func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Session) {
 	logger := logging.GetLogger(context.TODO())
+	redisPassword, err := getRedisPassword(aws, configData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	configData.RedisStoreConfig.Password = redisPassword
 	redisClient, redisError := redis_util.NewRedisClientWith(configData.RedisStoreConfig)
 	if redisError != nil {
 		logger.Errorf("Error occurred while initializing redis cache %v", redisError)
@@ -90,4 +100,24 @@ func Objects(db *sqlx.DB, configData *configuration.ConfigData, aws *session.Ses
 	reportRepository := repository.NewReportRepository(db)
 	reportService := service.NewReportService(reportRepository)
 	reportController = storyController.NewReportController(reportService)
+}
+
+func getRedisPassword(awsSession *session.Session, config *configuration.ConfigData) (string, error) {
+	manager := secretsmanager.New(awsSession, nil)
+	value, err := manager.GetSecretValue(&secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(strings.ToLower(config.Environment + "/redis/password")),
+	})
+	if err != nil {
+		log.Println("unable to get db password from aws secrets ", err)
+		return "", err
+	}
+	secretString := []byte(*value.SecretString)
+	var data map[string]string
+	err = json.Unmarshal(secretString, &data)
+	if err != nil {
+		log.Println("unable to unmarshal db password from aws secrets ", err)
+		return "", err
+	}
+
+	return data[config.RedisPasswordKey], nil
 }

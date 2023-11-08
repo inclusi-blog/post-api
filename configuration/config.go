@@ -28,6 +28,7 @@ type ConfigData struct {
 	AwsSecretAccessKeyID      string                       `json:"aws_secret_access_key" binding:"required"`
 	AwsRegion                 string                       `json:"aws_region" binding:"required"`
 	AwsBucket                 string                       `json:"aws_bucket" binding:"required"`
+	RedisPasswordKey          string                       `json:"redis_password_key" binding:"required"`
 }
 
 type Email struct {
