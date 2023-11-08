@@ -41,7 +41,7 @@
     "accept_consent_request_url": "oauth2/auth/requests/consent/accept",
     "get_token_url": "oauth2/token"
   },
-  "crypto_service_url": "http://crypto-svc:8082",
+  "crypto_service_url": "http://crypto-service-svc:8082",
   "request_time_out": 60,
   "allow_insecure_cookies": true,
   "activationCallback": "http://localhost:3000/m/callback/email",
