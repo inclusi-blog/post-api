@@ -19,7 +19,7 @@
   ],
   "redis": {
     "host": "redis.gola-redis.svc.cluster.local",
-    "port": "26379",
+    "port": "6379",
     "db": 0,
     "readTimeoutInSeconds": 30,
     "writeTimeoutInSeconds": 30,
