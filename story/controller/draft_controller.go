@@ -15,7 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 )
 
 type DraftController struct {

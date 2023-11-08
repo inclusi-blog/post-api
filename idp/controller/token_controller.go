@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	utils "github.com/gola-glitch/gola-utils/logging"
+	utils "github.com/inclusi-blog/gola-utils/logging"
 	"net/http"
 	"post-api/idp/constants"
 	"post-api/idp/handlers/login"

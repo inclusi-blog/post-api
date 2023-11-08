@@ -13,7 +13,7 @@ import (
 	"post-api/story/models/response"
 	"strings"
 
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -3,8 +3,8 @@ package repository
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"github.com/jmoiron/sqlx"
 	storyModels "post-api/story/models"
 	"post-api/user-profile/models"

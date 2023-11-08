@@ -3,8 +3,8 @@ package helper
 import (
 	"context"
 	"fmt"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -81,7 +81,7 @@ func (dbHelper DbHelper) GetInterestsIDs(interestNames []string) ([]uuid.UUID, e
 		err = rows.Scan(&id)
 		interestsIDs = append(interestsIDs, id)
 	}
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	return interestsIDs, nil

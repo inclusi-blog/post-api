@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
 )
 
 type PostService interface {

@@ -9,7 +9,7 @@ import (
 	"post-api/story/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 )
 
 type PostController struct {
@@ -419,7 +419,7 @@ func (controller PostController) GetPostsByInterests(ctx *gin.Context) {
 		return
 	}
 	logger.Infof("Request body bind successful with get draft request for user %v", userUUID)
-	interestRequest.InterestUID, _  = uuid.Parse(interestURIRequest.InterestUID)
+	interestRequest.InterestUID, _ = uuid.Parse(interestURIRequest.InterestUID)
 
 	posts, fetchErr := controller.postService.FetchPostsByInterests(ctx, interestRequest, userUUID)
 	if fetchErr != nil {

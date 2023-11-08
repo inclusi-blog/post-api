@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/gola-glitch/gola-utils/alert/email"
-	"github.com/gola-glitch/gola-utils/alert/email/models"
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/redis_util"
+	"github.com/inclusi-blog/gola-utils/alert/email"
+	"github.com/inclusi-blog/gola-utils/alert/email/models"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/redis_util"
 	"post-api/configuration"
 	"post-api/idp/constants"
 	"post-api/idp/models/request"

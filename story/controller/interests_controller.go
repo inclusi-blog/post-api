@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"net/http"
 	"post-api/story/constants"
 	"post-api/story/models/request"

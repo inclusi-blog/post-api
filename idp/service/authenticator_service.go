@@ -3,9 +3,9 @@ package service
 // mockgen -source=service/authenticator_service.go -destination=mocks/mock_authenticator_service.go -package=mocks
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/mask_util"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/mask_util"
 	"post-api/idp/constants"
 	"post-api/idp/repository"
 	util "post-api/idp/utils"

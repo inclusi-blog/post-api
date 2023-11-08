@@ -3,7 +3,7 @@ package util
 import (
 	"bytes"
 	"context"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"html/template"
 )
 

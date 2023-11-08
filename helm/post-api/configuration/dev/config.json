@@ -18,7 +18,7 @@
     "https://api.narratenet.com"
   ],
   "redis": {
-    "host": "redis-master",
+    "host": "redis.gola-redis.svc.cluster.local",
     "port": "6379",
     "db": 0,
     "readTimeoutInSeconds": 30,

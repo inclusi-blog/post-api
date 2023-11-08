@@ -2,9 +2,9 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"post-api/service"
 	storyModels "post-api/story/models"
 	"post-api/user-profile/constants"

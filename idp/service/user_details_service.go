@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"post-api/idp/constants"
 	"post-api/idp/models/request"
 	"post-api/idp/repository"

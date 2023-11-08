@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"io/ioutil"
 	"net/http"
 	"post-api/idp/constants"

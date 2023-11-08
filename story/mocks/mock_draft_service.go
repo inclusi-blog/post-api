@@ -11,7 +11,7 @@ import (
 	request "post-api/story/models/request"
 	reflect "reflect"
 
-	golaerror "github.com/gola-glitch/gola-utils/golaerror"
+	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )

@@ -3,8 +3,8 @@ package init
 import (
 	"context"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/tracing"
+	"github.com/inclusi-blog/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/tracing"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"post-api/configuration"
@@ -23,7 +23,7 @@ func Db(configData *configuration.ConfigData, awsSession *session.Session) *sqlx
 	}
 	db, err := tracing.InitPostgresDBWithInstrumentationAndConnectionConfig("postgres", connectionString, configData.GetDBConnectionPoolConfig())
 	if err != nil {
-		logger.Panic("Could not connect to POST DB", err)
+		//logger.Panic("Could not connect to POST DB", err)
 	}
 
 	return db

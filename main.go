@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/tracing"
+	"github.com/inclusi-blog/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/tracing"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"

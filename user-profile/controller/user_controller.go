@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"net/http"
 	commonService "post-api/service"
 	"post-api/story/models/request"

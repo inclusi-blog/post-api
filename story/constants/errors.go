@@ -2,7 +2,7 @@ package constants
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/golaerror"
 	"net/http"
 )
 
@@ -39,7 +39,7 @@ var (
 	UnableToFetchObjectError       = golaerror.Error{ErrorCode: UnableToFetchObjectErrorCode, ErrorMessage: "unable to fetch object"}
 	PostNotFoundErr                = golaerror.Error{ErrorCode: PostNotFoundCode, ErrorMessage: "no post found for the given post uid"}
 	ObjectNotFoundError            = golaerror.Error{ErrorCode: ObjectNotFoundErrorCode, ErrorMessage: "image object not found"}
-	UnableToUpdatePreviewError      = golaerror.Error{ErrorCode: UnableToUpdatePreviewImageCode, ErrorMessage: "unable to upload avatar"}
+	UnableToUpdatePreviewError     = golaerror.Error{ErrorCode: UnableToUpdatePreviewImageCode, ErrorMessage: "unable to upload avatar"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{

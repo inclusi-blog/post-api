@@ -1,8 +1,8 @@
 package configuration
 
 import (
-	"github.com/gola-glitch/gola-utils/model"
-	"github.com/gola-glitch/gola-utils/redis_util"
+	"github.com/inclusi-blog/gola-utils/model"
+	"github.com/inclusi-blog/gola-utils/redis_util"
 )
 
 type ConfigData struct {

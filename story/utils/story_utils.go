@@ -2,7 +2,7 @@ package utils
 
 import (
 	"context"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"github.com/mitchellh/mapstructure"
 	"post-api/story/models"
 	"regexp"

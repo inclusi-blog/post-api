@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/gola-glitch/gola-utils/golaerror"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/golaerror"
 	"post-api/story/models"
 	"strings"
 	"time"

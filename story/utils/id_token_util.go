@@ -3,8 +3,8 @@ package utils
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	golaConstants "github.com/gola-glitch/gola-utils/middleware/introspection/oauth-middleware/constants"
-	"github.com/gola-glitch/gola-utils/model"
+	golaConstants "github.com/inclusi-blog/gola-utils/middleware/introspection/oauth-middleware/constants"
+	"github.com/inclusi-blog/gola-utils/model"
 )
 
 func GetIDToken(ctx *gin.Context) (model.IdToken, error) {

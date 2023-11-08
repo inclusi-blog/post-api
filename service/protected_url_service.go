@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/gola-glitch/gola-utils/middleware/introspection/oauth-middleware/service"
+	"github.com/inclusi-blog/gola-utils/middleware/introspection/oauth-middleware/service"
 	"post-api/configuration"
 	"strings"
 )

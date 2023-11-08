@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/gola-glitch/gola-utils/logging"
-	"github.com/gola-glitch/gola-utils/mask_util"
+	"github.com/inclusi-blog/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/mask_util"
 	"net/http"
 	"post-api/idp/constants"
 	"post-api/idp/handlers/login"

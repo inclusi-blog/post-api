@@ -1,7 +1,7 @@
 #post-api (story-api): Repository for gola microservice
 
 ## Download source
-    git clone git@github.com:gola-glitch/post-api.git
+    git clone git@github.com:inclusi-blog/post-api.git
     
 ## Scripts
 ### Prerequisites

@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	mocksUtil "github.com/gola-glitch/gola-utils/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	mocksUtil "github.com/inclusi-blog/gola-utils/mocks"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"net/http/httptest"

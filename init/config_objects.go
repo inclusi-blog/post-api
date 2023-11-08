@@ -1,7 +1,7 @@
 package init
 
 import (
-	"github.com/gola-glitch/gola-utils/configuration_loader"
+	"github.com/inclusi-blog/gola-utils/configuration_loader"
 	"post-api/configuration"
 	"post-api/constants"
 )

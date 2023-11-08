@@ -4,8 +4,8 @@ package repository
 
 import (
 	"context"
-	"github.com/gola-glitch/gola-utils/logging"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/logging"
 	"github.com/jmoiron/sqlx"
 	"post-api/story/models/db"
 	"post-api/story/models/response"

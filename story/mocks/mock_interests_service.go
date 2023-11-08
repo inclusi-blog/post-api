@@ -9,7 +9,7 @@ import (
 	db "post-api/story/models/db"
 	reflect "reflect"
 
-	golaerror "github.com/gola-glitch/gola-utils/golaerror"
+	golaerror "github.com/inclusi-blog/gola-utils/golaerror"
 	gomock "github.com/golang/mock/gomock"
 )
 

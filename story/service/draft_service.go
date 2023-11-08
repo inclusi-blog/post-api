@@ -5,8 +5,8 @@ package service
 import (
 	"context"
 	"database/sql"
-	"github.com/gola-glitch/gola-utils/model"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/model"
 	"post-api/service"
 	"post-api/story/constants"
 	"post-api/story/models"
@@ -17,8 +17,8 @@ import (
 	"post-api/story/utils"
 	"time"
 
-	"github.com/gola-glitch/gola-utils/golaerror"
-	"github.com/gola-glitch/gola-utils/logging"
+	"github.com/inclusi-blog/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/logging"
 )
 
 type DraftService interface {
@@ -298,7 +298,7 @@ func mapDraftToPreviewMetaData(draftDB db.Draft, metaData models.MetaData, draft
 
 	previewDraft.Tagline = *draftDB.Tagline
 	previewDraft.PreviewImage = *draftDB.PreviewImage
-	if draftDB.Tagline == nil  {
+	if draftDB.Tagline == nil {
 		previewDraft.Tagline = metaData.Tagline
 	}
 	if draftDB.PreviewImage == nil {

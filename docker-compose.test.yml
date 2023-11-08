@@ -19,7 +19,7 @@ services:
     environment:
       - GO111MODULE=on
       - GOSUMDB=off
-      - GOPRIVATE=github.com/gola-glitch
+      - GOPRIVATE=github.com/inclusi-blog
     volumes:
       - type: volume
         source: post_dep

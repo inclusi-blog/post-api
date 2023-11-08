@@ -1,7 +1,7 @@
 package init
 
 import (
-	"github.com/gola-glitch/gola-utils/http/request"
+	"github.com/inclusi-blog/gola-utils/http/request"
 	"go.opencensus.io/plugin/ochttp"
 	"net/http"
 	"post-api/configuration"

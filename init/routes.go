@@ -2,9 +2,9 @@ package init
 
 import (
 	"context"
-	cacheMiddleware "github.com/gola-glitch/gola-utils/middleware/cache_control"
-	tokenMiddleware "github.com/gola-glitch/gola-utils/middleware/introspection"
-	"github.com/gola-glitch/gola-utils/oauth"
+	cacheMiddleware "github.com/inclusi-blog/gola-utils/middleware/cache_control"
+	tokenMiddleware "github.com/inclusi-blog/gola-utils/middleware/introspection"
+	"github.com/inclusi-blog/gola-utils/oauth"
 	"net/http"
 	"post-api/configuration"
 	"post-api/idp/middlewares"
@@ -13,11 +13,11 @@ import (
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/logging"
-	cors "github.com/gola-glitch/gola-utils/middleware/cors"
-	"github.com/gola-glitch/gola-utils/middleware/request_response_trace"
-	middleware "github.com/gola-glitch/gola-utils/middleware/session_trace"
-	corsModel "github.com/gola-glitch/gola-utils/model"
+	"github.com/inclusi-blog/gola-utils/logging"
+	cors "github.com/inclusi-blog/gola-utils/middleware/cors"
+	"github.com/inclusi-blog/gola-utils/middleware/request_response_trace"
+	middleware "github.com/inclusi-blog/gola-utils/middleware/session_trace"
+	corsModel "github.com/inclusi-blog/gola-utils/model"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )

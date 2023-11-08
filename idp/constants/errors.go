@@ -2,7 +2,7 @@ package constants
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gola-glitch/gola-utils/golaerror"
+	"github.com/inclusi-blog/gola-utils/golaerror"
 	"net/http"
 )
 

@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/gola-glitch/gola-utils/alert/email/models"
-	mocksUtil "github.com/gola-glitch/gola-utils/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/inclusi-blog/gola-utils/alert/email/models"
+	mocksUtil "github.com/inclusi-blog/gola-utils/mocks"
 	"github.com/stretchr/testify/suite"
 	"post-api/configuration"
 	"post-api/idp/constants"
