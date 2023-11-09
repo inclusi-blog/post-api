@@ -2,7 +2,6 @@ package login
 
 // mockgen -source=handlers/login/oauth_login_handler.go -destination=mocks/mock_oauth_login_handler.go -package=mocks
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/inclusi-blog/gola-utils/golaerror"
@@ -11,9 +10,7 @@ import (
 	"github.com/inclusi-blog/gola-utils/mask_util"
 	"github.com/inclusi-blog/gola-utils/model"
 	oauth2 "github.com/inclusi-blog/gola-utils/oauth"
-	"log"
 	"net/http"
-	"net/url"
 	"post-api/configuration"
 	"post-api/idp/constants"
 	"post-api/idp/models/db"
@@ -53,72 +50,41 @@ func (authHandler oauthLoginHandler) AcceptLogin(ctx *gin.Context, loginChalleng
 		Userprofile: profile,
 	}
 
-	//queryParas := make(map[string]string)
-	//queryParas["login_challenge"] = loginChallenge
+	queryParas := make(map[string]string)
+	queryParas["login_challenge"] = loginChallenge
 
 	auth := authHandler.configData.Oauth
 	acceptLoginRequestEndpoint := auth.AdminUrl + auth.AcceptLoginRequestUrl
 	logger.Infof("oauth request URL is %s", acceptLoginRequestEndpoint)
-	//httpError := authHandler.httpRequestBuilder.NewRequest().
-	//	WithContext(ctx).
-	//	WithJSONBody(acceptLoginRequest).
-	//	AddQueryParameters(queryParas).
-	//	ResponseAs(&acceptResponse).
-	//	Put(acceptLoginRequestEndpoint)
-	marshal, _ := json.Marshal(acceptLoginRequest)
-	newRequest, httpError := http.NewRequest(http.MethodPut, acceptLoginRequestEndpoint, bytes.NewBuffer(marshal))
-	if httpError != nil {
-		log.Printf("Unable to create request %v", httpError)
-		return response.AcceptResponse{}, nil
-	}
+	httpError := authHandler.httpRequestBuilder.NewRequest().
+		WithContext(ctx).
+		WithJSONBody(acceptLoginRequest).
+		AddQueryParameters(queryParas).
+		ResponseAs(&acceptResponse).
+		Put(acceptLoginRequestEndpoint)
 
-	values := url.Values{}
-	values.Add("login_challenge", loginChallenge)
-	newRequest.URL.RawQuery = values.Encode()
-
-	do, httpError := http.DefaultClient.Do(newRequest)
-
-	if httpError != nil {
-		logger.Errorf("Unable to complete request %v", httpError)
-		return response.AcceptResponse{}, &constants.InternalServerError
-	}
-
-	defer do.Body.Close()
-
-	if do.StatusCode == 200 {
-		httpError := json.NewDecoder(do.Body).Decode(&acceptResponse)
-		if httpError != nil {
-			logger.Errorf("unable to unmarshal response %v", httpError)
-			return response.AcceptResponse{}, nil
-		}
-
+	if httpError == nil {
+		logger.Infof("Accept login request api call completed successfully for user email %v", maskEmail)
 		return acceptResponse, nil
 	}
 
-	logger.Errorf("status code is not 200 and it is %v", do.StatusCode)
+	logger.Errorf("Accept login request api failed for user email %v .%v", maskEmail, httpError)
 
-	//if httpError == nil {
-	//	logger.Infof("Accept login request api call completed successfully for user email %v", maskEmail)
-	//	return acceptResponse, nil
-	//}
-	//
-	//logger.Errorf("Accept login request api failed for user email %v .%v", maskEmail, httpError)
-	//
-	//genericAuthError := response.GenericAuthError{}
-	//unMarshalError := json.Unmarshal(httpError.(golaerror.HttpError).ResponseBody, &genericAuthError)
-	//
-	//if unMarshalError != nil {
-	//	logger.Errorf("Error in unmarshalling generic error %v", unMarshalError)
-	//	return acceptResponse, &constants.InternalServerError
-	//}
-	//
-	//logger.Errorf("Accept login request api failed with the hydra genericError %v", genericAuthError)
-	//
-	//if genericAuthError.StatusCode == http.StatusUnauthorized ||
-	//	genericAuthError.StatusCode == http.StatusNotFound ||
-	//	genericAuthError.StatusCode == http.StatusInternalServerError {
-	//	return acceptResponse, &constants.InvalidLoginChallengeError
-	//}
+	genericAuthError := response.GenericAuthError{}
+	unMarshalError := json.Unmarshal(httpError.(golaerror.HttpError).ResponseBody, &genericAuthError)
+
+	if unMarshalError != nil {
+		logger.Errorf("Error in unmarshalling generic error %v", unMarshalError)
+		return acceptResponse, &constants.InternalServerError
+	}
+
+	logger.Errorf("Accept login request api failed with the hydra genericError %v", genericAuthError)
+
+	if genericAuthError.StatusCode == http.StatusUnauthorized ||
+		genericAuthError.StatusCode == http.StatusNotFound ||
+		genericAuthError.StatusCode == http.StatusInternalServerError {
+		return acceptResponse, &constants.InvalidLoginChallengeError
+	}
 
 	return acceptResponse, &constants.InternalServerError
 }
