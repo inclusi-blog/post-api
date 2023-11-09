@@ -34,8 +34,8 @@
     }
   },
   "oauth": {
-    "adminBaseUrl": "http://hydra-admin:4445/",
-    "public_url": "http://hydra-public:4444/",
+    "adminBaseUrl": "http://hydra-admin.microservices.svc.cluster.local:4445/",
+    "public_url": "http://hydra-public.microservices.svc.cluster.local:4444/",
     "accept_login_request_url": "oauth2/auth/requests/login/accept",
     "get_consent_request_url": "oauth2/auth/requests/consent",
     "accept_consent_request_url": "oauth2/auth/requests/consent/accept",

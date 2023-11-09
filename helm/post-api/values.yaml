@@ -46,7 +46,7 @@ ingress:
     idpPath: "/api/idp"
     appFqdns:
       - "api.narratenet.com"
-    allowedOrigins: app.narratenet.com|www.narratenet.com|narratenet.com|localhost:3000|localhost3001
+    allowedOrigins: app.narratenet.com|www.narratenet.com|narratenet.com|localhost:3000|localhost:3001
 
 livenessProbe:
   httpGet:
