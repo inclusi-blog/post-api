@@ -55,6 +55,7 @@ func (authHandler oauthLoginHandler) AcceptLogin(ctx *gin.Context, loginChalleng
 
 	auth := authHandler.configData.Oauth
 	acceptLoginRequestEndpoint := auth.AdminUrl + auth.AcceptLoginRequestUrl
+	logger.Infof("oauth request URL is %s", acceptLoginRequestEndpoint)
 	httpError := authHandler.httpRequestBuilder.NewRequest().
 		WithContext(ctx).
 		WithJSONBody(acceptLoginRequest).
