@@ -27,7 +27,7 @@
     "mode": "standalone"
   },
   "email": {
-    "gateway_url": "http://ccg-api:8080/api/ccg/v1/email/send",
+    "gateway_url": "http://ccg-api-svc:8080/api/ccg/v1/email/send",
     "default_sender": "noreply@narratenet.com",
     "template_paths": {
       "new_user_activation": "assets/email_templates/new_user_activation.html"
