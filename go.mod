@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/inclusi-blog/gola-utils v0.0.5-dev-release
+	github.com/inclusi-blog/gola-utils v0.0.6-dev-release
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.8.0
