@@ -34,7 +34,7 @@
     }
   },
   "oauth": {
-    "adminBaseUrl": "https://ouauth.narratenet.com/",
+    "adminBaseUrl": "https://oauth.narratenet.com/",
     "public_url": "https://api.narratenet.com/",
     "accept_login_request_url": "oauth2/auth/requests/login/accept",
     "get_consent_request_url": "oauth2/auth/requests/consent",
