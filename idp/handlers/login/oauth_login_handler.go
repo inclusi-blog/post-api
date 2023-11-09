@@ -79,6 +79,7 @@ func (authHandler oauthLoginHandler) AcceptLogin(ctx *gin.Context, loginChalleng
 	do, httpError := http.DefaultClient.Do(newRequest)
 
 	if httpError != nil {
+		logger.Errorf("Unable to complete request %v", httpError)
 		return response.AcceptResponse{}, &constants.InternalServerError
 	}
 
