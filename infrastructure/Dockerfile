@@ -1,4 +1,4 @@
-FROM golang:1.18.8-alpine3.16
+FROM alpine:3.16
 
 COPY ./idp/assets/ /assets
 COPY ./bin/post-api /post-api
