@@ -8,6 +8,8 @@ import (
 	"post-api/idp/constants"
 	"post-api/idp/handlers/login"
 	"post-api/idp/models/oauth"
+	"post-api/idp/models/response"
+	"time"
 )
 
 type TokenController interface {
@@ -44,7 +46,8 @@ func (controller tokenController) ExchangeToken(ctx *gin.Context) {
 	}
 	logger.Info("setting access token and id token cookiesca.")
 
-	clearCsrfCookies(ctx)
+	//clearCsrfCookies(ctx)
+	setCookie(ctx, tokenExchangeResponse)
 	if !controller.allowInsecureCookies {
 		logger.Info("flag to allow insecure cookies is set to false")
 		tokenExchangeResponse.IdToken = "dummy.jwt.value"
@@ -54,7 +57,38 @@ func (controller tokenController) ExchangeToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, tokenExchangeResponse)
 }
 
+func setCookie(ctx *gin.Context, tokenData response.TokenExchangeResponse) {
+	parse, _ := time.Parse(http.TimeFormat, tokenData.ExpiresAt)
+	encryptIDToken := http.Cookie{
+		Name:     "enc_id_token",
+		Value:    tokenData.EncryptedIdToken,
+		Path:     "/",
+		Domain:   "api.narratenet.com",
+		Expires:  parse,
+		MaxAge:   int(time.Now().Sub(parse).Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	accessToken := http.Cookie{
+		Name:     "access_token",
+		Value:    tokenData.AccessToken,
+		Path:     "/",
+		Domain:   "api.narratenet.com",
+		Expires:  parse,
+		MaxAge:   int(time.Now().Sub(parse).Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	http.SetCookie(ctx.Writer, &accessToken)
+	http.SetCookie(ctx.Writer, &encryptIDToken)
+}
+
 func clearCsrfCookies(ctx *gin.Context) {
+
 	ctx.Writer.Header().Add("set-cookie", "oauth2_authentication_csrf=; Path=/; Max-Age=-1")
 	ctx.Writer.Header().Add("set-cookie", "oauth2_authentication_session=; Path=/; Max-Age=-1")
 	ctx.Writer.Header().Add("set-cookie", "oauth2_consent_csrf=; Path=/; Max-Age=-1")
