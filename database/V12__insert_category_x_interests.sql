@@ -96,6 +96,3 @@ insert into category_x_interests(category_id, interest_id) values ((select id fr
 insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Science'), (select id from interests where name = 'Theories'));
 insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Sports'), (select id from interests where name = 'Hockey'));
 insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Sports'), (select id from interests where name = 'Cricket'));
-insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Sports'), (select id from interests where name = 'Kabadi'));
-insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Sports'), (select id from interests where name = 'Cock fight'));
-insert into category_x_interests(category_id, interest_id) values ((select id from interests where name = 'Sports'), (select id from interests where name = 'Jallikattu'));
