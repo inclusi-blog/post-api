@@ -67,7 +67,6 @@ func setCookie(ctx *gin.Context, tokenData response.TokenExchangeResponse) {
 		Expires:  parse,
 		MaxAge:   int(parse.Sub(time.Now()).Seconds()),
 		Secure:   true,
-		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
@@ -79,7 +78,6 @@ func setCookie(ctx *gin.Context, tokenData response.TokenExchangeResponse) {
 		Expires:  parse,
 		MaxAge:   int(parse.Sub(time.Now()).Seconds()),
 		Secure:   true,
-		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
