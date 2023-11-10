@@ -43,6 +43,13 @@ spec:
                   name: {{ $apiName }}-svc
                   port:
                     number: {{ $values.service.port }}
+            - path: {{ $values.ingress.userProfilePath }}
+              pathType: Prefix
+              backend:
+                service:
+                  name: {{ $apiName }}-svc
+                  port:
+                    number: {{ $values.service.port }}
       {{- end }}
   tls:
     - hosts:
