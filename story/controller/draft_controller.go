@@ -337,6 +337,53 @@ func (controller DraftController) GetPreSignURLForDraftPreview(ctx *gin.Context)
 	})
 }
 
+func (controller DraftController) GetPreSignURLForDraftImage(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "UserDetailsController").WithField("method", "GetPreSignURLForDraftImage")
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entered controller to get presign url for draft preview %v", userUUID)
+
+	draftUUID := ctx.Param("draft_id")
+	draftID, err := uuid.Parse(draftUUID)
+	if err != nil {
+		logger.Errorf("invalid draft id request for user %v. Error %v", token.UserId, err)
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+	logger.Infof("Entered controller to save preview image for user %v", userUUID)
+	var p commonModels.CoverPreSign
+	p.Extension = "jpg"
+	if err := ctx.ShouldBindQuery(&p); err != nil {
+		ctx.JSON(http.StatusBadRequest, constants.PayloadValidationError)
+		return
+	}
+
+	_, draftGetErr := controller.service.GetDraft(ctx, draftID, userUUID)
+	if draftGetErr != nil {
+		logger.Errorf("Error occurred in draft service while fetching draft for user %v. Error %v", userUUID, draftGetErr)
+		constants.RespondWithGolaError(ctx, draftGetErr)
+		return
+	}
+
+	key := fmt.Sprintf("draft/%s/%s.%s", draftID.String(), uuid.NewString(), p.Extension)
+
+	url, s3Err := controller.awsServices.PutObjectInS3(key)
+	if s3Err != nil {
+		logger.Errorf("unable to put object in s3 %v", s3Err)
+		ctx.JSON(http.StatusBadRequest, constants.UnableToAssignPreSignURLError)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"url": url,
+	})
+}
+
 func (controller DraftController) GetAllDraft(ctx *gin.Context) {
 	logger := logging.GetLogger(ctx)
 	log := logger.WithField("class", "DraftController").WithField("method", "GetAllDraft")
