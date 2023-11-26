@@ -22,6 +22,7 @@ const (
 	UnableToFetchObjectErrorCode    string = "ERR_POST_UNABLE_TO_FETCH_OBJECT"
 	ObjectNotFoundErrorCode         string = "ERR_POST_OBJECT_NOT_FOUND"
 	UnableToUpdatePreviewImageCode  string = "ERR_POST_UNABLE_TO_UPDATE_PREVIEW"
+	InvalidImageKeyCode             string = "ERR_POST_INVALID_IMAGE_KEY"
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	PostNotFoundErr                = golaerror.Error{ErrorCode: PostNotFoundCode, ErrorMessage: "no post found for the given post uid"}
 	ObjectNotFoundError            = golaerror.Error{ErrorCode: ObjectNotFoundErrorCode, ErrorMessage: "image object not found"}
 	UnableToUpdatePreviewError     = golaerror.Error{ErrorCode: UnableToUpdatePreviewImageCode, ErrorMessage: "unable to upload avatar"}
+	InvalidImageKeyError           = golaerror.Error{ErrorCode: InvalidImageKeyCode, ErrorMessage: "image key is invalid"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
@@ -53,6 +55,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InterestParseErrorCode:          http.StatusBadRequest,
 	InterestDoesNotMeetReadTimeCode: http.StatusNotAcceptable,
 	PostNotFoundCode:                http.StatusNotFound,
+	InvalidImageKeyCode:             http.StatusBadRequest,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

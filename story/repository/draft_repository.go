@@ -25,8 +25,10 @@ type DraftRepository interface {
 	GetDraft(ctx context.Context, draftUID, userID uuid.UUID) (db.Draft, error)
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.Draft, error)
 	UpsertPreviewImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) error
+	UpsertImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) (string, error)
 	DeleteDraft(ctx context.Context, draftUID, userUUID uuid.UUID) error
 	UpdatePublishStatus(ctx context.Context, txn transaction.Transaction, draftUID, userID uuid.UUID, status bool) error
+	GetDraftImage(ctx context.Context, draftID, imageID uuid.UUID) (string, error)
 }
 
 const (
@@ -39,6 +41,8 @@ const (
 	FetchAllDraft       = "select id, user_id, data, preview_image, tagline, interests, created_at from drafts where user_id = $1 and is_published is false order by created_at desc limit $2 offset $3"
 	DeleteDraft         = "delete from drafts where id = $1 and user_id = $2"
 	UpdatePublishStatus = "update drafts set is_published = $1 where id = $2 and user_id = $3"
+	InsertDraftImage    = "insert into draft_images(id, draft_id, upload_id) values (uuid_generate_v4(), $1, $2) returning id"
+	GetDraftImage       = "select id, draft_id, upload_id from draft_images where id = $1"
 )
 
 type draftRepository struct {
@@ -254,6 +258,43 @@ func (repository draftRepository) UpdatePublishStatus(ctx context.Context, txn t
 
 	logger.Info("Successfully deleted draft")
 	return nil
+}
+
+func (repository draftRepository) UpsertImage(ctx context.Context, saveRequest request.PreviewImageSaveRequest) (string, error) {
+	var imageID uuid.UUID
+	logger := logging.GetLogger(ctx)
+	logger.Infof("entering draft repository to update draft image for draft id %v", saveRequest.DraftID.String())
+	err := repository.db.GetContext(ctx, &imageID, InsertDraftImage, saveRequest.DraftID, saveRequest.UploadID)
+
+	if err != nil {
+		logger.Errorf("Unable to insert draft image for draft id %v. Error %v", saveRequest.DraftID.String(), err)
+		return "", err
+	}
+
+	logger.Infof("successfully inserted draft image for draft id %v", saveRequest.DraftID.String())
+
+	return imageID.String(), nil
+}
+
+func (repository draftRepository) GetDraftImage(ctx context.Context, draftID, imageID uuid.UUID) (string, error) {
+	type draftImage struct {
+		ID       string `db:"id"`
+		DraftID  string `db:"draft_id"`
+		UploadID string `db:"upload_id"`
+	}
+	var image draftImage
+	logger := logging.GetLogger(ctx)
+	logger.Infof("entering draft repository to get draft image for draft id %v", draftID.String())
+	err := repository.db.GetContext(ctx, &image, GetDraftImage, draftID, imageID)
+
+	if err != nil {
+		logger.Errorf("Unable to get draft image for draft id %v. Error %v", draftID.String(), err)
+		return "", err
+	}
+
+	logger.Infof("successfully fetched the draft image for draft id %v", draftID.String())
+
+	return image.UploadID, nil
 }
 
 func NewDraftRepository(db *sqlx.DB) DraftRepository {

@@ -5,6 +5,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/inclusi-blog/gola-utils/model"
 	"post-api/service"
@@ -28,9 +29,11 @@ type DraftService interface {
 	UpsertTagline(taglineRequest request.TaglineSaveRequest, ctx context.Context) *golaerror.Error
 	GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error)
 	SavePreviewImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) *golaerror.Error
+	SaveImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) (string, *golaerror.Error)
 	GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error)
 	DeleteDraft(ctx context.Context, draftID, userUUID uuid.UUID) *golaerror.Error
 	ValidateAndGetDraft(ctx context.Context, draftId uuid.UUID, user model.IdToken) (response.PreviewDraft, *golaerror.Error)
+	GetDraftImage(ctx context.Context, draftID uuid.UUID, imageID uuid.UUID) (string, *golaerror.Error)
 }
 
 type draftService struct {
@@ -144,6 +147,41 @@ func (service draftService) SavePreviewImage(ctx context.Context, imageSaveReque
 
 	logger.Infof("Successfully stored preview image for draft id %v", id)
 	return nil
+}
+
+func (service draftService) SaveImage(ctx context.Context, imageSaveRequest request.PreviewImageSaveRequest) (string, *golaerror.Error) {
+	id := imageSaveRequest.DraftID
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "SaveImage")
+	logger.Infof("Saving draft image for draft id %v", id)
+
+	imageID, err := service.draftRepository.UpsertImage(ctx, imageSaveRequest)
+
+	if err != nil {
+		logger.Errorf("Error occurred while saving draft image to draft %v .%v", id, err)
+		return "", constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully stored draft image for draft id %v", id)
+	return imageID, nil
+}
+
+func (service draftService) GetDraftImage(ctx context.Context, draftID uuid.UUID, imageID uuid.UUID) (string, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraftImage")
+	logger.Infof("Fetching draft image for draft id %v and image id %v", draftID.String(), imageID.String())
+
+	uploadKey, err := service.draftRepository.GetDraftImage(ctx, draftID, imageID)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Errorf("No draft image found for draft id %v and image id %v. Error %v", draftID, imageID, err)
+			return "", &constants.ObjectNotFoundError
+		}
+		logger.Errorf("Error occurred while fetching draft image to draft %v and image id %v. Error %v", draftID, imageID, err)
+		return "", constants.StoryInternalServerError(err.Error())
+	}
+
+	logger.Infof("Successfully fetched draft image for draft id %v", draftID)
+	return uploadKey, nil
 }
 
 func (service draftService) GetAllDraft(ctx context.Context, allDraftReq models.GetAllDraftRequest) ([]db.DraftPreview, error) {
