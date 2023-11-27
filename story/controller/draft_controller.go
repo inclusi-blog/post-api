@@ -332,7 +332,7 @@ func (controller DraftController) UploadDraftImageKey(ctx *gin.Context) {
 	dir, _ := path.Split(upload.UploadID)
 	draftID := uuid.MustParse(strings.Split(dir, "/")[1])
 
-	_, uploadErr := controller.service.SaveImage(ctx, request.PreviewImageSaveRequest{
+	imageID, uploadErr := controller.service.SaveImage(ctx, request.PreviewImageSaveRequest{
 		UserID:   userUUID,
 		UploadID: upload.UploadID,
 		DraftID:  draftID,
@@ -343,14 +343,9 @@ func (controller DraftController) UploadDraftImageKey(ctx *gin.Context) {
 		return
 	}
 
-	url, s3Err := controller.awsServices.GetObjectInS3(upload.UploadID, time.Minute*5)
-	if s3Err != nil {
-		logger.Errorf("unable to get object in s3 %v", s3Err)
-		ctx.JSON(http.StatusBadRequest, constants.UnableToAssignPreSignURLError)
-		return
-	}
-
-	ctx.JSON(http.StatusTemporaryRedirect, url)
+	ctx.JSON(http.StatusOK, gin.H{
+		"image_id": imageID,
+	})
 }
 
 func (controller DraftController) GetPreSignURLForDraftPreview(ctx *gin.Context) {
