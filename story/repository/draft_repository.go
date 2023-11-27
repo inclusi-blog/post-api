@@ -42,7 +42,7 @@ const (
 	DeleteDraft         = "delete from drafts where id = $1 and user_id = $2"
 	UpdatePublishStatus = "update drafts set is_published = $1 where id = $2 and user_id = $3"
 	InsertDraftImage    = "insert into draft_images(id, draft_id, upload_id) values (uuid_generate_v4(), $1, $2) returning id"
-	GetDraftImage       = "select id, draft_id, upload_id from draft_images where id = $1"
+	GetDraftImage       = "select id, draft_id, upload_id from draft_images where id = $1 and draft_id = $2"
 )
 
 type draftRepository struct {
@@ -285,7 +285,7 @@ func (repository draftRepository) GetDraftImage(ctx context.Context, draftID, im
 	var image draftImage
 	logger := logging.GetLogger(ctx)
 	logger.Infof("entering draft repository to get draft image for draft id %v", draftID.String())
-	err := repository.db.GetContext(ctx, &image, GetDraftImage, draftID, imageID)
+	err := repository.db.GetContext(ctx, &image, GetDraftImage, imageID, draftID)
 
 	if err != nil {
 		logger.Errorf("Unable to get draft image for draft id %v. Error %v", draftID.String(), err)
