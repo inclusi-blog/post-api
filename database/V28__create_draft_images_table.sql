@@ -2,7 +2,7 @@ create table draft_images
 (
     id uuid not null,
     draft_id uuid not null,
-    upload_id uuid not null
+    upload_id text not null
 );
 
 create unique index draft_images_upload_id_draft_id_uindex
