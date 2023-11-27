@@ -538,7 +538,7 @@ func (controller DraftController) ViewDraftImage(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusTemporaryRedirect, url)
+	ctx.Redirect(http.StatusMovedPermanently, url)
 }
 
 func (controller DraftController) GetAllDraft(ctx *gin.Context) {
