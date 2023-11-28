@@ -278,13 +278,13 @@ func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsDraft() {
 		Interests:    &interests,
 	}
 
-	savedDraft, err := suite.draftRepository.GetDraft(suite.goContext, draftUUID, userUUID)
+	savedDraft, err := suite.draftRepository.GetDraftByUser(suite.goContext, draftUUID, userUUID)
 	suite.Nil(err)
 	suite.Equal(expectedDraft, savedDraft)
 }
 
 func (suite *DraftRepositoryIntegrationTest) TestGetDraft_WhenDbReturnsError() {
-	draft, err := suite.draftRepository.GetDraft(suite.goContext, uuid.New(), uuid.New())
+	draft, err := suite.draftRepository.GetDraftByUser(suite.goContext, uuid.New(), uuid.New())
 	suite.NotNil(err)
 	suite.Equal(sql.ErrNoRows, err)
 	suite.Equal(db.Draft{}, draft)

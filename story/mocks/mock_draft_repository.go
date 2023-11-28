@@ -85,7 +85,7 @@ func (mr *MockDraftRepositoryMockRecorder) GetAllDraft(ctx, allDraftReq interfac
 // GetDraft mocks base method.
 func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID, userID uuid.UUID) (db.Draft, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDraft", ctx, draftUID, userID)
+	ret := m.ctrl.Call(m, "GetDraftByUser", ctx, draftUID, userID)
 	ret0, _ := ret[0].(db.Draft)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -94,7 +94,7 @@ func (m *MockDraftRepository) GetDraft(ctx context.Context, draftUID, userID uui
 // GetDraft indicates an expected call of GetDraft.
 func (mr *MockDraftRepositoryMockRecorder) GetDraft(ctx, draftUID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraftByUser", reflect.TypeOf((*MockDraftRepository)(nil).GetDraft), ctx, draftUID, userID)
 }
 
 // SaveInterestsToDraft mocks base method.

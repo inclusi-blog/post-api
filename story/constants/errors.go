@@ -23,6 +23,7 @@ const (
 	ObjectNotFoundErrorCode         string = "ERR_POST_OBJECT_NOT_FOUND"
 	UnableToUpdatePreviewImageCode  string = "ERR_POST_UNABLE_TO_UPDATE_PREVIEW"
 	InvalidImageKeyCode             string = "ERR_POST_INVALID_IMAGE_KEY"
+	UnauthorisedDraftCode           string = "ERR_POST_UNAUTHORISED_DRAFT"
 )
 
 var (
@@ -42,6 +43,7 @@ var (
 	ObjectNotFoundError            = golaerror.Error{ErrorCode: ObjectNotFoundErrorCode, ErrorMessage: "image object not found"}
 	UnableToUpdatePreviewError     = golaerror.Error{ErrorCode: UnableToUpdatePreviewImageCode, ErrorMessage: "unable to upload avatar"}
 	InvalidImageKeyError           = golaerror.Error{ErrorCode: InvalidImageKeyCode, ErrorMessage: "image key is invalid"}
+	UnauthorisedDraftError         = golaerror.Error{ErrorCode: UnauthorisedDraftCode, ErrorMessage: "unauthorised to access draft"}
 )
 
 var ErrorCodeHttpStatusCodeMap = map[string]int{
@@ -56,6 +58,7 @@ var ErrorCodeHttpStatusCodeMap = map[string]int{
 	InterestDoesNotMeetReadTimeCode: http.StatusNotAcceptable,
 	PostNotFoundCode:                http.StatusNotFound,
 	InvalidImageKeyCode:             http.StatusBadRequest,
+	UnauthorisedDraftCode:           http.StatusUnauthorized,
 }
 
 func GetGolaHttpCode(golaErrCode string) int {

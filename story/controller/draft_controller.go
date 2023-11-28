@@ -201,7 +201,7 @@ func (controller DraftController) SaveInterests(ctx *gin.Context) {
 }
 
 func (controller DraftController) GetDraft(ctx *gin.Context) {
-	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetDraft")
+	logger := logging.GetLogger(ctx).WithField("class", "DraftController").WithField("method", "GetDraftByUser")
 	token, err := utils.GetIDToken(ctx)
 	if err != nil {
 		logger.Error("id token not found", err)

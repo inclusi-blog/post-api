@@ -50,7 +50,7 @@ type postService struct {
 
 func (service postService) PublishPost(ctx context.Context, draftUID, userUUID uuid.UUID) (string, *golaerror.Error) {
 	logger := logging.GetLogger(ctx).WithField("class", "PostService").WithField("method", "PublishPost")
-	draft, err := service.draftRepository.GetDraft(ctx, draftUID, userUUID)
+	draft, err := service.draftRepository.GetDraftByUser(ctx, draftUID, userUUID)
 	if err != nil {
 		logger.Errorf("error occurred while fetching draft from draft repository %v", err)
 		if err == sql.ErrNoRows {

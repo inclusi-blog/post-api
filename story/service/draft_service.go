@@ -91,11 +91,11 @@ func (service draftService) UpsertTagline(taglineRequest request.TaglineSaveRequ
 }
 
 func (service draftService) GetDraft(ctx context.Context, draftUID, userUUID uuid.UUID) (db.Draft, *golaerror.Error) {
-	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraft")
+	logger := logging.GetLogger(ctx).WithField("class", "DraftService").WithField("method", "GetDraftByUser")
 
 	logger.Infof("Calling service to get draft using draft Id %s", draftUID)
 
-	draft, err := service.draftRepository.GetDraft(ctx, draftUID, userUUID)
+	draft, err := service.draftRepository.GetDraftByUser(ctx, draftUID, userUUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while getting draft from repository %v", err)
@@ -251,10 +251,28 @@ func (service draftService) DeleteDraft(ctx context.Context, draftID, userUUID u
 
 	logger.Infof("Deleting draft from draft repository for draft id %v", draftID)
 
-	err := service.draftRepository.DeleteDraft(ctx, draftID, userUUID)
-
+	draft, err := service.draftRepository.GetDraft(ctx, draftID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Errorf("no draft found for draft id %v .Error %v", draftID, err)
+			return &constants.NoDraftFoundError
+		}
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	if draft.UserID.String() != userUUID.String() {
+		return &constants.UnauthorisedDraftError
+	}
+
+	err = service.draftRepository.DeleteDraftImages(ctx, draftID)
+	if err != nil {
+		logger.Errorf("Unable to delete draft images for draft ID %v. Error %v", draftID, err)
+		return constants.StoryInternalServerError(err.Error())
+	}
+
+	err = service.draftRepository.DeleteDraft(ctx, draftID, userUUID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("no draft found for draft id %v .Error %v", draftID, err)
 			return &constants.NoDraftFoundError
 		}
@@ -273,7 +291,7 @@ func (service draftService) ValidateAndGetDraft(ctx context.Context, draftId uui
 	logger.Infof("Fetching draftDB for validation of draftDB id %v", draftId)
 
 	userUUID, _ := uuid.Parse(user.UserId)
-	draft, err := service.draftRepository.GetDraft(ctx, draftId, userUUID)
+	draft, err := service.draftRepository.GetDraftByUser(ctx, draftId, userUUID)
 
 	if err != nil {
 		logger.Errorf("Error occurred while fetching draft from db %v, Error %v", draftId, err)
