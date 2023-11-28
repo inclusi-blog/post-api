@@ -114,7 +114,7 @@ const (
                  LEFT JOIN post_comments pc ON p.post_id = pc.post_id
      )
 SELECT
-    ps.post_id,
+    ps.post_id as id,
     ap.title,
     ap.tagline,
     ap.view_time,
