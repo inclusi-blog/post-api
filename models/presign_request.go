@@ -7,3 +7,8 @@ type CoverPreSign struct {
 type UploadImage struct {
 	UploadID string `json:"upload_id" validate:"required"`
 }
+
+type Pagination struct {
+	Start int `form:"start"`
+	Limit int `form:"limit"`
+}

@@ -36,6 +36,7 @@ type PostService interface {
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, *golaerror.Error)
 	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
 	Delete(ctx context.Context, postID, userID uuid.UUID) *golaerror.Error
+	GetHomeFeed(ctx context.Context, userID uuid.UUID, limit, offset int) ([]db.HomeFeedPost, *golaerror.Error)
 }
 
 type postService struct {
@@ -343,6 +344,25 @@ func (service postService) Delete(ctx context.Context, postID, userID uuid.UUID)
 	logger.Infof("successfully deleted post for post id %v", postID)
 
 	return nil
+}
+
+func (service postService) GetHomeFeed(ctx context.Context, userID uuid.UUID, limit, offset int) ([]db.HomeFeedPost, *golaerror.Error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "GetHomeFeed")
+	posts, err := service.repository.GetHomeFeed(ctx, userID, limit, offset)
+	if err != nil {
+		logger.Errorf("unable to fetch posts %v", err)
+		return nil, &constants.InternalServerError
+	}
+	for i, _ := range posts {
+		posts[i].PreviewImage, err = service.awsServices.GetObjectInS3(posts[i].PreviewImage, time.Hour*time.Duration(6))
+		if err != nil {
+			logger.Errorf("unable to fetch preview image from s3 %v", err)
+			return nil, &constants.InternalServerError
+		}
+	}
+	logger.Info("successfully fetched posts for interest")
+
+	return posts, nil
 }
 
 func NewPostService(postsRepository repository.PostsRepository, draftRepository repository.DraftRepository, validator utils.PostValidator, previewPostsRepository repository.AbstractPostRepository, interestsRepository repository.InterestsRepository, manager helper.TransactionManager, services service.AwsServices) PostService {

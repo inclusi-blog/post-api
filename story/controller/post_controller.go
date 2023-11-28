@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/google/uuid"
 	"net/http"
+	"post-api/models"
 	"post-api/story/constants"
 	"post-api/story/models/request"
 	"post-api/story/service"
@@ -464,6 +465,36 @@ func (controller PostController) Delete(ctx *gin.Context) {
 
 	logger.Infof("Successfully fetching post for given post id %v", id)
 	ctx.Status(http.StatusOK)
+}
+
+func (controller PostController) GetHomeFeed(ctx *gin.Context) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostController").WithField("method", "GetHomeFeed")
+	logger.Info("Started get post to fetch post for the given post id")
+
+	token, err := utils.GetIDToken(ctx)
+	if err != nil {
+		logger.Error("id token not found", err)
+		ctx.JSON(http.StatusInternalServerError, constants.InternalServerError)
+		return
+	}
+
+	userUUID, _ := uuid.Parse(token.UserId)
+	logger.Infof("Entering post controller to publish post")
+
+	var pagination models.Pagination
+	if err = ctx.ShouldBindQuery(&pagination); err != nil {
+		constants.RespondWithGolaError(ctx, &constants.PayloadValidationError)
+		return
+	}
+
+	posts, fetchErr := controller.postService.GetHomeFeed(ctx, userUUID, pagination.Limit, pagination.Start)
+	if fetchErr != nil {
+		logger.Errorf("unable to get posts by interests %v", fetchErr)
+		constants.RespondWithGolaError(ctx, fetchErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, posts)
 }
 
 func NewPostController(postService service.PostService) PostController {

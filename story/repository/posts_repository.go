@@ -33,6 +33,7 @@ type PostsRepository interface {
 	FetchPostsByInterests(ctx context.Context, interestRequest request.InterestRequest, userID uuid.UUID) ([]response.PostView, error)
 	RemovePostBookmark(ctx context.Context, postID, userID uuid.UUID) error
 	Delete(ctx context.Context, postID, userID uuid.UUID) error
+	GetHomeFeed(ctx context.Context, userID uuid.UUID, limit, offset int) ([]db.HomeFeedPost, error)
 }
 
 type postRepository struct {
@@ -52,6 +53,88 @@ const (
 	RemovePostBookmark = "delete from saved_posts where post_id = $1 and user_id = $2"
 	MarkAsViewed       = "insert into post_views (post_id, user_id) values ($1, $2)"
 	Delete             = "update posts set deleted_at = current_timestamp where id = $1 and author_id = $2"
+	GetHomeFeed        = `WITH post_interests AS (
+    SELECT
+        px.post_id,
+        ARRAY_AGG(i.name) AS interest_names,
+        ARRAY_AGG(i.id) AS interest_ids
+    FROM
+        post_x_interests px
+            JOIN interests i ON px.interest_id = i.id
+    GROUP BY
+        px.post_id
+),
+     post_likes AS (
+         SELECT
+             post_id,
+             COUNT(*) AS like_count
+         FROM
+             likes
+         GROUP BY
+             post_id
+     ),
+     post_comments AS (
+         SELECT
+             p.id AS post_id,
+             COUNT(*) AS comment_count
+         FROM
+             posts p
+                 LEFT JOIN comments c ON p.id = c.post_id
+         GROUP BY
+             p.id
+     ),
+     post_author AS (
+         SELECT
+             p.id AS post_id,
+             COALESCE(a.name, u.username) AS author_name
+         FROM
+             posts p
+                 LEFT JOIN users u ON p.author_id = u.id
+                 LEFT JOIN admin a ON p.author_id = a.id
+     ),
+     user_likes AS (
+         SELECT
+             post_id,
+             TRUE AS user_liked
+         FROM
+             likes
+         WHERE
+                         liked_by = $1
+     ),
+     post_statistics AS (
+         SELECT
+             p.post_id AS post_id,
+             p.view_time,
+             COALESCE(pl.like_count, 0) AS like_count,
+             COALESCE(pc.comment_count, 0) AS comment_count,
+             p.created_at
+         FROM
+             abstract_post p
+                 LEFT JOIN post_likes pl ON p.post_id = pl.post_id
+                 LEFT JOIN post_comments pc ON p.post_id = pc.post_id
+     )
+SELECT
+    ps.post_id,
+    ap.title,
+    ap.tagline,
+    ap.view_time,
+    ap.created_at AS published_date,
+    pi.interest_names,
+    pa.author_name,
+    ps.like_count,
+    ul.user_liked,
+    ap.preview_image
+FROM
+    post_statistics ps
+        JOIN abstract_post ap ON ps.post_id = ap.post_id
+        JOIN post_interests pi ON ps.post_id = pi.post_id
+        LEFT JOIN post_author pa ON ps.post_id = pa.post_id
+        LEFT JOIN user_likes ul ON ps.post_id = ul.post_id
+WHERE
+    ap.deleted_at IS NULL
+  OR (pi.interest_ids @> ARRAY(SELECT interest_id FROM user_interests WHERE user_id = $2))
+ORDER BY
+    ap.created_at DESC limit $3 offset $4;`
 )
 
 func (repository postRepository) CreatePost(ctx context.Context, tx helper.Transaction, post db.PublishPost) (uuid.UUID, error) {
@@ -285,6 +368,18 @@ func (repository postRepository) Delete(ctx context.Context, postID, userID uuid
 
 	logger.Infof("successfully deleted post for post id %v", postID)
 	return nil
+}
+
+func (repository postRepository) GetHomeFeed(ctx context.Context, userID uuid.UUID, limit, offset int) ([]db.HomeFeedPost, error) {
+	logger := logging.GetLogger(ctx).WithField("class", "PostsRepository").WithField("method", "GetHomeFeed")
+	var posts []db.HomeFeedPost
+	err := repository.db.SelectContext(ctx, &posts, GetHomeFeed, userID, userID, limit, offset)
+	if err != nil {
+		logger.Errorf("unable to fetch posts for interest %v", err)
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 func NewPostsRepository(db *sqlx.DB) PostsRepository {
