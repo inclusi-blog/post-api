@@ -25,6 +25,6 @@ type HomeFeedPost struct {
 	InterestNames pq.StringArray `json:"interest_names" db:"interest_names"`
 	AuthorName    *string        `json:"author_name" db:"author_name"`
 	LikeCount     *int64         `json:"like_count" db:"like_count"`
-	UserLiked     bool           `json:"user_liked" db:"user_liked"`
+	UserLiked     *bool          `json:"user_liked" db:"user_liked"`
 	PreviewImage  string         `json:"preview_image" db:"preview_image"`
 }
