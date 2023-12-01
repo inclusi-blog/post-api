@@ -123,7 +123,8 @@ SELECT
     pa.author_name,
     ps.like_count,
     ul.user_liked,
-    ap.preview_image
+    ap.preview_image,
+    ap.url
 FROM
     post_statistics ps
         JOIN abstract_post ap ON ps.post_id = ap.post_id

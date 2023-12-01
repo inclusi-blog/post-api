@@ -27,4 +27,5 @@ type HomeFeedPost struct {
 	LikeCount     *int64         `json:"like_count" db:"like_count"`
 	UserLiked     *bool          `json:"user_liked" db:"user_liked"`
 	PreviewImage  string         `json:"preview_image" db:"preview_image"`
+	URL           string         `json:"url" db:"url"`
 }
