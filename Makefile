@@ -18,11 +18,11 @@ vet: install_deps
 	docker-compose -f infrastructure/build.yml --project-name $(PROJECT) \
 	run --rm build-env /bin/sh -c "go vet -mod=vendor ./..."
 
-start: build
-	docker-compose -f docker-compose.local-app.yml up -d
+start:
+	go run main.go
 
-stop:
-	docker-compose -f docker-compose.local-app.yml down -v
+format:
+	go fmt ./...
 
 clean:
 	chmod -R +w ./.gopath vendor || true
