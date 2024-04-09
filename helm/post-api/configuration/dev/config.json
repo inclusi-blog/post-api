@@ -46,6 +46,6 @@
   "allow_insecure_cookies": true,
   "activationCallback": "https://www.narratenet.com/m/callback/email",
   "token_validation_ignore_urls": [],
-  "aws_bucket": "golastorage",
+  "aws_bucket": "golabucket",
   "redis_password_key": "DEV_REDIS_DB_PASSWORD"
 }

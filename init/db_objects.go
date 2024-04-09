@@ -26,5 +26,10 @@ func Db(configData *configuration.ConfigData, awsSession *session.Session) *sqlx
 		//logger.Panic("Could not connect to POST DB", err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		logger.Panic("unable to ping db", err)
+	}
+
 	return db
 }
